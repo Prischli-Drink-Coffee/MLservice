@@ -3,7 +3,8 @@ import { Stack, useToast, Button, HStack, Input, Text, SimpleGrid } from "@chakr
 import PageHeader from "../components/common/PageHeader";
 import Card from "../components/common/Card";
 import { listDatasets, uploadDataset } from "../API";
-import { ErrorAlert, LoadingState, EmptyState } from "../components/common";
+import { ErrorAlert, LoadingState, EmptyState } from "../components";
+import TTLCleanupCard from "../components/common/TTLCleanupCard";
 
 function DatasetsPage() {
   const toast = useToast();
@@ -12,6 +13,7 @@ function DatasetsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const isAdminUI = String(process.env.REACT_APP_ENABLE_ADMIN_UI || "false").toLowerCase() === "true";
 
   const fetchDatasets = async () => {
     setIsLoading(true);
@@ -90,6 +92,9 @@ function DatasetsPage() {
           </HStack>
         }
       />
+
+      {isAdminUI && <TTLCleanupCard isAdmin />}
+
       <Card p={4}>
         <Stack spacing={2} fontSize="sm" color="text.muted">
           <Text>Требования к CSV:</Text>

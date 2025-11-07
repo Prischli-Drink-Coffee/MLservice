@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Stack, Table, Thead, Tbody, Tr, Th, Td, IconButton, Text, useToast } from "@chakra-ui/react";
 import { FiTrash2, FiDownload } from "react-icons/fi";
 import PageHeader from "../components/common/PageHeader";
@@ -10,7 +10,7 @@ function ArtifactsPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
       const data = await listArtifacts({ limit: 50 });
@@ -20,11 +20,11 @@ function ArtifactsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [fetchItems]);
 
   const handleDelete = async (id) => {
     try {

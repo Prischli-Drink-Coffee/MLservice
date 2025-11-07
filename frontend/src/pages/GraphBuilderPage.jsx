@@ -1,3 +1,5 @@
+// LEGACY GraphBuilderPage: retained temporarily for potential reference.
+// Marked for removal after full migration to ML console.
 import React from "react";
 import {
   ReactFlow,

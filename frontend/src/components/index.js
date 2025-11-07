@@ -10,7 +10,3 @@ export { default as EmptyState } from "./common/EmptyState";
 export { default as ErrorAlert } from "./common/ErrorAlert";
 export { default as JsonEditor } from "./common/JsonEditor";
 export { default as LoadingState } from "./common/LoadingState";
-
-// graphs
-export { default as GraphNode } from "./GraphNode";
-export { default as LabelEdge } from "./edges/LabelEdge";
