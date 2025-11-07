@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from "react";
-import { createHashRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Center, Spinner } from "@chakra-ui/react";
 import ProtectedLayout from "./components/layout/ProtectedLayout";
 import PublicLayout from "./components/layout/PublicLayout";
@@ -15,7 +15,7 @@ const TrainingRunsPage = lazy(() => import("./pages/TrainingRunsPage"));
 const ArtifactsPage = lazy(() => import("./pages/ArtifactsPage"));
 const MetricsPage = lazy(() => import("./pages/MetricsPage"));
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     path: "/",
     element: <PublicLayout />,

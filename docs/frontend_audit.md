@@ -138,14 +138,16 @@
 
 Этап 3 (UX/графики/администрирование):
 
-9. [ ] Добавить красивые графики (Recharts) для трендов.
-10. [ ] TTL cleanup (кнопка для администратора) с отчётом.
-11. [ ] Перейти на Browser History и добавить nginx fallback.
+9. [x] Добавить красивые графики (Recharts) для трендов — реализованы LineChart по accuracy и r2.
+10. [x] TTL cleanup (кнопка для администратора) с отчётом — компонент `TTLCleanupCard` за флагом `REACT_APP_ENABLE_ADMIN_UI`.
+11. [x] Перейти на Browser History и добавить nginx fallback — переключено на `createBrowserRouter`, SPA fallback присутствует в `frontend/nginx.conf` (`try_files $uri /index.html`).
 
 Этап 4 (зачистка):
 
 12. [ ] Полностью удалить легаси Graph/Telegram страницы и API-модули.
 13. [ ] Удалить `API/services/*` и cookie-хелперы Bearer.
+
+Примечание: временно легаси файлы (Graph/Telegram) физически не удалены, но исключены из lint посредством `ignores` в `eslint.config.cjs` (flat config). Это предотвращает шум до полной зачистки.
 
 ---
 

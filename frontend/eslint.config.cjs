@@ -8,7 +8,22 @@ const globals = require("globals");
 
 module.exports = [
   {
-    ignores: ["build/**", "node_modules/**"],
+    ignores: [
+      "build/**",
+      "node_modules/**",
+      // Ignore legacy Graph/Telegram code during migration (kept on disk but unused)
+      "src/pages/GraphBuilderPage.jsx",
+      "src/pages/GraphsPage.jsx",
+      "src/pages/GraphDetailPage.jsx",
+      "src/pages/NodeRegistryPage.jsx",
+      "src/pages/TelegramPage.jsx",
+      "src/components/graph/**",
+      "src/components/graphs/**",
+      "src/components/nodes/**",
+      "src/components/edges/**",
+      "src/components/telegram/**",
+      "src/components/GraphNode.jsx",
+    ],
   },
   {
     files: ["src/**/*.{js,jsx}"],

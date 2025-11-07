@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Box, Divider, HStack, VStack } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { Subtitle, Body, Footnote } from "../common/Typography";
-import LiveStats from "./LiveStats";
+// import LiveStats from "./LiveStats";
 import StatusBadge from "../common/StatusBadge";
 import { colors, spacing } from "../../theme/tokens";
 
@@ -80,7 +80,7 @@ function PlatformInfoCard({ isAuthenticated, health }) {
           <VStack align="stretch" spacing={4} h="full">
             {/* Title */}
             <Subtitle variant="medium" fontSize={{ base: "18px", md: "22px" }}>
-              Статистика нашего сайта
+              Статус платформы
             </Subtitle>
 
             <Divider borderColor={colors.border.default} opacity={0.5} />
@@ -93,13 +93,13 @@ function PlatformInfoCard({ isAuthenticated, health }) {
               <StatusBadge ok={health?.ok} />
             </HStack>
 
-            {/* Live Stats - доступна для всех пользователей */}
-            <Divider borderColor={colors.border.default} opacity={0.5} />
+            {/* Дополнительно: место для будущей ML-статистики */}
+            {/* <Divider borderColor={colors.border.default} opacity={0.5} />
             <VStack align="stretch" spacing={2}>
               <Box w="full" maxW={{ base: "full", lg: "900px" }}>
                 <LiveStats />
               </Box>
-            </VStack>
+            </VStack> */}
           </VStack>
         </Box>
       </MotionBox>
