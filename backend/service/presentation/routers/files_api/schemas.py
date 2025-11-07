@@ -12,7 +12,8 @@ class FileMetadata(BaseModel):
 
 
 class UploadResponse(FileMetadata):
-    pass
+    # Optional storage file key (backend-internal reference)
+    file_key: str | None = None
 
 
 class FetchUserFilesResponse(BaseModel):

@@ -407,18 +407,27 @@
   - Интерфейс `AbstractFileStorage`; реализации `LocalFileStorage`, `MinioFileStorage`.
   - Выбор через `STORAGE_BACKEND` (`local` по умолчанию, `minio` при наличии конфигурации).
   - `FileSaverService` перенесён на абстрактный интерфейс.
+  - Улучшения MinIO: ретраи на `put_object`/`remove_object` с экспоненциальной задержкой; пресайны для скачивания.
 - TTL очистка датасетов:
   - Метод репозитория `cleanup_expired_datasets(cutoff, limit)` удаляет устаревшие `Dataset` + связанный `TrainingRun`, возвращает ключи файлов.
   - Эндпоинт `DELETE /api/ml/v1/datasets/expired?limit=` удаляет файлы и возвращает отчёт `{deleted, files_removed, files_missing}`.
+  - Автоматизация: добавлен фоновой таск `dataset-ttl-cleanup` (интервал `DATASET_TTL_CHECK_INTERVAL_SEC`, лимит батча `DATASET_TTL_BATCH_LIMIT`). Если `DATASET_TTL_DAYS=0` — не запускается.
 - Новые тесты: heavy метрики, summary агрегаты (включая best), TTL cleanup.
 
 Переменные окружения:
 
-- `ENABLE_REAL_TRAINING`, `STORAGE_BACKEND`, `DATASET_TTL_DAYS`, `MAX_MODEL_ARTIFACTS`, `MAX_CSV_UPLOAD_BYTES`, `MIN_CSV_DATA_ROWS`, `MAX_EMPTY_RATIO` + MinIO креды.
+- `ENABLE_REAL_TRAINING`, `STORAGE_BACKEND`, `DATASET_TTL_DAYS`, `DATASET_TTL_CHECK_INTERVAL_SEC`, `DATASET_TTL_BATCH_LIMIT`, `MAX_MODEL_ARTIFACTS`, `MAX_CSV_UPLOAD_BYTES`, `MIN_CSV_DATA_ROWS`, `MAX_EMPTY_RATIO` + MinIO креды.
+- MinIO тюнинг: `MINIO_RETRY_ATTEMPTS` (по умолчанию 3), `MINIO_RETRY_BACKOFF` (секунды, по умолчанию 0.5), `MINIO_PRESIGN_EXP` (секунды, по умолчанию 3600).
 
 Backlog по разделу 19:
 
-- Автоматизация TTL (периодический запуск, фоновые задачи).
+- Расширение автоматизации TTL: метрики активности (кол-во удалённых за сутки), экспорт в мониторинг.
+- Публичный эндпоинт получения presigned URL по `file_id` (для повторного скачивания без re-upload).
+
+Дополнительно:
+
+- Ответ загрузки датасета теперь включает `download_url` (если доступен пресайн) и поле `name` хранит внутренний ключ хранилища (для корректной TTL-очистки).
+- Сводная статистика метрик расширена: добавлены средние и лучшие значения для `precision`, `recall`, `f1`, `mae`.
 - Presigned URLs и retry логика для MinIO.
 - Интеграционные тесты с реальным MinIO/S3 в CI.
 - Агрегаты для `precision`, `recall`, `f1`, `mae`; confusion matrix и per-class статистика.

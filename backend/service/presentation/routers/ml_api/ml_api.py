@@ -238,17 +238,30 @@ async def upload_dataset(
         user_id=profile.user_id,
         launch_id=None,
         mode=mode,
-        file_name=file.filename,
+        # Store internal storage key rather than original filename for TTL alignment
+        file_name=upload_resp.file_key or file.filename,
         file_url=upload_resp.file_url,
     )
+
+    # Attempt presigned URL if supported
+    presigned: str | None = None
+    try:
+        if upload_resp.file_key:
+            presigned = await saver.get_presigned_url_by_key(
+                file_key=upload_resp.file_key,
+                expiry_sec=int(os.getenv("MINIO_PRESIGN_EXP", "3600")),
+            )
+    except Exception:
+        presigned = None
 
     return DatasetUploadResponse(
         dataset_id=dataset.id,
         file_url=dataset.file_url,
-        name=dataset.name,
+        name=dataset.name,  # internal key or original name
         mode=dataset.mode.value if hasattr(dataset.mode, "value") else str(dataset.mode),
         version=getattr(dataset, "version", 1),
         created_at=dataset.created_at,
+        download_url=presigned,
     )
 
 
@@ -331,11 +344,59 @@ async def get_metrics_summary(
         "avg_accuracy": _avg(acc_values),
         "avg_r2": _avg(r2_values),
         "avg_mse": _avg(mse_values),
+        "avg_precision": _avg(
+            [
+                float(m.metrics.precision)
+                for m in trends
+                if m.metrics and m.metrics.precision is not None
+            ]
+        ),
+        "avg_recall": _avg(
+            [float(m.metrics.recall) for m in trends if m.metrics and m.metrics.recall is not None]
+        ),
+        "avg_f1": _avg(
+            [float(m.metrics.f1) for m in trends if m.metrics and m.metrics.f1 is not None]
+        ),
+        "avg_mae": _avg(
+            [float(m.metrics.mae) for m in trends if m.metrics and m.metrics.mae is not None]
+        ),
         "classification_count": classification_count or None,
         "regression_count": regression_count or None,
         "best_accuracy": max(acc_values) if acc_values else None,
         "best_r2": max(r2_values) if r2_values else None,
         "best_mse": (min(mse_values) if mse_values else None),
+        "best_precision": (
+            max(
+                [
+                    float(m.metrics.precision)
+                    for m in trends
+                    if m.metrics and m.metrics.precision is not None
+                ]
+            )
+            if any(m.metrics and m.metrics.precision is not None for m in trends)
+            else None
+        ),
+        "best_recall": (
+            max(
+                [
+                    float(m.metrics.recall)
+                    for m in trends
+                    if m.metrics and m.metrics.recall is not None
+                ]
+            )
+            if any(m.metrics and m.metrics.recall is not None for m in trends)
+            else None
+        ),
+        "best_f1": (
+            max([float(m.metrics.f1) for m in trends if m.metrics and m.metrics.f1 is not None])
+            if any(m.metrics and m.metrics.f1 is not None for m in trends)
+            else None
+        ),
+        "best_mae": (
+            min([float(m.metrics.mae) for m in trends if m.metrics and m.metrics.mae is not None])
+            if any(m.metrics and m.metrics.mae is not None for m in trends)
+            else None
+        ),
     }
 
     from service.presentation.routers.ml_api.schemas import MetricsAggregate, MetricsSummaryResponse

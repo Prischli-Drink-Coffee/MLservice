@@ -39,6 +39,35 @@ async def lifespan(app: FastAPI):
         except Exception:
             logger.warning("Job processor is not available; background processing disabled")
 
+        # Dataset TTL background cleanup
+        try:
+            if config.dataset_ttl_days > 0:
+                from service.services.dataset_ttl_worker import run_dataset_ttl_loop
+
+                training_repo = container.get(container.TrainingRepositoryName)
+                file_saver = container.get(container.FileSaverServiceName)
+
+                await task_manager.start_task_with_restart(
+                    lambda: run_dataset_ttl_loop(
+                        ttl_days_supplier=lambda: config.dataset_ttl_days,
+                        interval_sec_supplier=lambda: config.dataset_ttl_check_interval_sec,
+                        batch_limit_supplier=lambda: config.dataset_ttl_batch_limit,
+                        training_repo=training_repo,
+                        file_saver=file_saver,
+                    ),
+                    task_name="dataset-ttl-cleanup",
+                    restart_delay=10,
+                )
+                logger.info(
+                    "Dataset TTL cleanup task started (days=%s, interval=%ss)",
+                    config.dataset_ttl_days,
+                    config.dataset_ttl_check_interval_sec,
+                )
+            else:
+                logger.info("Dataset TTL cleanup disabled (dataset_ttl_days <= 0)")
+        except Exception:
+            logger.exception("Failed to start dataset TTL cleanup task")
+
         logger.info("Application started successfully!")
 
         yield

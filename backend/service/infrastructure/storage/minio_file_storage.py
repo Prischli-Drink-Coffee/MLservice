@@ -45,18 +45,56 @@ class MinioFileStorage(AbstractFileStorage):
         return key
 
     async def upload_file(self, *, file_key: str, file_data: bytes) -> str:
-        # Use in-memory bytes upload
+        # Use in-memory bytes upload with simple retries
+        import asyncio
         from io import BytesIO
 
-        data = BytesIO(file_data)
-        length = len(file_data)
-        self._client.put_object(self._bucket, file_key, data, length)
-        # Return s3:// style url placeholder
+        attempts = int(os.getenv("MINIO_RETRY_ATTEMPTS", "3"))
+        backoff_base = float(os.getenv("MINIO_RETRY_BACKOFF", "0.5"))
+        last_exc: Exception | None = None
+        for i in range(max(1, attempts)):
+            try:
+                data = BytesIO(file_data)
+                length = len(file_data)
+                self._client.put_object(self._bucket, file_key, data, length)
+                return f"s3://{self._bucket}/{file_key}"
+            except Exception as e:  # noqa: BLE001
+                last_exc = e
+                if i < attempts - 1:
+                    await asyncio.sleep(backoff_base * (2**i))
+                else:
+                    raise
+
+        # Should not reach here
+        if last_exc:
+            raise last_exc
         return f"s3://{self._bucket}/{file_key}"
 
     async def delete_file(self, *, file_key: str) -> None:  # pragma: no cover - simple pass-through
+        import asyncio
+
+        attempts = int(os.getenv("MINIO_RETRY_ATTEMPTS", "3"))
+        backoff_base = float(os.getenv("MINIO_RETRY_BACKOFF", "0.5"))
+        for i in range(max(1, attempts)):
+            try:
+                self._client.remove_object(self._bucket, file_key)
+                return
+            except Exception:
+                if i < attempts - 1:
+                    await asyncio.sleep(backoff_base * (2**i))
+                else:
+                    # Non-fatal for cleanup flows
+                    return
+
+    async def get_presigned_url(self, *, file_key: str, expiry_sec: int = 3600) -> str:
+        from datetime import timedelta
+
+        # minio client returns a temporary HTTP URL
         try:
-            self._client.remove_object(self._bucket, file_key)
-        except Exception:
-            # Non-fatal for cleanup flows
-            pass
+            url = self._client.presigned_get_object(
+                self._bucket, file_key, expires=timedelta(seconds=max(1, int(expiry_sec)))
+            )
+            return url
+        except Exception:  # noqa: BLE001
+            # Fallback to s3:// style reference if presign fails
+            return f"s3://{self._bucket}/{file_key}"

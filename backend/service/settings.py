@@ -107,6 +107,13 @@ class Config(BaseSettings):
     allowed_extensions: tuple[str, ...] = (".png", ".jpg", ".jpeg", ".csv")
     max_file_size_byte: int = 20 * 1024 * 1024  # 20 MB
 
+    # Dataset TTL automation
+    dataset_ttl_days: int = int(os.getenv("DATASET_TTL_DAYS", "0"))  # 0 => disabled
+    dataset_ttl_check_interval_sec: int = int(
+        os.getenv("DATASET_TTL_CHECK_INTERVAL_SEC", "3600")
+    )  # default: hourly
+    dataset_ttl_batch_limit: int = int(os.getenv("DATASET_TTL_BATCH_LIMIT", "500"))
+
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_nested_delimiter="__",

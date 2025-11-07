@@ -278,9 +278,17 @@ class MetricsAggregate(BaseModel):
     )
     avg_r2: float | None = Field(None, description="Средний R^2 по регрессии")
     avg_mse: float | None = Field(None, description="Средний MSE по регрессии")
+    avg_precision: float | None = Field(None, description="Средняя precision по классификации")
+    avg_recall: float | None = Field(None, description="Средняя recall по классификации")
+    avg_f1: float | None = Field(None, description="Средняя F1 по классификации")
+    avg_mae: float | None = Field(None, description="Средняя MAE по регрессии")
     best_accuracy: float | None = Field(None, description="Лучшая accuracy по классификации")
     best_r2: float | None = Field(None, description="Лучший R^2 по регрессии")
     best_mse: float | None = Field(None, description="Лучший (минимальный) MSE по регрессии")
+    best_precision: float | None = Field(None, description="Лучшая precision по классификации")
+    best_recall: float | None = Field(None, description="Лучшая recall по классификации")
+    best_f1: float | None = Field(None, description="Лучшая F1 по классификации")
+    best_mae: float | None = Field(None, description="Лучшая (минимальная) MAE по регрессии")
 
 
 class MetricsSummaryResponse(BaseModel):
@@ -309,6 +317,17 @@ class DatasetUploadResponse(BaseModel):
     mode: str
     version: int
     created_at: datetime
+    # Если доступно: временная ссылка для скачивания, напр. из MinIO
+    download_url: Optional[str] = None
+
+
+class PresignedUrlResponse(BaseModel):
+    """Ссылка для скачивания файла (presigned URL, если доступен у backend'а)."""
+
+    file_id: UUID
+    url: str
+    expiry_sec: Optional[int] = None
+    backend: Optional[str] = None
 
 
 class TelegramBotStatusResponseSchema(BaseModel):

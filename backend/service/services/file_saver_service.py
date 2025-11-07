@@ -77,7 +77,16 @@ class FileSaverService:
         logger.info(
             f"File metadata saved for user: {user_id}, file: {file_url}, metadata: {saved_metadata.id}"
         )
-        return UploadResponse(file_id=saved_metadata.id, file_url=file_url)
+        return UploadResponse(file_id=saved_metadata.id, file_url=file_url, file_key=file_key)
+
+    async def get_presigned_url_by_key(
+        self, *, file_key: str, expiry_sec: int = 3600
+    ) -> str | None:
+        # Duck-typing: only works if storage supports it
+        getter = getattr(self.storage, "get_presigned_url", None)
+        if callable(getter):
+            return await getter(file_key=file_key, expiry_sec=expiry_sec)
+        return None
 
     async def delete(self, user_id: uuid.UUID, file_id: uuid.UUID) -> None:
 
