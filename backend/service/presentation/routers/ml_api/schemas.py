@@ -269,11 +269,20 @@ class MetricsAggregate(BaseModel):
     """Агрегированные метрики по последним запускам."""
 
     count: int = Field(..., description="Число запусков в выборке")
+    classification_count: int | None = Field(
+        None, description="Число классификационных запусков в выборке"
+    )
+    regression_count: int | None = Field(
+        None, description="Число регрессионных запусков в выборке"
+    )
     avg_accuracy: float | None = Field(
         None, description="Средняя accuracy по классификации (если есть хотя бы один)"
     )
     avg_r2: float | None = Field(None, description="Средний R^2 по регрессии")
     avg_mse: float | None = Field(None, description="Средний MSE по регрессии")
+    best_accuracy: float | None = Field(None, description="Лучшая accuracy по классификации")
+    best_r2: float | None = Field(None, description="Лучший R^2 по регрессии")
+    best_mse: float | None = Field(None, description="Лучший (минимальный) MSE по регрессии")
 
 
 class MetricsSummaryResponse(BaseModel):

@@ -304,10 +304,17 @@ async def get_metrics_summary(
     acc_values: list[float] = []
     r2_values: list[float] = []
     mse_values: list[float] = []
+    classification_count = 0
+    regression_count = 0
     for tp in trends:
         m = tp.metrics
         if not m:
             continue
+        # Heuristic: task field present; rely on reported task
+        if m.task == "classification":
+            classification_count += 1
+        elif m.task == "regression":
+            regression_count += 1
         if m.accuracy is not None:
             acc_values.append(float(m.accuracy))
         if m.r2 is not None:
@@ -323,6 +330,11 @@ async def get_metrics_summary(
         "avg_accuracy": _avg(acc_values),
         "avg_r2": _avg(r2_values),
         "avg_mse": _avg(mse_values),
+        "classification_count": classification_count or None,
+        "regression_count": regression_count or None,
+        "best_accuracy": max(acc_values) if acc_values else None,
+        "best_r2": max(r2_values) if r2_values else None,
+        "best_mse": (min(mse_values) if mse_values else None),
     }
 
     from service.presentation.routers.ml_api.schemas import MetricsAggregate, MetricsSummaryResponse

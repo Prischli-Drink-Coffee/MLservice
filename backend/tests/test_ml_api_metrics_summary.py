@@ -65,6 +65,13 @@ def test_metrics_summary_aggregates():
     # regression averages
     assert agg["avg_r2"] == 0.4
     assert abs(agg["avg_mse"] - 1.2) < 1e-6
+    # bests
+    assert agg["best_accuracy"] == 0.9
+    assert agg["best_r2"] == 0.4
+    assert agg["best_mse"] == 1.2
+    # counts per task
+    assert agg["classification_count"] == 2
+    assert agg["regression_count"] == 1
     assert len(data["trends"]) == 3
 
 

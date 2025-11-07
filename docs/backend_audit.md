@@ -379,11 +379,12 @@
 
 - Схемы: `MetricsAggregate`, `MetricsSummaryResponse`.
 - Роут: `GET /api/ml/v1/metrics/summary?mode=&limit=` — возвращает агрегаты по последним запускам и ту же выборку `trends` для унификации UX.
-- Агрегаты включают `count`, `avg_accuracy`, `avg_r2`, `avg_mse` (каждое поле присутствует, если есть хотя бы одна соответствующая метрика).
+- Агрегаты включают `count`, `classification_count`, `regression_count`, `avg_accuracy`, `avg_r2`, `avg_mse`, а также лучшие значения: `best_accuracy`, `best_r2`, `best_mse`.
 
 Тесты:
 
 - `tests/test_ml_api_metrics_summary.py` — проверка корректности расчёта средних для смешанной выборки (2 classification + 1 regression) и работы фильтра `mode`.
+  Дополнено проверками лучших значений и счётчиков по задачам.
 
 Следующее расширение:
 
