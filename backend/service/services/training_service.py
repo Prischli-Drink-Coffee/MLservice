@@ -94,6 +94,39 @@ class TrainingService:
             run_id=run.id, status=ProcessingStatus.SUCCESS, model_url=model_url, metrics=metrics
         )
 
+        # 7) Retention: limit number of artifacts per user (env MAX_MODEL_ARTIFACTS, default 5)
+        try:
+            import os
+
+            max_artifacts = int(os.getenv("MAX_MODEL_ARTIFACTS", "5"))
+        except Exception:  # noqa: BLE001
+            max_artifacts = 5
+        if max_artifacts > 0:
+            try:
+                total = await self._training_repo.count_artifacts(job.user_id)
+                if total > max_artifacts:
+                    deleted_urls = await self._training_repo.delete_oldest_artifacts(
+                        job.user_id, keep=max_artifacts
+                    )
+                    removed_files = 0
+                    for url in deleted_urls:
+                        path = self._resolve_model_path(url)
+                        try:
+                            os.remove(path)
+                            removed_files += 1
+                        except FileNotFoundError:
+                            logger.debug("Retention cleanup skipped missing file: %s", path)
+                        except Exception as e:  # noqa: BLE001
+                            logger.warning("Failed to delete artifact file %s: %s", path, e)
+                    logger.info(
+                        "Artifact retention: removed %s DB records and %s files for user %s",
+                        len(deleted_urls),
+                        removed_files,
+                        job.user_id,
+                    )
+            except Exception:  # noqa: BLE001
+                logger.warning("Artifact retention step failed for user %s", job.user_id)
+
         logger.info("Training for job %s finished successfully", job.id)
         return metrics
 
@@ -315,3 +348,15 @@ class TrainingService:
             pickle.dump(dummy_model, fh)
         metrics["model_url"] = f"/storage/{model_rel_path}"
         return metrics
+
+    def _resolve_model_path(self, model_url: str) -> str:
+        """Map stored model_url (which starts with /storage/) to absolute path under storage_root.
+
+        If model_url already absolute, return as is.
+        """
+        if model_url.startswith("/storage/"):
+            rel = model_url[len("/storage/") :]
+            return os.path.join(self._storage_root, rel)
+        if os.path.isabs(model_url):
+            return model_url
+        return os.path.join(self._storage_root, model_url)

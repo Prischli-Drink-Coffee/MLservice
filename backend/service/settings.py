@@ -88,9 +88,8 @@ class CorsConfig(BaseSettings):
     """CORS configuration"""
 
     allow_origins: list[str] = Field(default_factory=list)
-
-    class Config:
-        env_prefix = "CORS_"
+    # Pydantic v2 style config (avoid deprecated inner class Config warning)
+    model_config = SettingsConfigDict(env_prefix="CORS_")
 
 
 class Config(BaseSettings):

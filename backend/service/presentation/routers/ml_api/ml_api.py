@@ -8,8 +8,10 @@ from service.models.auth_models import AuthProfile
 from service.models.key_value import ServiceMode
 from service.presentation.dependencies.auth_checker import check_auth
 from service.presentation.routers.ml_api.schemas import (
+    ArtifactDeleteResponse,
     DatasetResponse,
     DatasetUploadResponse,
+    MetricTrendPoint,
     ModelArtifactResponse,
     TrainingRunResponse,
 )
@@ -58,6 +60,57 @@ async def list_artifacts(
     return items
 
 
+@ml_router.delete(
+    "/artifacts/{artifact_id}", response_model=ArtifactDeleteResponse, status_code=200
+)
+async def delete_artifact(
+    artifact_id: str,
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    repo: TrainingRepository = Depends(get_training_repo),
+):
+    """Удаление артефакта модели и связанного файла.
+
+    Поведение:
+    - 404 если артефакт не принадлежит пользователю или не существует.
+    - Удаляет запись из БД, затем пытается удалить файл на диске.
+    """
+    import logging as _logging
+    import os as _os
+    from uuid import UUID as _UUID
+
+    logger = _logging.getLogger(__name__)
+
+    try:
+        art_uuid = _UUID(artifact_id)
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Некорректный UUID")
+
+    model_url = await repo.delete_artifact(profile.user_id, art_uuid)
+    if model_url is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Артефакт не найден")
+
+    # Map URL to storage path similar to TrainingService logic
+    def _resolve(path_url: str) -> str:
+        if path_url.startswith("/storage/"):
+            rel = path_url[len("/storage/") :]
+            root = _os.getenv("STORAGE_ROOT", "/var/lib/app/storage")
+            return _os.path.join(root, rel)
+        if _os.path.isabs(path_url):
+            return path_url
+        root = _os.getenv("STORAGE_ROOT", "/var/lib/app/storage")
+        return _os.path.join(root, path_url)
+
+    abs_path = _resolve(model_url)
+    try:
+        _os.remove(abs_path)
+    except FileNotFoundError:
+        logger.debug("Файл артефакта уже отсутствует: %s", abs_path)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Ошибка удаления файла артефакта %s: %s", abs_path, e)
+
+    return ArtifactDeleteResponse(id=art_uuid)
+
+
 @ml_router.get("/datasets", response_model=list[DatasetResponse])
 async def list_datasets(
     profile: Annotated[AuthProfile, Depends(check_auth)],
@@ -102,7 +155,7 @@ async def upload_dataset(
         max_bytes = 10 * 1024 * 1024
     if len(raw) > max_bytes:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Файл слишком большой"
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE, detail="Файл слишком большой"
         )
 
     # Lightweight CSV validation without heavy deps to avoid Windows NumPy access violation
@@ -117,22 +170,56 @@ async def upload_dataset(
         reader = csv.reader(text_stream)
 
         header = next(reader, None)
-        if not header or len([c for c in header if c is not None and str(c).strip() != ""]) < 2:
+        if not header:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Отсутствует заголовок CSV"
+            )
+        cleaned_header = [c.strip() for c in header if c is not None and str(c).strip() != ""]
+        if len(cleaned_header) < 2:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Недостаточно колонок в CSV"
             )
 
-        # Ensure at least one non-empty data row
-        has_row = False
+        data_rows = []
         for row in reader:
-            # Skip completely empty lines
             if row and any(str(cell).strip() != "" for cell in row):
-                has_row = True
-                break
+                data_rows.append(row)
 
-        if not has_row:
+        if not data_rows:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Пустой CSV без данных"
+            )
+
+        # Minimum data rows (env MIN_CSV_DATA_ROWS, default 2)
+        try:
+            import os as _os
+
+            min_rows = int(_os.getenv("MIN_CSV_DATA_ROWS", "2"))
+        except Exception:
+            min_rows = 2
+        if len(data_rows) < min_rows:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Недостаточно строк данных: {len(data_rows)} < {min_rows}",
+            )
+
+        # NaN / пустые значения доля (env MAX_EMPTY_RATIO, default 0.5)
+        try:
+            max_empty_ratio = float(_os.getenv("MAX_EMPTY_RATIO", "0.5"))
+        except Exception:
+            max_empty_ratio = 0.5
+        total_cells = len(data_rows) * len(cleaned_header)
+        empty_cells = 0
+        for r in data_rows:
+            empty_cells += sum(
+                1
+                for cell in r
+                if str(cell).strip() == "" or cell.lower() in {"nan", "none", "null"}
+            )
+        if total_cells > 0 and (empty_cells / total_cells) > max_empty_ratio:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Слишком много пустых значений в CSV",
             )
     except HTTPException:
         raise
@@ -158,5 +245,32 @@ async def upload_dataset(
         file_url=dataset.file_url,
         name=dataset.name,
         mode=dataset.mode.value if hasattr(dataset.mode, "value") else str(dataset.mode),
+        version=getattr(dataset, "version", 1),
         created_at=dataset.created_at,
     )
+
+
+@ml_router.get("/metrics/trends", response_model=list[MetricTrendPoint])
+async def list_metrics_trends(
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    mode: ServiceMode | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    repo: TrainingRepository = Depends(get_training_repo),
+):
+    """Список точек тренда метрик обучения.
+
+    Возвращает последние запуски обучения с их метриками и версией датасета.
+    Параметры:
+    - mode: фильтр по режиму датасета (опционально)
+    - limit: максимум точек (по умолчанию 50)
+    """
+    rows = await repo.list_training_metrics_trends(profile.user_id, mode=mode, limit=limit)
+    return [
+        MetricTrendPoint(
+            run_id=tr.id,
+            created_at=tr.created_at,
+            version=version,
+            metrics=tr.metrics if tr.metrics else None,
+        )
+        for tr, version in rows
+    ]

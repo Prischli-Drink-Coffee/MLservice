@@ -37,19 +37,42 @@ class TrainingRepository(BaseRepository):
         file_url: str,
         session: AsyncSession | None = None,
     ) -> Dataset:
-        # Try find existing by file_url
-        stmt = select(Dataset).where(Dataset.user_id == user_id, Dataset.file_url == file_url)
-        result = await session.execute(stmt)
-        ds = result.scalar_one_or_none()
-        if ds:
-            return ds
+        # Deprecated semantics: previously reused dataset by file_url. Now always create new with version.
+        return await self.create_dataset_with_version(
+            user_id=user_id,
+            launch_id=launch_id,
+            mode=mode,
+            file_name=file_name,
+            file_url=file_url,
+            session=session,
+        )
 
+    @connection()
+    async def create_dataset_with_version(
+        self,
+        user_id: UUID,
+        launch_id: UUID | None,
+        mode: ServiceMode,
+        file_name: str,
+        file_url: str,
+        session: AsyncSession | None = None,
+    ) -> Dataset:
+        # Fetch max version for this user+mode
+        from sqlalchemy import func
+
+        v_stmt = select(func.max(Dataset.version)).where(
+            Dataset.user_id == user_id, Dataset.mode == mode
+        )
+        v_res = await session.execute(v_stmt)
+        current_max = v_res.scalar()
+        next_version = (current_max or 0) + 1
         ds = Dataset(
             user_id=user_id,
             launch_id=launch_id,
             mode=mode,
             name=file_name,
             file_url=file_url,
+            version=next_version,
         )
         session.add(ds)
         await session.flush()
@@ -146,6 +169,66 @@ class TrainingRepository(BaseRepository):
         return list(result.scalars().all())
 
     @connection()
+    async def count_artifacts(self, user_id: UUID, session: AsyncSession | None = None) -> int:
+        from sqlalchemy import func
+
+        stmt = select(func.count(ModelArtifact.id)).where(ModelArtifact.user_id == user_id)
+        result = await session.execute(stmt)
+        return int(result.scalar() or 0)
+
+    @connection()
+    async def delete_oldest_artifacts(
+        self,
+        user_id: UUID,
+        keep: int,
+        session: AsyncSession | None = None,
+    ) -> list[str]:
+        """Delete artifacts beyond 'keep' newest.
+
+        Returns list of model_url values that were deleted from DB so that caller can remove files.
+        """
+        # Select IDs + model_url to delete (offset keep)
+        ids_stmt = (
+            select(ModelArtifact.id, ModelArtifact.model_url)
+            .where(ModelArtifact.user_id == user_id)
+            .order_by(ModelArtifact.created_at.desc())
+            .offset(keep)
+        )
+        ids_result = await session.execute(ids_stmt)
+        rows = ids_result.fetchall()
+        if not rows:
+            return []
+        ids = [row[0] for row in rows]
+        urls = [row[1] for row in rows]
+        from sqlalchemy import delete
+
+        del_stmt = delete(ModelArtifact).where(ModelArtifact.id.in_(ids))
+        await session.execute(del_stmt)
+        return urls
+
+    @connection()
+    async def delete_artifact(
+        self, user_id: UUID, artifact_id: UUID, session: AsyncSession | None = None
+    ) -> str | None:
+        """Delete a single artifact by id for a user and return its model_url if it existed."""
+        # fetch model_url first
+        stmt = (
+            select(ModelArtifact)
+            .where(ModelArtifact.user_id == user_id, ModelArtifact.id == artifact_id)
+            .limit(1)
+        )
+        result = await session.execute(stmt)
+        art = result.scalar_one_or_none()
+        if not art:
+            return None
+        model_url = art.model_url
+        from sqlalchemy import delete
+
+        del_stmt = delete(ModelArtifact).where(ModelArtifact.id == artifact_id)
+        await session.execute(del_stmt)
+        return model_url
+
+    @connection()
     async def list_datasets(
         self, user_id: UUID, limit: int = 20, session: AsyncSession | None = None
     ) -> list[Dataset]:
@@ -184,3 +267,32 @@ class TrainingRepository(BaseRepository):
         )
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
+
+    # --- Metrics trends listing ---
+    @connection()
+    async def list_training_metrics_trends(
+        self,
+        user_id: UUID,
+        mode: ServiceMode | None = None,
+        limit: int = 50,
+        session: AsyncSession | None = None,
+    ) -> list[tuple[TrainingRun, int]]:
+        """Return recent training runs with associated dataset version.
+
+        Output list items are (TrainingRun, dataset_version).
+        Optional filtering by dataset mode.
+        Ordered by TrainingRun.created_at DESC.
+        """
+        from sqlalchemy import select
+
+        stmt = (
+            select(TrainingRun, Dataset.version)
+            .join(Dataset, TrainingRun.dataset_id == Dataset.id)
+            .where(TrainingRun.user_id == user_id)
+            .order_by(TrainingRun.created_at.desc())
+            .limit(limit)
+        )
+        if mode is not None:
+            stmt = stmt.where(Dataset.mode == mode)
+        result = await session.execute(stmt)
+        return [(row[0], int(row[1])) for row in result.all()]

@@ -212,6 +212,7 @@ class DatasetResponse(BaseModel):
     mode: str
     name: str
     file_url: str
+    version: int
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -242,6 +243,28 @@ class ModelArtifactResponse(BaseModel):
     updated_at: Optional[datetime]
 
 
+class ArtifactDeleteResponse(BaseModel):
+    """Ответ на удаление артефакта модели."""
+
+    id: UUID
+    deleted: bool = True
+
+
+class MetricTrendPoint(BaseModel):
+    """Точка тренда метрик обучения.
+
+    Представляет отдельный запуск обучения с его метриками и версией датасета.
+    Используется для построения графиков динамики качества модели.
+    """
+
+    run_id: UUID
+    created_at: datetime
+    version: int
+    metrics: MetricsResponse | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class DatasetUploadResponse(BaseModel):
     """Ответ на успешную загрузку датасета (CSV)."""
 
@@ -249,6 +272,7 @@ class DatasetUploadResponse(BaseModel):
     file_url: str
     name: str
     mode: str
+    version: int
     created_at: datetime
 
 
