@@ -30,13 +30,30 @@ services:
       - ./.env
     volumes:
       - ./backend/service:/dude/service
-      - '' # Пока пусто, но будет S3
+      - ./infra/storage:/var/lib/app/storage
     command: server
     ports:
       - '8000:8000'
     environment:
       - SERVICE_DEBUG=1
       - CORS__ALLOW_ORIGINS=${CORS__ALLOW_ORIGINS:-["http://localhost:3000","http://81.177.217.148:3000"]}
+      - STORAGE_BACKEND=${STORAGE_BACKEND:-local}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
+      - MINIO_BUCKET=${MINIO_BUCKET:-mlservice}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - MINIO_SECURE=${MINIO_SECURE:-false}
+      - MINIO_RETRY_ATTEMPTS=${MINIO_RETRY_ATTEMPTS:-3}
+      - MINIO_RETRY_BACKOFF=${MINIO_RETRY_BACKOFF:-0.5}
+      - MINIO_PRESIGN_EXP=${MINIO_PRESIGN_EXP:-3600}
+      - ENABLE_REAL_TRAINING=${ENABLE_REAL_TRAINING:-false}
+      - MAX_MODEL_ARTIFACTS=${MAX_MODEL_ARTIFACTS:-5}
+      - MAX_CSV_UPLOAD_BYTES=${MAX_CSV_UPLOAD_BYTES:-10485760}
+      - MIN_CSV_DATA_ROWS=${MIN_CSV_DATA_ROWS:-2}
+      - MAX_EMPTY_RATIO=${MAX_EMPTY_RATIO:-0.5}
+      - DATASET_TTL_DAYS=${DATASET_TTL_DAYS:-0}
+      - DATASET_TTL_CHECK_INTERVAL_SEC=${DATASET_TTL_CHECK_INTERVAL_SEC:-3600}
+      - DATASET_TTL_BATCH_LIMIT=${DATASET_TTL_BATCH_LIMIT:-500}
     stdin_open: true
     tty: true
     restart: "always"

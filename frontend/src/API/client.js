@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "/";
 let unauthorizedHandler = null;
 
 // Публичные эндпоинты, для которых не требуется авторизация
-const PUBLIC_ENDPOINTS = ["/api/stats/v1/platform", "/api/health"];
+const PUBLIC_ENDPOINTS = ["/api/health"];
 
 export const registerUnauthorizedHandler = (handler) => {
   unauthorizedHandler = handler;
