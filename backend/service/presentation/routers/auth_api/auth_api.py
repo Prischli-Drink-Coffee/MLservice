@@ -1,0 +1,84 @@
+import logging
+from typing import Annotated
+
+from fastapi import APIRouter, Body, Depends, Request, Response
+
+from service import container
+from service.presentation.routers.auth_api.schemas import (
+    LoginRequest,
+    LoginResponse,
+    RegisterRequest,
+    RegisterResponse,
+)
+from service.settings import config
+
+logger = logging.getLogger(__name__)
+
+auth_router = APIRouter(prefix="/api/auth/v1")
+
+
+@auth_router.post(
+    path="/register",
+    response_model=RegisterResponse,
+    summary="User registration with password",
+    description="Register new user with email and password. User needs to login separately after registration.",
+)
+async def register(
+    request_body: Annotated[RegisterRequest, Body],
+    request: Request,
+    service: Annotated[
+        container.AuthServiceT, Depends(container.getter(container.AuthServiceName))
+    ],
+) -> RegisterResponse:
+
+    user_agent = request.headers.get("user-agent", "unknown")
+    register_result = await service.register_user(user_agent, request_body)
+
+    return register_result
+
+
+@auth_router.post(
+    path="/login",
+    response_model=LoginResponse,
+    summary="User login with password",
+    description="Login with email and password. Returns JWT token on success.",
+)
+async def login(
+    request_body: Annotated[LoginRequest, Body],
+    request: Request,
+    response: Response,
+    service: Annotated[
+        container.AuthServiceT, Depends(container.getter(container.AuthServiceName))
+    ],
+) -> LoginResponse:
+
+    user_agent = request.headers.get("user-agent", "unknown")
+    user_jwt = await service.login(user_agent, request_body)
+
+    # Hardened cookie settings (production-ready):
+    # - secure=True (requires HTTPS; keep False only in explicit dev override)
+    # - samesite='strict' to mitigate CSRF; adjust to 'lax' if third‑party contexts needed
+    # - httponly=True prevents JS access
+    secure_cookie = not config.auth.dev_mode
+    response.set_cookie(
+        key="auth_token",
+        value=user_jwt.jwt,
+        httponly=True,
+        secure=secure_cookie,
+        samesite="strict" if secure_cookie else "lax",
+        max_age=config.auth.jwt_exp_hours,
+        path="/",
+    )
+
+    return user_jwt
+
+
+@auth_router.post(path="/debug_login", summary="Debug login (dev only)")
+async def debug_login(request: Request):
+    """Temporary endpoint to return raw request body for debugging malformed JSON issues."""
+    body = await request.body()
+    try:
+        text = body.decode("utf-8")
+    except Exception:
+        text = str(body)
+    return {"raw_body": text}

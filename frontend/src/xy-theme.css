@@ -1,0 +1,57 @@
+:root {
+  /* Edge colors */
+  --xy-edge-stroke-default: #8a8f98; /* subtle gray */
+  --xy-edge-stroke-width-default: 1.25;
+  --xy-edge-stroke-selected-default: #2f74ff; /* brand-500 */
+  --xy-connectionline-stroke-default: #8a8f98;
+  --xy-connectionline-stroke-width-default: 1.25;
+
+  /* Nodes */
+  --xy-node-color-default: inherit;
+  --xy-node-border-default: 1px solid rgba(255, 255, 255, 0.08);
+  --xy-node-background-color-default: #151515; /* surface */
+  --xy-node-group-background-color-default: rgba(255, 255, 255, 0.04);
+  --xy-node-boxshadow-hover-default: 0 1px 4px 1px rgba(0, 0, 0, 0.16);
+  --xy-node-boxshadow-selected-default: 0 0 0 1px #2f74ff; /* brand-500 */
+
+  /* Handles */
+  --xy-handle-background-color-default: #2f74ff;
+  --xy-handle-border-color-default: #0f1720;
+
+  /* Selection */
+  --xy-selection-background-color-default: rgba(47, 116, 255, 0.08);
+  --xy-selection-border-default: 1px dotted rgba(47, 116, 255, 0.8);
+
+  /* Controls & minimap */
+  --xy-controls-button-background-color-default: #1b1b1b; /* dark surface */
+  --xy-controls-button-background-color-hover-default: #222; /* darker */
+  --xy-controls-button-color-default: inherit;
+  --xy-controls-button-color-hover-default: inherit;
+  --xy-controls-button-border-color-default: rgba(255, 255, 255, 0.08);
+  --xy-controls-box-shadow-default: 0 0 2px 1px rgba(0, 0, 0, 0.24);
+
+  --xy-minimap-background-color-default: #0f0f0f;
+  --xy-background-pattern-dots-color-default: #2a2a2a;
+  --xy-background-pattern-line-color-default: #1f1f1f;
+  --xy-background-pattern-cross-color-default: #1f1f1f;
+}
+
+/* Dark mode (если переключите Chakra на dark) */
+.dark .react-flow {
+  --xy-node-background-color-default: #1a202c; /* gray-900 */
+  --xy-node-border-default: 1px solid #2d3748; /* gray-800 */
+  --xy-edge-stroke-default: #8a8f98;
+  --xy-edge-stroke-selected-default: #2f74ff;
+  --xy-selection-background-color-default: rgba(47, 116, 255, 0.08);
+  --xy-selection-border-default: 1px dotted rgba(47, 116, 255, 0.8);
+}
+
+/* Gradient border animation for feature slider */
+@keyframes rotate-gradient {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    filter: hue-rotate(360deg);
+  }
+}

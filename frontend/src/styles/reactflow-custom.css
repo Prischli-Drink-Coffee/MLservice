@@ -1,0 +1,224 @@
+/* Custom styles for React Flow components */
+
+/* Fix Controls (zoom buttons) visibility */
+.react-flow__controls {
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.react-flow__controls-button {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button svg {
+  fill: #e5e7eb !important;
+}
+
+.react-flow__controls-button:hover {
+  background: rgba(99, 102, 241, 0.2) !important;
+}
+
+.react-flow__controls-button:hover svg {
+  fill: #6366f1 !important;
+}
+
+/* Fix MiniMap visibility */
+.react-flow__minimap {
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 10px !important;
+}
+
+/* Fix Background grid colors */
+.react-flow__background {
+  background-color: #1a1a1a !important;
+}
+
+.react-flow__background-pattern {
+  stroke: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix Edge styles */
+.react-flow__edge-path {
+  stroke: #6366f1 !important;
+  stroke-width: 2px !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #818cf8 !important;
+  stroke-width: 3px !important;
+}
+
+/* Fix Connection line */
+.react-flow__connection-path {
+  stroke: #6366f1 !important;
+  stroke-width: 2px !important;
+}
+
+/* Fix Selection box */
+.react-flow__selection {
+  background: rgba(99, 102, 241, 0.1) !important;
+  border: 2px solid #6366f1 !important;
+}
+
+/* Hide attribution if proOptions doesn't work */
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* Fix pane cursor */
+.react-flow__pane {
+  cursor: default !important;
+}
+
+.react-flow__pane.dragging {
+  cursor: grabbing !important;
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+/* Enable GPU acceleration for smoother animations */
+.react-flow__node {
+  will-change: transform;
+  transform: translateZ(0); /* Force GPU acceleration */
+  backface-visibility: hidden; /* Prevent flicker */
+}
+
+/* Optimize edges rendering */
+.react-flow__edge {
+  will-change: auto;
+}
+
+/* Optimize handles */
+.react-flow__handle {
+  will-change: auto;
+  transform: translateZ(0);
+}
+
+/* Node selection styles */
+.react-flow__node.selected {
+  box-shadow: none !important; /* Remove default selection shadow */
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Also ensure selected nodes don't have white backgrounds */
+.react-flow__node.selected,
+.react-flow__node.selected > div,
+.react-flow__node.selected .react-flow__node-default {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* ===== FIX: Remove default white background from ALL nodes ===== */
+/* This fixes the white square issue under custom nodes */
+
+/* Target all possible node containers */
+.react-flow__node,
+.react-flow__node-default,
+.react-flow__node > div,
+.react-flow__node-default > div,
+div[data-id] {
+  background: transparent !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+/* Remove pseudo-elements that might create backgrounds */
+.react-flow__node::before,
+.react-flow__node::after,
+.react-flow__node-default::before,
+.react-flow__node-default::after {
+  content: none !important;
+  display: none !important;
+  background: transparent !important;
+}
+
+/* Remove any wrapper backgrounds */
+.react-flow__node .react-flow__node-wrapper,
+.react-flow__node [class*="wrapper"],
+.react-flow__node [class*="container"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* ===== PERFORMANCE: Optimize dragging ===== */
+/* Disable heavy effects during drag for better performance */
+.react-flow__node.dragging {
+  opacity: 0.8 !important;
+  /* Use will-change to optimize GPU rendering */
+  will-change: transform !important;
+}
+
+/* Remove all backgrounds from dragging node and children */
+.react-flow__node.dragging,
+.react-flow__node.dragging *,
+.react-flow__node.dragging .custom-node-body,
+.react-flow__node.dragging .chakra-box,
+.react-flow__node.dragging::before,
+.react-flow__node.dragging::after {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Disable expensive visual effects during drag */
+.react-flow__node.dragging .custom-node-body {
+  box-shadow: none !important;
+  backdrop-filter: none !important; /* Very expensive for GPU */
+  transition: none !important; /* Disable transitions during drag */
+  animation: none !important; /* Disable animations during drag */
+}
+
+/* Simplify visual appearance during drag */
+.react-flow__node.dragging * {
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Hide drag preview elements that React Flow creates */
+.react-flow__node-drag-preview,
+.react-flow__drag-preview {
+  display: none !important;
+}
+
+/* Also target by data attribute */
+[data-id].dragging,
+[data-id].dragging *,
+[data-id].dragging .custom-node-body {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Handle styles */
+.react-flow__handle {
+  width: 10px !important;
+  height: 10px !important;
+  border: 2px solid #1e293b !important;
+  background: #6366f1 !important;
+}
+
+.react-flow__handle:hover {
+  background: #818cf8 !important;
+}
+
+.react-flow__handle-connecting {
+  background: #10b981 !important;
+}
+
+.react-flow__handle-valid {
+  background: #10b981 !important;
+}

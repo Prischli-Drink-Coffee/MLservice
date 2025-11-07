@@ -1,0 +1,20 @@
+import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from service.models.key_value import ProcessingStatus, ServiceMode, ServiceType
+
+
+class JobLogic(BaseModel):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    user_id: uuid.UUID
+    mode: ServiceMode
+    type: ServiceType
+    status: ProcessingStatus
+    # Поля источников/результатов исключены до внедрения таблицы файлов/результатов
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    is_payment_taken: bool = False
+
+    model_config = ConfigDict(from_attributes=True)

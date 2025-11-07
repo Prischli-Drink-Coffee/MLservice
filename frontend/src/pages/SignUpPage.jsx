@@ -1,0 +1,251 @@
+import React, { useMemo, useState } from "react";
+import { Box, Link, Text, VStack, HStack, Icon } from "@chakra-ui/react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { EmailIcon, PhoneIcon } from "@chakra-ui/icons";
+import { motion } from "framer-motion";
+import { registerUser } from "../API";
+import { AuthFormCard, AuthInput, PasswordInput, PasswordStrength } from "../components/auth";
+import { Title, Body } from "../components/common/Typography";
+import PrimaryButton from "../components/common/PrimaryButton";
+import { tokens } from "../theme/tokens";
+
+const MotionBox = motion(Box);
+
+function SignUpPage() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const emailInvalid = email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const emailDomain = useMemo(() => (email.includes("@") ? email.split("@")[1] : ""), [email]);
+  const softEmailDomainWarning = useMemo(() => {
+    if (!email || emailInvalid) return "";
+    if (!emailDomain.includes(".")) return "Проверьте домен e-mail (отсутствует точка)";
+    const suspiciousTlds = ["invalid", "example", "local", "test"];
+    const tld = emailDomain.split(".").pop()?.toLowerCase();
+    if (tld && suspiciousTlds.includes(tld))
+      return "Похоже на тестовый домен — убедитесь, что он корректен";
+    return "";
+  }, [email, emailDomain, emailInvalid]);
+
+  const hasMinLen = password.length >= 8;
+  const hasLetter = /[A-Za-zА-Яа-я]/.test(password);
+  const hasDigit = /\d/.test(password);
+  const passwordsMismatch = password && confirmPassword && password !== confirmPassword;
+  const passwordStrongEnough = hasMinLen && hasLetter && hasDigit;
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError(null);
+
+    if (emailInvalid || !passwordStrongEnough || passwordsMismatch) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await registerUser({ email, password, first_name: firstName || null, phone: phone || null });
+      navigate("/login", { replace: true });
+    } catch (err) {
+      const message = err.response?.data?.detail || err.message;
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Box py={16}>
+      <AuthFormCard as="form" onSubmit={handleSubmit} maxW="520px">
+        {/* Header */}
+        <VStack spacing={2} mb={2}>
+          <Title size="medium" textAlign="center">
+            Регистрация в{" "}
+            <Box as="span" color={tokens.colors.brand.secondary}>
+              TeleRAG
+            </Box>
+          </Title>
+          <Body size="small" color={tokens.colors.text.tertiary} textAlign="center">
+            Создайте аккаунт для работы с платформой
+          </Body>
+        </VStack>
+
+        {/* Error message */}
+        {error && (
+          <MotionBox
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            p={4}
+            bg="rgba(239, 68, 68, 0.1)"
+            border="1px solid"
+            borderColor={tokens.colors.error}
+            borderRadius={tokens.borderRadius.md}
+          >
+            <HStack spacing={2}>
+              <Icon viewBox="0 0 24 24" color={tokens.colors.error} w={5} h={5}>
+                <path
+                  fill="currentColor"
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                />
+              </Icon>
+              <VStack align="start" spacing={0}>
+                <Text
+                  fontSize={tokens.typography.footnote.medium}
+                  fontWeight="600"
+                  color={tokens.colors.error}
+                >
+                  Ошибка регистрации
+                </Text>
+                <Text
+                  fontSize={tokens.typography.footnote.small}
+                  color={tokens.colors.text.secondary}
+                >
+                  {error}
+                </Text>
+              </VStack>
+            </HStack>
+          </MotionBox>
+        )}
+
+        {/* Form fields */}
+        <VStack spacing={4} w="full">
+          <AuthInput
+            id="email"
+            label="Email адрес"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            icon={EmailIcon}
+            isRequired
+            isInvalid={emailInvalid}
+            errorMessage="Неверный формат e-mail"
+            helperText={!emailInvalid && softEmailDomainWarning ? softEmailDomainWarning : null}
+            autoComplete="email"
+          />
+
+          <Box w="full">
+            <PasswordInput
+              id="password"
+              label="Пароль"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Минимум 8 символов, буквы и цифры"
+              isRequired
+              autoComplete="new-password"
+            />
+
+            {/* Password strength indicator */}
+            {password && <PasswordStrength password={password} />}
+          </Box>
+
+          <PasswordInput
+            id="confirmPassword"
+            label="Подтверждение пароля"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Повторите пароль"
+            isRequired
+            isInvalid={passwordsMismatch}
+            errorMessage="Пароли не совпадают"
+            autoComplete="new-password"
+          />
+
+          {/* Decorative separator */}
+          <HStack w="full" spacing={3}>
+            <Box flex={1} h="1px" bg={tokens.colors.border.subtle} />
+            <Text fontSize={tokens.typography.footnote.small} color={tokens.colors.text.tertiary}>
+              Опционально
+            </Text>
+            <Box flex={1} h="1px" bg={tokens.colors.border.subtle} />
+          </HStack>
+
+          <AuthInput
+            id="firstName"
+            label="Имя"
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="Ваше имя"
+            icon={() => (
+              <Icon viewBox="0 0 24 24" w={5} h={5}>
+                <path
+                  fill="currentColor"
+                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                />
+              </Icon>
+            )}
+            autoComplete="given-name"
+          />
+
+          <AuthInput
+            id="phone"
+            label="Телефон"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+7 (___) ___-__-__"
+            icon={PhoneIcon}
+            autoComplete="tel"
+          />
+        </VStack>
+
+        {/* Submit button */}
+        <MotionBox w="full" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <PrimaryButton
+            type="submit"
+            w="full"
+            isLoading={isLoading}
+            isDisabled={
+              emailInvalid ||
+              !passwordStrongEnough ||
+              passwordsMismatch ||
+              !email ||
+              !password ||
+              !confirmPassword
+            }
+          >
+            {isLoading ? "Регистрация..." : "Создать аккаунт"}
+          </PrimaryButton>
+        </MotionBox>
+
+        {/* Footer */}
+        <VStack spacing={3} pt={2}>
+          <Box w="full" h="1px" bg={tokens.colors.border.subtle} />
+
+          <Text
+            fontSize={tokens.typography.footnote.small}
+            color={tokens.colors.text.tertiary}
+            textAlign="center"
+          >
+            После регистрации войдите с указанными данными
+          </Text>
+
+          <HStack spacing={1} fontSize={tokens.typography.footnote.medium}>
+            <Text color={tokens.colors.text.tertiary}>Уже есть аккаунт?</Text>
+            <Link
+              as={RouterLink}
+              to="/login"
+              color={tokens.colors.brand.primary}
+              fontWeight="600"
+              _hover={{
+                color: tokens.colors.brand.secondary,
+                textDecoration: "underline",
+              }}
+            >
+              Войти
+            </Link>
+          </HStack>
+        </VStack>
+      </AuthFormCard>
+    </Box>
+  );
+}
+
+export default SignUpPage;

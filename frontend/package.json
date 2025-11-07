@@ -1,0 +1,78 @@
+{
+  "name": "telerag-frontend",
+  "homepage": ".",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@chakra-ui/icons": "^2.1.1",
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@fontsource/inter": "^5.0.15",
+    "@fontsource/montserrat": "^5.0.16",
+    "@fontsource/open-sans": "^5.0.17",
+    "@fontsource/roboto": "^5.0.8",
+    "@fontsource/roboto-mono": "^5.0.16",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@xyflow/react": "^12.0.0",
+    "axios": "^1.6.2",
+    "caniuse-lite": "^1.0.30001746",
+    "dagre": "^0.8.5",
+    "framer-motion": "^10.16.4",
+    "js-cookie": "^3.0.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.12.0",
+    "react-router": "^6.18.0",
+    "react-router-dom": "^6.18.0",
+    "react-scripts": "^5.0.1",
+    "react-select": "^5.8.0",
+    "react-select-async-paginate": "^0.7.3",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "npx eslint \"src/**/*.{js,jsx}\"",
+    "format": "npx prettier --write \"src/**/*.{js,jsx,css,md}\""
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "description": "Frontend for TeleRAG control panel",
+  "main": "index.js",
+  "keywords": [
+    "telerag",
+    "fastapi",
+    "telegram"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jest-dom": "^5.5.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-testing-library": "^7.11.0",
+    "globals": "^16.4.0"
+  }
+}
