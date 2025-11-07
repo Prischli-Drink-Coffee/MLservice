@@ -265,6 +265,24 @@ class MetricTrendPoint(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MetricsAggregate(BaseModel):
+    """Агрегированные метрики по последним запускам."""
+
+    count: int = Field(..., description="Число запусков в выборке")
+    avg_accuracy: float | None = Field(
+        None, description="Средняя accuracy по классификации (если есть хотя бы один)"
+    )
+    avg_r2: float | None = Field(None, description="Средний R^2 по регрессии")
+    avg_mse: float | None = Field(None, description="Средний MSE по регрессии")
+
+
+class MetricsSummaryResponse(BaseModel):
+    """Ответ summary метрик: агрегаты + точки тренда (опционально усечённые)."""
+
+    aggregates: MetricsAggregate
+    trends: list[MetricTrendPoint]
+
+
 class DatasetUploadResponse(BaseModel):
     """Ответ на успешную загрузку датасета (CSV)."""
 

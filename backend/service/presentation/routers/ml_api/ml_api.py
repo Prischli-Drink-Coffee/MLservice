@@ -11,6 +11,7 @@ from service.presentation.routers.ml_api.schemas import (
     ArtifactDeleteResponse,
     DatasetResponse,
     DatasetUploadResponse,
+    MetricsSummaryResponse,
     MetricTrendPoint,
     ModelArtifactResponse,
     TrainingRunResponse,
@@ -274,3 +275,59 @@ async def list_metrics_trends(
         )
         for tr, version in rows
     ]
+
+
+@ml_router.get("/metrics/summary", response_model=MetricsSummaryResponse)
+async def get_metrics_summary(
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    mode: ServiceMode | None = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    repo: TrainingRepository = Depends(get_training_repo),
+):
+    """Агрегированная сводка метрик по последним запускам.
+
+    Возвращает агрегаты (count, averages) и ту же выборку трендов
+    для унификации с фронтендом.
+    """
+    rows = await repo.list_training_metrics_trends(profile.user_id, mode=mode, limit=limit)
+    trends = [
+        MetricTrendPoint(
+            run_id=tr.id,
+            created_at=tr.created_at,
+            version=version,
+            metrics=tr.metrics if tr.metrics else None,
+        )
+        for tr, version in rows
+    ]
+
+    # Aggregate
+    acc_values: list[float] = []
+    r2_values: list[float] = []
+    mse_values: list[float] = []
+    for tp in trends:
+        m = tp.metrics
+        if not m:
+            continue
+        if m.accuracy is not None:
+            acc_values.append(float(m.accuracy))
+        if m.r2 is not None:
+            r2_values.append(float(m.r2))
+        if m.mse is not None:
+            mse_values.append(float(m.mse))
+
+    def _avg(values: list[float]) -> float | None:
+        return (sum(values) / len(values)) if values else None
+
+    aggregates = {
+        "count": len(trends),
+        "avg_accuracy": _avg(acc_values),
+        "avg_r2": _avg(r2_values),
+        "avg_mse": _avg(mse_values),
+    }
+
+    from service.presentation.routers.ml_api.schemas import MetricsAggregate, MetricsSummaryResponse
+
+    return MetricsSummaryResponse(
+        aggregates=MetricsAggregate(**aggregates),
+        trends=trends,
+    )
