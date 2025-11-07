@@ -6,4 +6,3 @@ export { default as TelegramPage } from "./TelegramPage";
 export { default as LoginPage } from "./LoginPage";
 export { default as SignUpPage } from "./SignUpPage";
 export { default as NotFoundPage } from "./NotFoundPage";
-export { default as PlaygroundPage } from "./PlaygroundPage";

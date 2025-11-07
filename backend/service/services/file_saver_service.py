@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import HTTPException, status
 
+from service.infrastructure.storage.abstract_file_storage import AbstractFileStorage
 from service.infrastructure.storage.local_file_storage import LocalFileStorage
 from service.models.db.db_models import UserFile
 from service.models.file_models import FileMetadataLogic
@@ -23,7 +24,7 @@ class FileSaverService:
         self,
         repository: FileRepository,
         folder_name: str,
-        file_storage: LocalFileStorage | None = None,
+        file_storage: AbstractFileStorage | None = None,
     ) -> None:
         self.storage = file_storage or LocalFileStorage()
         self.repository = repository
@@ -76,7 +77,16 @@ class FileSaverService:
         logger.info(
             f"File metadata saved for user: {user_id}, file: {file_url}, metadata: {saved_metadata.id}"
         )
-        return UploadResponse(file_id=saved_metadata.id, file_url=file_url)
+        return UploadResponse(file_id=saved_metadata.id, file_url=file_url, file_key=file_key)
+
+    async def get_presigned_url_by_key(
+        self, *, file_key: str, expiry_sec: int = 3600
+    ) -> str | None:
+        # Duck-typing: only works if storage supports it
+        getter = getattr(self.storage, "get_presigned_url", None)
+        if callable(getter):
+            return await getter(file_key=file_key, expiry_sec=expiry_sec)
+        return None
 
     async def delete(self, user_id: uuid.UUID, file_id: uuid.UUID) -> None:
 

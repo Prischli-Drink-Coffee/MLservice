@@ -39,6 +39,35 @@ async def lifespan(app: FastAPI):
         except Exception:
             logger.warning("Job processor is not available; background processing disabled")
 
+        # Dataset TTL background cleanup
+        try:
+            if config.dataset_ttl_days > 0:
+                from service.services.dataset_ttl_worker import run_dataset_ttl_loop
+
+                training_repo = container.get(container.TrainingRepositoryName)
+                file_saver = container.get(container.FileSaverServiceName)
+
+                await task_manager.start_task_with_restart(
+                    lambda: run_dataset_ttl_loop(
+                        ttl_days_supplier=lambda: config.dataset_ttl_days,
+                        interval_sec_supplier=lambda: config.dataset_ttl_check_interval_sec,
+                        batch_limit_supplier=lambda: config.dataset_ttl_batch_limit,
+                        training_repo=training_repo,
+                        file_saver=file_saver,
+                    ),
+                    task_name="dataset-ttl-cleanup",
+                    restart_delay=10,
+                )
+                logger.info(
+                    "Dataset TTL cleanup task started (days=%s, interval=%ss)",
+                    config.dataset_ttl_days,
+                    config.dataset_ttl_check_interval_sec,
+                )
+            else:
+                logger.info("Dataset TTL cleanup disabled (dataset_ttl_days <= 0)")
+        except Exception:
+            logger.exception("Failed to start dataset TTL cleanup task")
+
         logger.info("Application started successfully!")
 
         yield
@@ -54,14 +83,6 @@ async def lifespan(app: FastAPI):
             logger.info("Stopping background task manager...")
             task_manager = container.get(container.BackgroundTaskManagerName)
             await task_manager.stop()
-
-            # ML service может отсутствовать — это нормально на текущем этапе
-            try:
-                ml_service = container.get(container.MLServiceName)
-                if hasattr(ml_service, "shutdown"):
-                    await ml_service.shutdown()
-            except Exception as exc:
-                logger.warning("Failed to shutdown ML service cleanly: %s", exc)
 
             logger.info("Closing database connections...")
             pg_connector = container.get(container.PgConnectorName)

@@ -37,6 +37,7 @@ class _FakeTrainingRepo:
                 self.mode = mode
                 self.name = file_name
                 self.file_url = file_url
+                self.version = 3  # simulate next version
                 self.created_at = datetime.now(UTC)
 
         return _Obj()
@@ -73,3 +74,4 @@ def test_dataset_upload_endpoint(tmp_path):
     assert data["file_url"].startswith("/storage/")
     assert data["name"] == "dataset.csv"
     assert data["mode"] == ServiceMode.LIPS.value
+    assert data["version"] == 3

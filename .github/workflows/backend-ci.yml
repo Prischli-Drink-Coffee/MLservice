@@ -1,0 +1,61 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ dev, feature/backend ]
+  pull_request:
+    branches: [ dev ]
+
+jobs:
+  tests-windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install uv
+        run: pip install uv
+      - name: Install backend deps (no heavy training flag)
+        working-directory: backend
+        run: uv sync --frozen
+      - name: Run tests (fallback training)
+        working-directory: backend
+        env:
+          ENABLE_REAL_TRAINING: ''
+        run: uv run pytest -q
+
+  tests-ubuntu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        run: pip install uv
+      - name: Install backend deps
+        working-directory: backend
+        run: uv sync --frozen
+      - name: Run tests (heavy training enabled)
+        working-directory: backend
+        env:
+          ENABLE_REAL_TRAINING: '1'
+        run: uv run pytest -q
+
+  summary:
+    needs: [ tests-windows, tests-ubuntu ]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: CI Result Summary
+        run: |
+          echo "Windows: ${{ needs.tests-windows.result }}"
+          echo "Ubuntu: ${{ needs.tests-ubuntu.result }}"
+          if [ "${{ needs.tests-windows.result }}" != "success" ] || [ "${{ needs.tests-ubuntu.result }}" != "success" ]; then
+            exit 1
+          fi

@@ -160,6 +160,9 @@ class Dataset(Base):
     mode: Mapped[ServiceMode] = mapped_column(String(50), comment="Dataset mode type")
     name: Mapped[str] = mapped_column(String(255), comment="Human-friendly dataset name")
     file_url: Mapped[str] = mapped_column(String(1000), comment="Stored dataset file path/URL")
+    version: Mapped[int] = mapped_column(
+        default=1, comment="Sequential dataset version per user+mode"
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.utcnow, comment="Creation timestamp"
     )

@@ -94,6 +94,39 @@ class TrainingService:
             run_id=run.id, status=ProcessingStatus.SUCCESS, model_url=model_url, metrics=metrics
         )
 
+        # 7) Retention: limit number of artifacts per user (env MAX_MODEL_ARTIFACTS, default 5)
+        try:
+            import os
+
+            max_artifacts = int(os.getenv("MAX_MODEL_ARTIFACTS", "5"))
+        except Exception:  # noqa: BLE001
+            max_artifacts = 5
+        if max_artifacts > 0:
+            try:
+                total = await self._training_repo.count_artifacts(job.user_id)
+                if total > max_artifacts:
+                    deleted_urls = await self._training_repo.delete_oldest_artifacts(
+                        job.user_id, keep=max_artifacts
+                    )
+                    removed_files = 0
+                    for url in deleted_urls:
+                        path = self._resolve_model_path(url)
+                        try:
+                            os.remove(path)
+                            removed_files += 1
+                        except FileNotFoundError:
+                            logger.debug("Retention cleanup skipped missing file: %s", path)
+                        except Exception as e:  # noqa: BLE001
+                            logger.warning("Failed to delete artifact file %s: %s", path, e)
+                    logger.info(
+                        "Artifact retention: removed %s DB records and %s files for user %s",
+                        len(deleted_urls),
+                        removed_files,
+                        job.user_id,
+                    )
+            except Exception:  # noqa: BLE001
+                logger.warning("Artifact retention step failed for user %s", job.user_id)
+
         logger.info("Training for job %s finished successfully", job.id)
         return metrics
 
@@ -120,7 +153,14 @@ class TrainingService:
                 import numpy as np
                 import pandas as pd
                 from sklearn.linear_model import LinearRegression, LogisticRegression
-                from sklearn.metrics import accuracy_score, mean_squared_error, r2_score
+                from sklearn.metrics import (
+                    accuracy_score,
+                    confusion_matrix,
+                    mean_absolute_error,
+                    mean_squared_error,
+                    precision_recall_fscore_support,
+                    r2_score,
+                )
                 from sklearn.model_selection import train_test_split
 
                 df = pd.read_csv(csv_path)
@@ -160,9 +200,17 @@ class TrainingService:
                     model.fit(X_train, y_train)
                     y_pred = model.predict(X_test)
                     acc = accuracy_score(y_test, y_pred)
+                    prec, rec, f1, _ = precision_recall_fscore_support(
+                        y_test, y_pred, average="macro", zero_division=0
+                    )
+                    cm = confusion_matrix(y_test, y_pred)
                     metrics: dict[str, Any] = {
                         "task": task,
                         "accuracy": float(acc),
+                        "precision": float(prec),
+                        "recall": float(rec),
+                        "f1": float(f1),
+                        "confusion_matrix": cm.tolist(),
                         "n_features": int(X.shape[1]),
                         "n_samples": int(df.shape[0]),
                     }
@@ -172,10 +220,12 @@ class TrainingService:
                     y_pred = model.predict(X_test)
                     r2 = r2_score(y_test, y_pred)
                     mse = mean_squared_error(y_test, y_pred)
+                    mae = mean_absolute_error(y_test, y_pred)
                     metrics = {
                         "task": task,
                         "r2": float(r2),
                         "mse": float(mse),
+                        "mae": float(mae),
                         "n_features": int(X.shape[1]),
                         "n_samples": int(df.shape[0]),
                     }
@@ -284,6 +334,10 @@ class TrainingService:
             metrics = {
                 "task": task,
                 "accuracy": float(acc),
+                # Fallback baseline cannot meaningfully compute precision/recall/f1 for majority classifier
+                "precision": None,
+                "recall": None,
+                "f1": None,
                 "n_features": int(n_features),
                 "n_samples": int(n_samples),
             }
@@ -293,10 +347,13 @@ class TrainingService:
             sse = sum((yv - mean_y) ** 2 for yv in y_as_float)
             mse = sse / n_samples if n_samples else 0.0
             # r2 vs mean predictor is 0.0 by definition for in-sample baseline
+            # MAE for mean predictor baseline equals avg absolute deviation
+            mae = sum(abs(yv - mean_y) for yv in y_as_float) / n_samples if n_samples else 0.0
             metrics = {
                 "task": task,
                 "r2": 0.0,
                 "mse": float(mse),
+                "mae": float(mae),
                 "n_features": int(n_features),
                 "n_samples": int(n_samples),
             }
@@ -315,3 +372,15 @@ class TrainingService:
             pickle.dump(dummy_model, fh)
         metrics["model_url"] = f"/storage/{model_rel_path}"
         return metrics
+
+    def _resolve_model_path(self, model_url: str) -> str:
+        """Map stored model_url (which starts with /storage/) to absolute path under storage_root.
+
+        If model_url already absolute, return as is.
+        """
+        if model_url.startswith("/storage/"):
+            rel = model_url[len("/storage/") :]
+            return os.path.join(self._storage_root, rel)
+        if os.path.isabs(model_url):
+            return model_url
+        return os.path.join(self._storage_root, model_url)
