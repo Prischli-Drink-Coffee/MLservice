@@ -153,7 +153,13 @@ class TrainingService:
                 import numpy as np
                 import pandas as pd
                 from sklearn.linear_model import LinearRegression, LogisticRegression
-                from sklearn.metrics import accuracy_score, mean_squared_error, r2_score
+                from sklearn.metrics import (
+                    accuracy_score,
+                    mean_absolute_error,
+                    mean_squared_error,
+                    precision_recall_fscore_support,
+                    r2_score,
+                )
                 from sklearn.model_selection import train_test_split
 
                 df = pd.read_csv(csv_path)
@@ -193,9 +199,15 @@ class TrainingService:
                     model.fit(X_train, y_train)
                     y_pred = model.predict(X_test)
                     acc = accuracy_score(y_test, y_pred)
+                    prec, rec, f1, _ = precision_recall_fscore_support(
+                        y_test, y_pred, average="macro", zero_division=0
+                    )
                     metrics: dict[str, Any] = {
                         "task": task,
                         "accuracy": float(acc),
+                        "precision": float(prec),
+                        "recall": float(rec),
+                        "f1": float(f1),
                         "n_features": int(X.shape[1]),
                         "n_samples": int(df.shape[0]),
                     }
@@ -205,10 +217,12 @@ class TrainingService:
                     y_pred = model.predict(X_test)
                     r2 = r2_score(y_test, y_pred)
                     mse = mean_squared_error(y_test, y_pred)
+                    mae = mean_absolute_error(y_test, y_pred)
                     metrics = {
                         "task": task,
                         "r2": float(r2),
                         "mse": float(mse),
+                        "mae": float(mae),
                         "n_features": int(X.shape[1]),
                         "n_samples": int(df.shape[0]),
                     }
@@ -317,6 +331,10 @@ class TrainingService:
             metrics = {
                 "task": task,
                 "accuracy": float(acc),
+                # Fallback baseline cannot meaningfully compute precision/recall/f1 for majority classifier
+                "precision": None,
+                "recall": None,
+                "f1": None,
                 "n_features": int(n_features),
                 "n_samples": int(n_samples),
             }
@@ -326,10 +344,13 @@ class TrainingService:
             sse = sum((yv - mean_y) ** 2 for yv in y_as_float)
             mse = sse / n_samples if n_samples else 0.0
             # r2 vs mean predictor is 0.0 by definition for in-sample baseline
+            # MAE for mean predictor baseline equals avg absolute deviation
+            mae = sum(abs(yv - mean_y) for yv in y_as_float) / n_samples if n_samples else 0.0
             metrics = {
                 "task": task,
                 "r2": 0.0,
                 "mse": float(mse),
+                "mae": float(mae),
                 "n_features": int(n_features),
                 "n_samples": int(n_samples),
             }

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from fastapi import HTTPException, status
 
+from service.infrastructure.storage.abstract_file_storage import AbstractFileStorage
 from service.infrastructure.storage.local_file_storage import LocalFileStorage
 from service.models.db.db_models import UserFile
 from service.models.file_models import FileMetadataLogic
@@ -23,7 +24,7 @@ class FileSaverService:
         self,
         repository: FileRepository,
         folder_name: str,
-        file_storage: LocalFileStorage | None = None,
+        file_storage: AbstractFileStorage | None = None,
     ) -> None:
         self.storage = file_storage or LocalFileStorage()
         self.repository = repository

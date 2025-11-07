@@ -1,8 +1,10 @@
 import os
 from pathlib import Path
 
+from .abstract_file_storage import AbstractFileStorage
 
-class LocalFileStorage:
+
+class LocalFileStorage(AbstractFileStorage):
     """Простейшее файловое хранилище для пользовательских загрузок.
 
     Сохраняет файлы в базовую директорию STORAGE_ROOT (env) с ключами вида

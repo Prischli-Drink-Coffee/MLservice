@@ -272,9 +272,7 @@ class MetricsAggregate(BaseModel):
     classification_count: int | None = Field(
         None, description="Число классификационных запусков в выборке"
     )
-    regression_count: int | None = Field(
-        None, description="Число регрессионных запусков в выборке"
-    )
+    regression_count: int | None = Field(None, description="Число регрессионных запусков в выборке")
     avg_accuracy: float | None = Field(
         None, description="Средняя accuracy по классификации (если есть хотя бы один)"
     )
@@ -290,6 +288,16 @@ class MetricsSummaryResponse(BaseModel):
 
     aggregates: MetricsAggregate
     trends: list[MetricTrendPoint]
+
+
+class DatasetTTLResponse(BaseModel):
+    """Результат очистки просроченных датасетов."""
+
+    cutoff: datetime
+    limit: int
+    deleted: int
+    files_removed: int
+    files_missing: int
 
 
 class DatasetUploadResponse(BaseModel):

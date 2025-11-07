@@ -10,6 +10,7 @@ from service.presentation.dependencies.auth_checker import check_auth
 from service.presentation.routers.ml_api.schemas import (
     ArtifactDeleteResponse,
     DatasetResponse,
+    DatasetTTLResponse,
     DatasetUploadResponse,
     MetricsSummaryResponse,
     MetricTrendPoint,
@@ -342,4 +343,50 @@ async def get_metrics_summary(
     return MetricsSummaryResponse(
         aggregates=MetricsAggregate(**aggregates),
         trends=trends,
+    )
+
+
+@ml_router.delete("/datasets/expired", response_model=DatasetTTLResponse)
+async def cleanup_expired_datasets(
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    limit: int = Query(1000, ge=1, le=5000),
+    repo: TrainingRepository = Depends(get_training_repo),
+    saver: FileSaverService = Depends(get_file_saver),
+):
+    """Удалить просроченные датасеты и связанные training_runs по TTL.
+
+    TTL берётся из переменной окружения DATASET_TTL_DAYS (по умолчанию 30).
+    Удаляются записи из БД, затем физические файлы через активный storage backend.
+    """
+    import os
+    from datetime import datetime, timedelta, timezone
+
+    try:
+        ttl_days = int(os.getenv("DATASET_TTL_DAYS", "30"))
+    except Exception:
+        ttl_days = 30
+
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=ttl_days)
+
+    file_keys = await repo.cleanup_expired_datasets(cutoff=cutoff, limit=limit)
+
+    files_removed = 0
+    files_missing = 0
+    for key in file_keys:
+        try:
+            await saver.storage.delete_file(file_key=key)
+            files_removed += 1
+        except FileNotFoundError:
+            files_missing += 1
+        except Exception:
+            # non-fatal
+            files_missing += 1
+
+    return DatasetTTLResponse(
+        cutoff=cutoff,
+        limit=limit,
+        deleted=len(file_keys),
+        files_removed=files_removed,
+        files_missing=files_missing,
     )

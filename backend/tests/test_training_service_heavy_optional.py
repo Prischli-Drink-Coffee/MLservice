@@ -89,3 +89,9 @@ def test_heavy_training_joblib_artifact(tmp_path, monkeypatch):
     assert model_url and model_url.endswith('.joblib')
     rel = model_url.replace('/storage/', '')
     assert (tmp_path / rel).exists()
+
+    # New heavy metrics should be present depending on task (here, regression)
+    if metrics.get('task') == 'regression':
+        assert 'r2' in metrics and 'mse' in metrics and 'mae' in metrics
+    else:
+        assert 'accuracy' in metrics and 'precision' in metrics and 'recall' in metrics and 'f1' in metrics

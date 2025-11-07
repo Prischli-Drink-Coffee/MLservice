@@ -40,9 +40,31 @@ def build(config: Config):
         get(JobRepositoryName),
         get(ProfileServiceName),
     )
+    # Storage backend selection
+    try:
+        import os as _os
+
+        backend = _os.getenv("STORAGE_BACKEND", "local").strip().lower()
+        if backend == "minio":
+            from service.infrastructure.storage.minio_file_storage import MinioFileStorage
+
+            storage = MinioFileStorage()
+        else:
+            from service.infrastructure.storage.local_file_storage import LocalFileStorage
+
+            storage = LocalFileStorage()
+    except Exception as e:  # noqa: BLE001
+        logger.warning(
+            "Failed to initialize configured storage backend, falling back to local: %s", e
+        )
+        from service.infrastructure.storage.local_file_storage import LocalFileStorage
+
+        storage = LocalFileStorage()
+
     _CONTAINER[FileSaverServiceName] = FileSaverService(
         repository=get(FileRepositoryName),
         folder_name="uploads",
+        file_storage=storage,
     )
     # Training service (ML pipeline v1)
     _CONTAINER[TrainingServiceName] = TrainingService(

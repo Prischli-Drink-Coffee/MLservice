@@ -296,3 +296,40 @@ class TrainingRepository(BaseRepository):
             stmt = stmt.where(Dataset.mode == mode)
         result = await session.execute(stmt)
         return [(row[0], int(row[1])) for row in result.all()]
+
+    # --- Dataset TTL cleanup ---
+    @connection()
+    async def cleanup_expired_datasets(
+        self,
+        *,
+        cutoff,
+        limit: int = 1000,
+        session: AsyncSession | None = None,
+    ) -> list[str]:
+        """Delete datasets older than cutoff and their training runs.
+
+        Returns list of dataset file_keys (Dataset.name) for storage deletion.
+        """
+        # Select expired dataset IDs and file names
+        ds_stmt = (
+            select(Dataset.id, Dataset.name)
+            .where(Dataset.created_at < cutoff)
+            .order_by(Dataset.created_at.asc())
+            .limit(limit)
+        )
+        res = await session.execute(ds_stmt)
+        rows = res.fetchall()
+        if not rows:
+            return []
+        ids = [row[0] for row in rows]
+        file_keys = [row[1] for row in rows]
+
+        # Delete related training runs
+        from sqlalchemy import delete
+
+        del_runs = delete(TrainingRun).where(TrainingRun.dataset_id.in_(ids))
+        await session.execute(del_runs)
+        # Delete datasets themselves
+        del_ds = delete(Dataset).where(Dataset.id.in_(ids))
+        await session.execute(del_ds)
+        return file_keys
