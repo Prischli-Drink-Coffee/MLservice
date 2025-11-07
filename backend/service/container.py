@@ -111,14 +111,6 @@ JobServiceName = "JobService"
 ProfileServiceT = ProfileService
 ProfileServiceName = "ProfileService"
 
-MLServiceT = None  # placeholder
-MLServiceName = "MLService"
-
-StatsServiceT = None  # placeholder
-StatsServiceName = "StatsService"
-
-FileStorageServiceT = None  # placeholder до реализации
-FileStorageServiceName = "FileStorageService"
 
 FileSaverServiceT = FileSaverService
 FileSaverServiceName = "FileSaverService"
@@ -129,8 +121,6 @@ TrainingServiceName = "TrainingService"
 AuthRepositoryName = "AuthRepository"
 JobRepositoryName = "JobRepository"
 ProfileRepositoryName = "ProfileRepository"
-MLRepositoryName = "MLRepository"  # placeholder
-StatsRepositoryName = "StatsRepository"  # placeholder
 FileRepositoryName = "FileRepository"
 TrainingRepositoryName = "TrainingRepository"
 

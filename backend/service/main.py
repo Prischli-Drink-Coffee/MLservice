@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, tags=["Auth-API"])
     app.include_router(jobs_router, tags=["Jobs-API"])
     app.include_router(files_router, tags=["Files-API"])
-    # app.include_router(stats_router, tags=["Stats-API"])  # отключено
+    # Роутер статистики удалён как легаси (см. backend_audit.md #21)
     from service.presentation.routers.ml_api.ml_api import ml_router
 
     app.include_router(ml_router, tags=["ML-API"])  # минимальные эндпоинты

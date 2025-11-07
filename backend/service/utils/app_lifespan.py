@@ -84,14 +84,6 @@ async def lifespan(app: FastAPI):
             task_manager = container.get(container.BackgroundTaskManagerName)
             await task_manager.stop()
 
-            # ML service может отсутствовать — это нормально на текущем этапе
-            try:
-                ml_service = container.get(container.MLServiceName)
-                if hasattr(ml_service, "shutdown"):
-                    await ml_service.shutdown()
-            except Exception as exc:
-                logger.warning("Failed to shutdown ML service cleanly: %s", exc)
-
             logger.info("Closing database connections...")
             pg_connector = container.get(container.PgConnectorName)
             await pg_connector.close()

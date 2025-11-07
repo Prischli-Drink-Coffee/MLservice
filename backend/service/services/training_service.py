@@ -155,6 +155,7 @@ class TrainingService:
                 from sklearn.linear_model import LinearRegression, LogisticRegression
                 from sklearn.metrics import (
                     accuracy_score,
+                    confusion_matrix,
                     mean_absolute_error,
                     mean_squared_error,
                     precision_recall_fscore_support,
@@ -202,12 +203,14 @@ class TrainingService:
                     prec, rec, f1, _ = precision_recall_fscore_support(
                         y_test, y_pred, average="macro", zero_division=0
                     )
+                    cm = confusion_matrix(y_test, y_pred)
                     metrics: dict[str, Any] = {
                         "task": task,
                         "accuracy": float(acc),
                         "precision": float(prec),
                         "recall": float(rec),
                         "f1": float(f1),
+                        "confusion_matrix": cm.tolist(),
                         "n_features": int(X.shape[1]),
                         "n_samples": int(df.shape[0]),
                     }

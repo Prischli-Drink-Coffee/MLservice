@@ -15,6 +15,7 @@ from service.presentation.routers.ml_api.schemas import (
     MetricsSummaryResponse,
     MetricTrendPoint,
     ModelArtifactResponse,
+    PresignedUrlResponse,
     TrainingRunResponse,
 )
 from service.repositories.file_repository import FileRepository
@@ -263,6 +264,49 @@ async def upload_dataset(
         created_at=dataset.created_at,
         download_url=presigned,
     )
+
+
+@ml_router.get("/files/{file_id}/download-url", response_model=PresignedUrlResponse)
+async def get_file_download_url(
+    file_id: str,
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    expiry_sec: int = Query(3600, ge=1, le=86400),
+    saver: FileSaverService = Depends(get_file_saver),
+    file_repo: FileRepository = Depends(get_file_repo),
+):
+    """Получить ссылку для скачивания файла.
+
+    Если backend хранилища поддерживает presigned URLs (например, MinIO),
+    возвращается временная ссылка. Иначе — обычный `file_url`.
+    """
+    from uuid import UUID as _UUID
+
+    try:
+        fid = _UUID(file_id)
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Некорректный UUID")
+
+    user_file = await file_repo.fetch_user_file_by_id(profile.user_id, fid)
+    if not user_file:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
+
+    backend = None
+    url = None
+    try:
+        presigned = await saver.get_presigned_url_by_key(
+            file_key=user_file.file_name, expiry_sec=expiry_sec
+        )
+        if presigned:
+            url = presigned
+            backend = "minio"
+    except Exception:
+        url = None
+
+    if not url:
+        url = user_file.file_url
+        backend = backend or "local"
+
+    return PresignedUrlResponse(file_id=fid, url=url, expiry_sec=expiry_sec, backend=backend)
 
 
 @ml_router.get("/metrics/trends", response_model=list[MetricTrendPoint])
