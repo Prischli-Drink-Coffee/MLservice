@@ -58,3 +58,14 @@ repos:
               .*/static/.*|
               .*/node_modules/.*|
           )$
+
+  # Frontend linting (cross-platform: Python script works on Windows and Linux)
+  - repo: local
+    hooks:
+      - id: frontend-eslint
+        name: Frontend ESLint
+        entry: python scripts/lint-frontend.py
+        language: system
+        files: ^frontend/src/.*\.(js|jsx)$
+        pass_filenames: false
+        stages: [pre-commit]

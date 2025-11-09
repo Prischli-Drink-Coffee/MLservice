@@ -26,7 +26,7 @@ function AnimatedCounter({ value, duration = 1.5, decimals = 0 }) {
 
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
       const currentValue = easeOutQuart * targetValue;
-      
+
       setCount(decimals > 0 ? currentValue : Math.floor(currentValue));
 
       if (progress < 1) {
@@ -154,13 +154,13 @@ function MLStats() {
         // Extract best metrics from summary
         if (metricsRes.status === "fulfilled" && metricsRes.value) {
           const summary = metricsRes.value;
-          
+
           if (summary.aggregates) {
             // Best accuracy (classification)
             if (summary.aggregates.best_accuracy !== null && summary.aggregates.best_accuracy !== undefined) {
               newStats.bestAccuracy = (summary.aggregates.best_accuracy * 100) || 0;
             }
-            
+
             // Best R2 (regression)
             if (summary.aggregates.best_r2 !== null && summary.aggregates.best_r2 !== undefined) {
               newStats.bestR2 = (summary.aggregates.best_r2 * 100) || 0;
