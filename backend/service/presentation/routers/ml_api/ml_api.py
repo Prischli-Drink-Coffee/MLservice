@@ -119,9 +119,34 @@ async def list_datasets(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     limit: int = Query(20, ge=1, le=100),
     repo: TrainingRepository = Depends(get_training_repo),
+    saver: FileSaverService = Depends(get_file_saver),
+    file_repo: FileRepository = Depends(get_file_repo),
 ):
+    """Список датасетов пользователя с presigned URLs (если MinIO включён)."""
     items = await repo.list_datasets(profile.user_id, limit=limit)
-    return items
+
+    # Add presigned URLs if storage backend supports it
+    result = []
+    for dataset in items:
+        dataset_dict = dataset.model_dump()
+
+        # Try to get presigned URL for MinIO backend
+        try:
+            # Get file metadata to retrieve file_name (storage key)
+            user_file = await file_repo.fetch_user_file_by_id(profile.user_id, dataset.id)
+            if user_file:
+                presigned_url = await saver.get_presigned_url_by_key(
+                    file_key=user_file.file_name, expiry_sec=3600  # 1 hour default
+                )
+                if presigned_url:
+                    dataset_dict["download_url"] = presigned_url
+        except Exception:
+            # If presigned URL generation fails, just skip it
+            pass
+
+        result.append(DatasetResponse(**dataset_dict))
+
+    return result
 
 
 @ml_router.post("/datasets/upload", response_model=DatasetUploadResponse, status_code=201)

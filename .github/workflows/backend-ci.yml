@@ -20,7 +20,7 @@ jobs:
         run: pip install uv
       - name: Install backend deps (no heavy training flag)
         working-directory: backend
-        run: uv sync --frozen
+        run: uv sync --frozen --python 3.13
       - name: Run tests (fallback training)
         working-directory: backend
         env:
@@ -35,12 +35,12 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Install uv
         run: pip install uv
       - name: Install backend deps
         working-directory: backend
-        run: uv sync --frozen
+        run: uv sync --frozen --python 3.13
       - name: Run tests (heavy training enabled)
         working-directory: backend
         env:

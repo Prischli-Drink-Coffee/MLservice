@@ -1,5 +1,5 @@
 {
-  "name": "telerag-frontend",
+  "name": "mlservice-frontend",
   "homepage": ".",
   "version": "0.1.0",
   "private": true,
@@ -16,10 +16,8 @@
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "@xyflow/react": "^12.0.0",
     "axios": "^1.6.2",
     "caniuse-lite": "^1.0.30001746",
-    "dagre": "^0.8.5",
     "framer-motion": "^10.16.4",
     "js-cookie": "^3.0.5",
     "react": "^18.2.0",
@@ -30,7 +28,8 @@
     "react-scripts": "^5.0.1",
     "react-select": "^5.8.0",
     "react-select-async-paginate": "^0.7.3",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "recharts": "^2.10.3"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -64,7 +63,7 @@
     "fastapi",
     "telegram"
   ],
-  "author": "",
+  "author": "dfvolkhin@edu.hse.ru",
   "license": "MIT",
   "devDependencies": {
     "eslint-plugin-import": "^2.32.0",

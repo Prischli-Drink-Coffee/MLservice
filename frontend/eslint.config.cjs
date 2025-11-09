@@ -8,7 +8,10 @@ const globals = require("globals");
 
 module.exports = [
   {
-    ignores: ["build/**", "node_modules/**"],
+    ignores: [
+      "build/**",
+      "node_modules/**",
+    ],
   },
   {
     files: ["src/**/*.{js,jsx}"],

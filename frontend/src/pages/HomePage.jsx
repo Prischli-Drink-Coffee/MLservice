@@ -4,9 +4,11 @@ import { useAuth } from "../context/AuthContext";
 import useHealth from "../hooks/useHealth";
 import HeroSection from "../components/home/HeroSection";
 import PlatformInfoCard from "../components/home/PlatformInfoCard";
+import MLStats from "../components/home/MLStats";
 import BenefitsSection from "../components/home/BenefitsSection";
 import FeatureSlider from "../components/home/FeatureSlider";
 import SectionDivider from "../components/common/SectionDivider";
+import GlowingCard from "../components/common/GlowingCard";
 import { colors } from "../theme/tokens";
 
 /**
@@ -39,6 +41,17 @@ function HomePage() {
       <Container maxW="1400px" px={{ base: 4, md: 6, lg: 8 }}>
         <SectionDivider variant="electric" />
       </Container>
+
+      {/* ML Stats Section with GlowingCard */}
+      {isAuthenticated && (
+        <Box py={{ base: 12, md: 14 }} px={{ base: 4, md: 6, lg: 8 }}>
+          <Container maxW="1400px" px={0}>
+            <GlowingCard intensity="medium">
+              <MLStats />
+            </GlowingCard>
+          </Container>
+        </Box>
+      )}
 
       {/* Benefits Section */}
       <Box

@@ -19,7 +19,6 @@ import SectionDivider from "../components/common/SectionDivider";
 
 const MotionBox = motion(Box);
 const MotionVStack = motion(VStack);
-const MotionHStack = motion(HStack);
 
 /**
  * GradientParticles - Animated gradient particles background

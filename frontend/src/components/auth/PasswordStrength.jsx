@@ -31,7 +31,6 @@ const PasswordStrength = ({ password }) => {
 
   const passedChecks = checks.filter((check) => check.test(password));
   const strengthPercentage = (passedChecks.length / checks.length) * 100;
-  const isStrong = passedChecks.length === checks.length;
 
   // Цвет прогресса в зависимости от силы
   const getProgressColor = () => {

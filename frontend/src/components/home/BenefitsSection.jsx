@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, SimpleGrid, Stack, HStack, Icon } from "@chakra-ui/react";
+import { Box, SimpleGrid, Stack, Icon } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { Subtitle, Body, Footnote } from "../common/Typography";
 import { colors, borderRadius } from "../../theme/tokens";

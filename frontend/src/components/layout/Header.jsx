@@ -21,9 +21,10 @@ import Logo from "../common/assets/Logo";
 
 const navItems = [
   { label: "Главная", to: "/" },
-  { label: "Сборка", to: "/graphs" },
-  { label: "Библиотека", to: "/nodes" },
-  { label: "Бот", to: "/telegram" },
+  { label: "Датасеты", to: "/datasets" },
+  { label: "Обучение", to: "/training" },
+  { label: "Артефакты", to: "/artifacts" },
+  { label: "Метрики", to: "/metrics" },
   { label: "О нас", to: "/info" },
 ];
 
@@ -57,7 +58,7 @@ function Header() {
             color={linkActiveColor}
             display={{ base: "none", sm: "block" }}
           >
-            TeleRAG Console
+            ML Console
           </Text>
         </HStack>
 

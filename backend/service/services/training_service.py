@@ -81,7 +81,9 @@ class TrainingService:
         metrics: dict[str, Any] = await self._train_and_export_model(data_path)
 
         # 5) Persist a model artifact file (already created by _train_and_export_model)
-        model_url = metrics.pop("model_url")
+        model_url = metrics.get("model_url")
+        if not model_url:
+            raise ValueError("Training completed but no model_url was generated")
 
         # 6) Save artifact and mark run done
         await self._training_repo.create_model_artifact(
