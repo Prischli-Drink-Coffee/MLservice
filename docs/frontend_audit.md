@@ -122,32 +122,34 @@
 
 ## 9) Поэтапный план работ (MVP → улучшения)
 
-Этап 1 (MVP):
+**Этап 1 (MVP):**
 
-1. [x] Добавить новые API-модули (`datasets.js`, `training.js`, `artifacts.js`, `metrics.js`, `files.js`) и экспорт из `API/index.js`.
-2. [x] Обновить `client.js`: убрать `/api/stats/v1/platform` из `PUBLIC_ENDPOINTS`.
-3. [x] Создать каркас страниц: `DatasetsPage`, `TrainingRunsPage`, `ArtifactsPage`, `MetricsPage`.
-4. [x] Обновить роутинг и меню — убрать Graph/Telegram.
+- [x] Добавить новые API-модули (`datasets.js`, `training.js`, `artifacts.js`, `metrics.js`, `files.js`) и экспорт из `API/index.js`.
+- [x] Обновить `client.js`: убрать `/api/stats/v1/platform` из `PUBLIC_ENDPOINTS`.
+- [x] Создать каркас страниц: `DatasetsPage`, `TrainingRunsPage`, `ArtifactsPage`, `MetricsPage`.
+- [x] Обновить роутинг и меню — убрать Graph/Telegram.
 
-Этап 2 (Функциональность):
+**Этап 2 (Функциональность):**
 
-5. [x] Загрузка CSV, список датасетов, версия/дата и `download_url`.
-6. [x] TrainingRuns: таблица запусков и метрики.
-7. [x] Artifacts: таблица, удаление, ссылка на модель.
-8. [x] Metrics: карточки сводки и тренд (таблица).
+- [x] Загрузка CSV, список датасетов, версия/дата и `download_url`.
+- [x] TrainingRuns: таблица запусков и метрики.
+- [x] Artifacts: таблица, удаление, ссылка на модель.
+- [x] Metrics: карточки сводки и тренд (таблица).
 
-Этап 3 (UX/графики/администрирование):
+**Этап 3 (UX/графики/администрирование):**
 
-9. [x] Добавить красивые графики (Recharts) для трендов — реализованы LineChart по accuracy и r2.
-10. [x] TTL cleanup (кнопка для администратора) с отчётом — компонент `TTLCleanupCard` за флагом `REACT_APP_ENABLE_ADMIN_UI`.
-11. [x] Перейти на Browser History и добавить nginx fallback — переключено на `createBrowserRouter`, SPA fallback присутствует в `frontend/nginx.conf` (`try_files $uri /index.html`).
+- [x] Добавить красивые графики (Recharts) для трендов — реализованы LineChart по accuracy и r2.
+- [x] TTL cleanup (кнопка для администратора) с отчётом — компонент `TTLCleanupCard` за флагом `REACT_APP_ENABLE_ADMIN_UI`.
+- [x] Перейти на Browser History и добавить nginx fallback — переключено на `createBrowserRouter`, SPA fallback присутствует в `frontend/nginx.conf` (`try_files $uri /index.html`).
 
-Этап 4 (зачистка):
+**Этап 4 (зачистка):**
 
-12. [ ] Полностью удалить легаси Graph/Telegram страницы и API-модули.
-13. [ ] Удалить `API/services/*` и cookie-хелперы Bearer.
+- [x] Полностью удалить легаси Graph/Telegram страницы и API-модули — удалены физически.
+- [x] Удалить `API/services/*` и cookie-хелперы Bearer — удалены.
 
-Примечание: временно легаси файлы (Graph/Telegram) физически не удалены, но исключены из lint посредством `ignores` в `eslint.config.cjs` (flat config). Это предотвращает шум до полной зачистки.
+**Этап 5 (главная страница):**
+
+- [x] Добавить ML статистику на главную — создан компонент `MLStats`, отображает количество датасетов, запусков, артефактов и лучшие метрики (accuracy, R²) с анимированными счётчиками.
 
 ---
 

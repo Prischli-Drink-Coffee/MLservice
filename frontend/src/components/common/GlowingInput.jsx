@@ -14,7 +14,11 @@ const MotionBox = motion(Box);
 
 export default function GlowingInput({
   placeholder = "Опишите, что хотите автоматизировать",
+  value,
+  onChange,
   onSubmit,
+  showSubmitButton = true,
+  leftIcon = AttachmentIcon,
 }) {
   const [gradientPos, setGradientPos] = useState({ x: 50, y: 50 });
   const controls = useAnimation();
@@ -91,16 +95,20 @@ export default function GlowingInput({
       }}
     >
       <InputGroup position="relative">
-        <InputLeftElement pointerEvents="none">
-          <AttachmentIcon color={iconColor} boxSize={5} />
-        </InputLeftElement>
+        {leftIcon && (
+          <InputLeftElement pointerEvents="none">
+            {React.createElement(leftIcon, { color: iconColor, boxSize: 5 })}
+          </InputLeftElement>
+        )}
         <Input
           placeholder={placeholder}
+          value={value}
+          onChange={onChange}
           bg={inputBg}
           borderRadius="xl"
           py={{ base: 6, md: 7 }}
-          pl="48px"
-          pr="64px"
+          pl={leftIcon ? "48px" : "16px"}
+          pr={showSubmitButton ? "64px" : "16px"}
           fontSize={{ base: "md", md: "lg" }}
           color="text.primary"
           _placeholder={{ color: placeholderColor }}
@@ -108,22 +116,24 @@ export default function GlowingInput({
           borderColor="borderSubtle"
           boxShadow="0 2px 12px rgba(15, 23, 42, 0.45)"
         />
-        <IconButton
-          aria-label="Запустить"
-          icon={<ArrowForwardIcon />}
-          position="absolute"
-          right={{ base: 1, md: 2 }}
-          top="50%"
-          transform="translateY(-50%)"
-          size="lg"
-          borderRadius="full"
-          bg="accent"
-          color="white"
-          boxShadow="0 0 16px rgba(47, 116, 255, 0.55)"
-          _hover={{ bg: "accent", filter: "brightness(1.1)" }}
-          _active={{ bg: "accent", filter: "brightness(0.95)" }}
-          onClick={handleSubmit}
-        />
+        {showSubmitButton && (
+          <IconButton
+            aria-label="Запустить"
+            icon={<ArrowForwardIcon />}
+            position="absolute"
+            right={{ base: 1, md: 2 }}
+            top="50%"
+            transform="translateY(-50%)"
+            size="lg"
+            borderRadius="full"
+            bg="accent"
+            color="white"
+            boxShadow="0 0 16px rgba(47, 116, 255, 0.55)"
+            _hover={{ bg: "accent", filter: "brightness(1.1)" }}
+            _active={{ bg: "accent", filter: "brightness(0.95)" }}
+            onClick={handleSubmit}
+          />
+        )}
       </InputGroup>
     </MotionBox>
   );

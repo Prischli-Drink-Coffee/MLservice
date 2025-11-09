@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { Box, Divider, HStack, VStack } from "@chakra-ui/react";
 import { motion } from "framer-motion";
-import { Subtitle, Body, Footnote } from "../common/Typography";
-// import LiveStats from "./LiveStats";
+import { Subtitle, Footnote } from "../common/Typography";
+import MLStats from "./MLStats";
 import StatusBadge from "../common/StatusBadge";
-import { colors, spacing } from "../../theme/tokens";
+import { colors } from "../../theme/tokens";
 
 const MotionBox = motion(Box);
 
@@ -19,12 +19,6 @@ function PlatformInfoCard({ isAuthenticated, health }) {
   const accent = "#2f74ff";
   const glowSecondary = "#8b5cf6";
   const glowTertiary = "#1dd1a1";
-
-  const quickLinks = [
-    { label: "Telegram", path: "/telegram" },
-    { label: "Узлы", path: "/nodes" },
-    { label: "Playground", path: "/playground" },
-  ];
 
   const gradientCss = useMemo(
     () =>
@@ -80,7 +74,7 @@ function PlatformInfoCard({ isAuthenticated, health }) {
           <VStack align="stretch" spacing={4} h="full">
             {/* Title */}
             <Subtitle variant="medium" fontSize={{ base: "18px", md: "22px" }}>
-              Статус платформы
+              Статистика ML платформы
             </Subtitle>
 
             <Divider borderColor={colors.border.default} opacity={0.5} />
@@ -93,13 +87,13 @@ function PlatformInfoCard({ isAuthenticated, health }) {
               <StatusBadge ok={health?.ok} />
             </HStack>
 
-            {/* Дополнительно: место для будущей ML-статистики */}
-            {/* <Divider borderColor={colors.border.default} opacity={0.5} />
+            {/* ML Statistics */}
+            <Divider borderColor={colors.border.default} opacity={0.5} />
             <VStack align="stretch" spacing={2}>
               <Box w="full" maxW={{ base: "full", lg: "900px" }}>
-                <LiveStats />
+                <MLStats />
               </Box>
-            </VStack> */}
+            </VStack>
           </VStack>
         </Box>
       </MotionBox>

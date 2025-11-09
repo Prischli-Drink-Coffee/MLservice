@@ -9,7 +9,6 @@ const SignUpPage = lazy(() => import("./pages/SignUpPage"));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 const InfoPage = lazy(() => import("./pages/InfoPage"));
 const HomePage = lazy(() => import("./pages/HomePage"));
-// ML pages
 const DatasetsPage = lazy(() => import("./pages/DatasetsPage"));
 const TrainingRunsPage = lazy(() => import("./pages/TrainingRunsPage"));
 const ArtifactsPage = lazy(() => import("./pages/ArtifactsPage"));

@@ -8,5 +8,4 @@ export { default as PublicLayout } from "./layout/PublicLayout";
 export { default as ConfirmDialog } from "./common/ConfirmDialog";
 export { default as EmptyState } from "./common/EmptyState";
 export { default as ErrorAlert } from "./common/ErrorAlert";
-export { default as JsonEditor } from "./common/JsonEditor";
 export { default as LoadingState } from "./common/LoadingState";

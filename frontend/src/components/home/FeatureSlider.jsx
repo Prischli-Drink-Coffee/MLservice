@@ -5,14 +5,10 @@ import {
   Button,
   Flex,
   HStack,
-  IconButton,
   Stack,
-  Text,
-  useBreakpointValue,
 } from "@chakra-ui/react";
 import { motion } from "framer-motion";
-import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
-import { colors, borderRadius, spacing } from "../../theme/tokens";
+import { colors, borderRadius } from "../../theme/tokens";
 import { Subtitle, Body } from "../common/Typography";
 import PrimaryButton from "../common/PrimaryButton";
 
@@ -116,7 +112,6 @@ export default function FeatureSlider() {
   const [isPaused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
-  const isMobile = useBreakpointValue({ base: true, md: false });
 
   // Минимальное расстояние свайпа (в пикселях)
   const minSwipeDistance = 50;

@@ -6,7 +6,7 @@ import { Title, Body, Footnote } from "../common/Typography";
 import PrimaryButton from "../common/PrimaryButton";
 import SecondaryButton from "../common/SecondaryButton";
 import Logo from "../common/assets/Logo";
-import { colors, spacing, borderRadius } from "../../theme/tokens";
+import { colors, borderRadius } from "../../theme/tokens";
 
 const MotionBox = motion(Box);
 const MotionBadge = motion(Badge);
