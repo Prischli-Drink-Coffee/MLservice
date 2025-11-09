@@ -92,6 +92,21 @@ class CorsConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="CORS_")
 
 
+class MinioConfig(BaseModel):
+    """MinIO/S3 storage configuration"""
+
+    endpoint: str = "minio:9000"
+    access_key: str = "minioadmin"
+    secret_key: str = "minioadmin"
+    bucket: str = "mlops-files"
+    region: str = "us-east-1"
+    secure: bool = False
+    public_endpoint: str = "http://localhost:9000"
+    retry_attempts: int = 3
+    retry_backoff: float = 0.5
+    presign_expiry: int = 3600  # 1 hour default
+
+
 class Config(BaseSettings):
     service_name: str = "service-api"
 
@@ -102,6 +117,10 @@ class Config(BaseSettings):
 
     ml: MLConfig = Field(default_factory=MLConfig)
     cors: CorsConfig = Field(default_factory=CorsConfig)
+    minio: MinioConfig = Field(default_factory=MinioConfig)
+
+    # Storage backend selection
+    storage_backend: str = "local"  # "local" or "minio"
 
     # Настройки загрузки файлов (используются files API)
     allowed_extensions: tuple[str, ...] = (".png", ".jpg", ".jpeg", ".csv")

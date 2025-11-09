@@ -41,25 +41,26 @@ def build(config: Config):
         get(ProfileServiceName),
     )
     # Storage backend selection
+    backend = config.storage_backend.strip().lower()
     try:
-        import os as _os
-
-        backend = _os.getenv("STORAGE_BACKEND", "local").strip().lower()
         if backend == "minio":
             from service.infrastructure.storage.minio_file_storage import MinioFileStorage
 
-            storage = MinioFileStorage()
+            storage = MinioFileStorage(config.minio)
+            logger.info("Initialized MinIO storage backend")
         else:
             from service.infrastructure.storage.local_file_storage import LocalFileStorage
 
             storage = LocalFileStorage()
+            logger.info("Initialized Local storage backend")
     except Exception as e:  # noqa: BLE001
         logger.warning(
-            "Failed to initialize configured storage backend, falling back to local: %s", e
+            "Failed to initialize %s storage backend, falling back to local: %s", backend, e
         )
         from service.infrastructure.storage.local_file_storage import LocalFileStorage
 
         storage = LocalFileStorage()
+        logger.info("Fallback: Using Local storage backend")
 
     _CONTAINER[FileSaverServiceName] = FileSaverService(
         repository=get(FileRepositoryName),

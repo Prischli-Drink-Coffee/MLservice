@@ -1,42 +1,60 @@
-import os
+import logging
+
+from service.settings import MinioConfig
 
 from .abstract_file_storage import AbstractFileStorage
 
+logger = logging.getLogger(__name__)
+
 
 class MinioFileStorage(AbstractFileStorage):
-    """S3/MinIO backend. Requires `minio` package if actually used.
+    """S3/MinIO storage backend with presigned URLs support.
 
-    Env vars:
-      - MINIO_ENDPOINT (host:port)
-      - MINIO_BUCKET
-      - MINIO_ACCESS_KEY
-      - MINIO_SECRET_KEY
-      - MINIO_SECURE ("1"/"true" for TLS)
-      - STORAGE_PREFIX (optional key prefix)
+    Uses MinioConfig from settings for configuration.
+    Supports:
+    - File upload/download/delete
+    - Presigned URLs for secure direct access
+    - Automatic bucket creation
+    - Retry logic with exponential backoff
     """
 
-    def __init__(self) -> None:
+    def __init__(self, config: MinioConfig) -> None:
         try:
             from minio import Minio  # type: ignore
-        except Exception as e:  # noqa: BLE001
+        except ImportError as e:
             raise RuntimeError(
                 "Minio client not installed. Please `pip install minio` to use MinioFileStorage"
             ) from e
 
-        endpoint = os.getenv("MINIO_ENDPOINT")
-        bucket = os.getenv("MINIO_BUCKET")
-        access = os.getenv("MINIO_ACCESS_KEY")
-        secret = os.getenv("MINIO_SECRET_KEY")
-        secure = os.getenv("MINIO_SECURE", "0").strip().lower() in {"1", "true", "yes", "on"}
-        if not all([endpoint, bucket, access, secret]):
-            raise RuntimeError("Missing MinIO configuration envs")
+        self.config = config
+        self._bucket = config.bucket
+        self._retry_attempts = config.retry_attempts
+        self._retry_backoff = config.retry_backoff
+        self._presign_expiry = config.presign_expiry
 
-        self._bucket = bucket  # type: ignore[arg-type]
-        self._prefix = os.getenv("STORAGE_PREFIX", "")
-        self._client = Minio(endpoint, access_key=access, secret_key=secret, secure=secure)
+        # Initialize MinIO client
+        self._client = Minio(
+            endpoint=config.endpoint,
+            access_key=config.access_key,
+            secret_key=config.secret_key,
+            secure=config.secure,
+            region=config.region,
+        )
+
         # Ensure bucket exists (idempotent)
-        if not self._client.bucket_exists(self._bucket):
-            self._client.make_bucket(self._bucket)
+        self._ensure_bucket_exists()
+
+    def _ensure_bucket_exists(self) -> None:
+        """Create bucket if it doesn't exist"""
+        try:
+            if not self._client.bucket_exists(self._bucket):
+                self._client.make_bucket(self._bucket, location=self.config.region)
+                logger.info(f"Created MinIO bucket: {self._bucket}")
+            else:
+                logger.debug(f"MinIO bucket exists: {self._bucket}")
+        except Exception as e:
+            logger.error(f"Failed to ensure bucket exists: {e}")
+            raise RuntimeError(f"Failed to create/verify MinIO bucket {self._bucket}") from e
 
     def build_file_path(self, folder: str, mode: str, file_name: str) -> str:
         key = f"{folder}/{mode}/{file_name}"
@@ -45,24 +63,34 @@ class MinioFileStorage(AbstractFileStorage):
         return key
 
     async def upload_file(self, *, file_key: str, file_data: bytes) -> str:
-        # Use in-memory bytes upload with simple retries
+        """Upload file to MinIO with retry logic"""
         import asyncio
         from io import BytesIO
 
-        attempts = int(os.getenv("MINIO_RETRY_ATTEMPTS", "3"))
-        backoff_base = float(os.getenv("MINIO_RETRY_BACKOFF", "0.5"))
         last_exc: Exception | None = None
-        for i in range(max(1, attempts)):
+        for i in range(max(1, self._retry_attempts)):
             try:
                 data = BytesIO(file_data)
                 length = len(file_data)
-                self._client.put_object(self._bucket, file_key, data, length)
+                result = self._client.put_object(
+                    bucket_name=self._bucket,
+                    object_name=file_key,
+                    data=data,
+                    length=length,
+                )
+                logger.info(
+                    f"Uploaded file to MinIO: {file_key} (etag: {result.etag}, size: {length} bytes)"
+                )
                 return f"s3://{self._bucket}/{file_key}"
             except Exception as e:  # noqa: BLE001
                 last_exc = e
-                if i < attempts - 1:
-                    await asyncio.sleep(backoff_base * (2**i))
+                logger.warning(f"MinIO upload attempt {i + 1}/{self._retry_attempts} failed: {e}")
+                if i < self._retry_attempts - 1:
+                    await asyncio.sleep(self._retry_backoff * (2**i))
                 else:
+                    logger.error(
+                        f"Failed to upload file {file_key} after {self._retry_attempts} attempts"
+                    )
                     raise
 
         # Should not reach here
@@ -70,31 +98,80 @@ class MinioFileStorage(AbstractFileStorage):
             raise last_exc
         return f"s3://{self._bucket}/{file_key}"
 
-    async def delete_file(self, *, file_key: str) -> None:  # pragma: no cover - simple pass-through
+    async def delete_file(self, *, file_key: str) -> None:
+        """Delete file from MinIO with retry logic"""
         import asyncio
 
-        attempts = int(os.getenv("MINIO_RETRY_ATTEMPTS", "3"))
-        backoff_base = float(os.getenv("MINIO_RETRY_BACKOFF", "0.5"))
-        for i in range(max(1, attempts)):
+        for i in range(max(1, self._retry_attempts)):
             try:
                 self._client.remove_object(self._bucket, file_key)
+                logger.info(f"Deleted file from MinIO: {file_key}")
                 return
-            except Exception:
-                if i < attempts - 1:
-                    await asyncio.sleep(backoff_base * (2**i))
+            except Exception as e:
+                logger.warning(f"MinIO delete attempt {i + 1}/{self._retry_attempts} failed: {e}")
+                if i < self._retry_attempts - 1:
+                    await asyncio.sleep(self._retry_backoff * (2**i))
                 else:
                     # Non-fatal for cleanup flows
+                    logger.error(f"Failed to delete file {file_key}, but continuing")
                     return
 
-    async def get_presigned_url(self, *, file_key: str, expiry_sec: int = 3600) -> str:
+    async def get_presigned_url(self, *, file_key: str, expiry_sec: int | None = None) -> str:
+        """Generate presigned URL for direct file download"""
         from datetime import timedelta
 
-        # minio client returns a temporary HTTP URL
+        expiry = expiry_sec if expiry_sec is not None else self._presign_expiry
+
         try:
             url = self._client.presigned_get_object(
-                self._bucket, file_key, expires=timedelta(seconds=max(1, int(expiry_sec)))
+                bucket_name=self._bucket,
+                object_name=file_key,
+                expires=timedelta(seconds=max(1, int(expiry))),
             )
+            logger.debug(f"Generated presigned URL for {file_key} (expires in {expiry}s)")
             return url
-        except Exception:  # noqa: BLE001
+        except Exception as e:
+            logger.error(f"Failed to generate presigned URL for {file_key}: {e}")
             # Fallback to s3:// style reference if presign fails
             return f"s3://{self._bucket}/{file_key}"
+
+    async def get_presigned_upload_url(
+        self, *, file_key: str, expiry_sec: int | None = None
+    ) -> str:
+        """Generate presigned URL for direct file upload (future use)"""
+        from datetime import timedelta
+
+        expiry = expiry_sec if expiry_sec is not None else self._presign_expiry
+
+        try:
+            url = self._client.presigned_put_object(
+                bucket_name=self._bucket,
+                object_name=file_key,
+                expires=timedelta(seconds=max(1, int(expiry))),
+            )
+            logger.debug(f"Generated presigned upload URL for {file_key} (expires in {expiry}s)")
+            return url
+        except Exception as e:
+            logger.error(f"Failed to generate presigned upload URL for {file_key}: {e}")
+            raise
+
+    def file_exists(self, file_key: str) -> bool:
+        """Check if file exists in MinIO"""
+        try:
+            self._client.stat_object(self._bucket, file_key)
+            return True
+        except Exception:
+            return False
+
+    async def get_file(self, file_key: str) -> bytes:
+        """Download file from MinIO"""
+        try:
+            response = self._client.get_object(self._bucket, file_key)
+            data = response.read()
+            response.close()
+            response.release_conn()
+            logger.debug(f"Downloaded file from MinIO: {file_key} ({len(data)} bytes)")
+            return data
+        except Exception as e:
+            logger.error(f"Failed to download file {file_key}: {e}")
+            raise

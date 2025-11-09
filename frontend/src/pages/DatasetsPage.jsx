@@ -3,7 +3,7 @@ import { Stack, useToast, Button, HStack, Input, Text, SimpleGrid, Box } from "@
 import { SearchIcon } from "@chakra-ui/icons";
 import PageHeader from "../components/common/PageHeader";
 import Card from "../components/common/Card";
-import { listDatasets, uploadDataset } from "../API";
+import { listDatasets, uploadDataset, getFileDownloadUrl } from "../API";
 import { ErrorAlert, LoadingState, EmptyState } from "../components";
 import TTLCleanupCard from "../components/common/TTLCleanupCard";
 import GlowingInput from "../components/common/GlowingInput";
@@ -54,6 +54,34 @@ function DatasetsPage() {
     }
   };
 
+  const handleDownload = async (dataset) => {
+    try {
+      // If presigned URL is already in dataset, use it directly
+      if (dataset.download_url) {
+        window.open(dataset.download_url, '_blank');
+        return;
+      }
+
+      // Otherwise, request presigned URL from API
+      const { url } = await getFileDownloadUrl(dataset.id);
+      window.open(url, '_blank');
+
+      toast({
+        title: 'Скачивание началось',
+        description: `Загружается ${dataset.name}`,
+        status: 'success',
+        duration: 3000,
+      });
+    } catch (e) {
+      toast({
+        title: 'Ошибка скачивания',
+        description: e.response?.data?.detail || 'Не удалось получить ссылку для скачивания',
+        status: 'error',
+        duration: 5000,
+      });
+    }
+  };
+
   // Фильтруем датасеты по поисковому запросу
   const filteredDatasets = useMemo(() => {
     if (!searchQuery.trim()) return datasets;
@@ -83,9 +111,13 @@ function DatasetsPage() {
               <Text fontWeight="semibold">Версия v{ds.version}</Text>
               <Text fontSize="sm" color="text.muted">{new Date(ds.created_at).toLocaleString()}</Text>
               <Text fontSize="sm" wordBreak="break-all">{ds.name}</Text>
-              {ds.download_url && (
-                <Button as="a" href={ds.download_url} size="sm" target="_blank" rel="noopener noreferrer" variant="outline">Скачать</Button>
-              )}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleDownload(ds)}
+              >
+                Скачать
+              </Button>
             </Stack>
           </Card>
         ))}

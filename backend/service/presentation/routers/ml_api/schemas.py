@@ -16,6 +16,7 @@ class DatasetResponse(BaseModel):
     file_url: str
     version: int
     created_at: datetime
+    download_url: str | None = None  # Presigned URL if MinIO backend is used
 
     model_config = ConfigDict(from_attributes=True)
 
