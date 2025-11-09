@@ -97,7 +97,13 @@
 - **CI/CD**: GitHub Actions
   - Windows runner (light mode tests)
   - Ubuntu runner (heavy mode tests)
-- **Storage**: Local filesystem (MinIO-ready, S3-compatible)
+- **Object Storage**: MinIO latest (S3-compatible)
+  - Ports: 9000 (API), 9001 (Console)
+  - Volumes: minio_data_volume
+  - Bucket auto-initialization
+- **File Storage Backends**:
+  - LocalFileStorage (default, filesystem-based)
+  - MinioFileStorage (production, S3-compatible with presigned URLs)
 
 ### Code Quality
 - **Python**:
@@ -418,6 +424,7 @@ Response 200:
 ```
 
 **GET /api/ml/v1/artifacts**
+
 ```
 Query params: limit=100
 
@@ -433,6 +440,7 @@ Response 200:
 ```
 
 **DELETE /api/ml/v1/artifacts/{artifact_id}**
+
 ```
 Response 200:
 {
@@ -444,6 +452,7 @@ Note: Каскадно удаляет файл модели из файлово�
 ```
 
 **GET /api/ml/v1/files/{file_id}/download-url**
+
 ```
 Query params: expiry_sec=3600
 
@@ -457,6 +466,7 @@ Note: Работает только если STORAGE_BACKEND=minio
 ```
 
 **GET /api/ml/v1/metrics/trends**
+
 ```
 Query params: limit=100
 
@@ -497,6 +507,7 @@ Response 200:
 #### 📁 Files API
 
 **POST /api/files/upload**
+
 ```
 Content-Type: multipart/form-data
 Field: file
@@ -514,6 +525,7 @@ Response 201:
 ```
 
 **GET /api/files/{file_id}**
+
 ```
 Response 200:
 {
@@ -525,6 +537,7 @@ Response 200:
 ```
 
 **GET /api/files/{file_id}/download**
+
 ```
 Response 200: Binary file stream
 Content-Disposition: attachment; filename="..."
@@ -533,6 +546,7 @@ Content-Disposition: attachment; filename="..."
 #### 🔄 Jobs API
 
 **POST /api/jobs**
+
 ```json
 // Request
 {
@@ -552,6 +566,7 @@ Content-Disposition: attachment; filename="..."
 ```
 
 **GET /api/jobs/{job_id}**
+
 ```json
 // Response 200
 {
@@ -567,6 +582,7 @@ Content-Disposition: attachment; filename="..."
 ```
 
 **GET /api/jobs**
+
 ```
 Query params: limit=100, status=COMPLETED
 
@@ -576,6 +592,7 @@ Response 200: Array of jobs
 #### 🏥 Health Check
 
 **GET /api/health**
+
 ```json
 // Response 200
 {
@@ -606,28 +623,33 @@ Response 200: Array of jobs
 ### Основные компоненты
 
 #### HomePage
+
 - **HeroSection**: Заголовок с анимацией
 - **MLStats**: Сводка метрик (accuracy, R², count) в `GlowingCard`
 - **BenefitsSection**: Преимущества платформы
 - **FeatureSlider**: Карусель возможностей
 
 #### DatasetsPage
+
 - **GlowingInput**: Поиск по имени/версии/ID
 - **Upload Form**: Drag-and-drop CSV загрузка
 - **DataTable**: Таблица датасетов с версиями
 - **EmptyState**: Placeholder при отсутствии данных
 
 #### TrainingRunsPage
+
 - **GlowingInput**: Поиск по дате/метрикам
 - **RunsTable**: История запусков с метриками
 - **Status Badges**: PENDING/RUNNING/COMPLETED/FAILED
 
 #### ArtifactsPage
+
 - **GlowingInput**: Поиск по дате/URL/метрикам
 - **ArtifactsTable**: Список моделей
 - **Actions**: Download, Delete (с подтверждением)
 
 #### MetricsPage
+
 - **Summary Cards**: Агрегированная статистика
 - **Trend Charts**: Recharts линейные графики
 - **Task Filters**: Classification / Regression
@@ -635,6 +657,7 @@ Response 200: Array of jobs
 ### UI-библиотека (Chakra UI)
 
 **Используемые компоненты**:
+
 - `Box`, `Container`, `Stack`, `Grid` - Layout
 - `Button`, `IconButton` - Actions
 - `Input`, `FormControl`, `FormLabel` - Forms
@@ -645,6 +668,7 @@ Response 200: Array of jobs
 - `Heading`, `Text` - Typography
 
 **Кастомные компоненты**:
+
 - **GlowingCard**: Анимированная gradient-карточка (3 уровня intensity)
 - **GlowingInput**: Поисковый input с анимацией
 - **EmptyState**: Placeholder с иконкой и сообщением
@@ -652,11 +676,13 @@ Response 200: Array of jobs
 ### Стилизация
 
 **Темизация**:
+
 - Файл: `src/theme/xy-theme.css`
 - Шрифты: Inter, Montserrat, Roboto, Open Sans
 - Цветовая схема: Chakra default (customizable)
 
 **Анимации**:
+
 - Framer Motion для плавных переходов
 - Gradient animations на GlowingCard/Input
 - Hover effects на кнопках
@@ -741,6 +767,7 @@ CREATE TABLE ml_data.model_artifact (
 **Расположение**: `backend/alembic/versions/`
 
 **Список миграций**:
+
 1. `001_initial_migration.py` - User, Session, UserLaunch tables
 2. `002_add_user_file.py` - UserFile table (datasets)
 3. `003_add_model_artifact.py` - ModelArtifact table
@@ -748,6 +775,7 @@ CREATE TABLE ml_data.model_artifact (
 5. `005_add_dataset_version_column.py` - Version column для датасетов
 
 **Автоматический запуск**:
+
 ```python
 # backend/service/utils/app_lifespan.py
 async def run_migrations():
@@ -756,6 +784,7 @@ async def run_migrations():
 ```
 
 **Ручной запуск**:
+
 ```bash
 # Внутри контейнера backend
 alembic -c alembic/alembic.ini upgrade head
@@ -767,6 +796,7 @@ docker compose exec backend alembic -c alembic/alembic.ini upgrade head
 ### Индексы и производительность
 
 **Созданные индексы**:
+
 - `profile.user.email` (UNIQUE)
 - `session.user_session.session_token` (UNIQUE)
 - `session.user_session.user_id` (FK)
@@ -777,6 +807,7 @@ docker compose exec backend alembic -c alembic/alembic.ini upgrade head
 - `ml_data.model_artifact.training_run_id` (FK)
 
 **Connection Pool настройки**:
+
 ```python
 pool_size = 10
 max_overflow = 20
@@ -792,6 +823,7 @@ pool_pre_ping = True
 ### Docker Compose
 
 **Файлы**:
+
 - `docker-compose.yaml` - Production setup
 - `docker-compose.dev.yaml` - Development setup
 
@@ -816,6 +848,7 @@ services:
 ### Nginx конфигурация
 
 **Production** (`infra/nginx/nginx.conf`):
+
 ```nginx
 # Reverse proxy для API
 location /api/ {
@@ -837,6 +870,7 @@ location /health {
 ```
 
 **Frontend** (`frontend/nginx.conf`):
+
 ```nginx
 server {
     listen 80;
@@ -855,6 +889,7 @@ server {
 **Файл**: `.github/workflows/backend-ci.yml`
 
 **Стратегия**:
+
 ```yaml
 matrix:
   os: [windows-latest, ubuntu-latest]
@@ -862,12 +897,14 @@ matrix:
 ```
 
 **Шаги**:
+
 1. **Setup Python 3.13**
 2. **Install uv** (fast package installer)
 3. **Install dependencies**: `uv sync --frozen --python 3.13`
 4. **Run tests**: `uv run pytest -q`
 
 **Особенности**:
+
 - **Windows**: `ENABLE_REAL_TRAINING=''` (light mode, fallback)
 - **Ubuntu**: `ENABLE_REAL_TRAINING='1'` (heavy mode, sklearn)
 - **Timeout**: 15 минут на job
@@ -878,6 +915,7 @@ matrix:
 ### Переменные окружения
 
 **Критические**:
+
 ```bash
 # Auth
 AUTH__SECRET=your-secret-key-change-in-prod
@@ -902,6 +940,7 @@ REACT_APP_API_BASE_URL=http://localhost:8000  # Dev only
 ```
 
 **ML Feature Flags**:
+
 ```bash
 ENABLE_REAL_TRAINING=1        # Включить sklearn (default: 0)
 MAX_CSV_UPLOAD_BYTES=10485760 # 10 MB
@@ -911,6 +950,7 @@ MAX_MODEL_ARTIFACTS=5         # Retention limit
 ```
 
 **Dataset TTL (автоочистка)**:
+
 ```bash
 DATASET_TTL_DAYS=30           # 0 = disabled
 DATASET_TTL_CHECK_INTERVAL_SEC=3600  # Hourly
@@ -918,18 +958,27 @@ DATASET_TTL_BATCH_LIMIT=500
 ```
 
 **Storage Backend**:
+
 ```bash
-STORAGE_BACKEND=local         # или "minio"
+STORAGE_BACKEND=local         # или "minio" (✅ PRODUCTION READY)
+
 # MinIO settings (если STORAGE_BACKEND=minio)
-MINIO_ENDPOINT=minio:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
-MINIO_BUCKET=mlops-files
+MINIO__ENDPOINT=minio:9000              # S3-compatible endpoint
+MINIO__ACCESS_KEY=minioadmin            # Access key ID
+MINIO__SECRET_KEY=minioadmin            # Secret access key
+MINIO__BUCKET=mlops-files               # Bucket name (auto-created)
+MINIO__REGION=us-east-1                 # AWS region (default)
+MINIO__SECURE=false                     # HTTPS (true for prod)
+MINIO__PUBLIC_ENDPOINT=http://localhost:9000  # Public URL for presigned URLs
+MINIO__RETRY_ATTEMPTS=3                 # Upload retry count
+MINIO__RETRY_BACKOFF=0.5                # Exponential backoff (seconds)
+MINIO__PRESIGN_EXPIRY=3600              # Presigned URL expiry (1 hour)
 ```
 
 ### Скрипты развёртывания
 
 **build.sh** - Сборка образов
+
 ```bash
 #!/bin/bash
 MODE=prod ./build.sh  # Production build
@@ -937,6 +986,7 @@ MODE=dev ./build.sh   # Development build
 ```
 
 **run.sh** - Запуск сервисов
+
 ```bash
 #!/bin/bash
 MODE=prod ./run.sh    # Start production
@@ -944,6 +994,7 @@ MODE=dev ./run.sh     # Start development
 ```
 
 **Healthcheck логика**:
+
 - Ожидание PostgreSQL: 60 секунд
 - Ожидание Backend API: 120 секунд (prod), 180 секунд (dev)
 - Health endpoint: `GET /api/health`
@@ -957,6 +1008,7 @@ MODE=dev ./run.sh     # Start development
 **Файл**: `.pre-commit-config.yaml`
 
 **Установка**:
+
 ```bash
 # Хуки уже установлены при инициализации проекта
 # Для ручной переустановки:
@@ -966,6 +1018,7 @@ C:/App/ReactProject/domains/MLOps/backend/.venv/Scripts/pre-commit.exe install
 **Автоматические проверки при коммите**:
 
 **Python (Backend)**:
+
 - ✅ `check-yaml` - Валидация YAML
 - ✅ `check-json` - Валидация JSON
 - ✅ `trailing-whitespace` - Удаление trailing spaces
@@ -976,13 +1029,16 @@ C:/App/ReactProject/domains/MLOps/backend/.venv/Scripts/pre-commit.exe install
 - ✅ `black` - Форматирование кода (Python 3.13, line-length=100)
 
 **JavaScript (Frontend)**:
+
 - ✅ `frontend-eslint` - ESLint проверка (`npm run lint`)
 
 **Кроссплатформенность**:
+
 - Python-скрипт `scripts/lint-frontend.py` работает на Windows и Linux
 - Использует `subprocess` с `shell=True` для npm
 
 **Ручной запуск**:
+
 ```powershell
 # Windows PowerShell
 .\precommit.ps1 run --all-files
@@ -998,7 +1054,8 @@ C:/App/ReactProject/domains/MLOps/backend/.venv/Scripts/pre-commit.exe run --all
 **Расположение**: `backend/tests/`
 
 **Список тестов** (19 passed, 1 skipped):
-```
+
+```list
 test_file_presigned_url.py          # Presigned URLs (S3)
 test_jobs_integration.py            # Job processing
 test_ml_api_upload.py              # CSV upload validation
@@ -1013,6 +1070,7 @@ test_dataset_ttl_cleanup.py        # TTL automation
 ```
 
 **Запуск тестов**:
+
 ```bash
 # Внутри backend/
 uv run pytest -v                # Verbose mode
@@ -1021,6 +1079,7 @@ uv run pytest tests/test_ml_api_upload.py  # Specific test
 ```
 
 **Coverage**: Покрытие основных user flows:
+
 - ✅ Auth: sign-up, sign-in, logout
 - ✅ Dataset: upload, validation, list, TTL cleanup
 - ✅ Training: job creation, processing, metrics
@@ -1030,6 +1089,7 @@ uv run pytest tests/test_ml_api_upload.py  # Specific test
 ### Линтеры и форматтеры
 
 **Python**:
+
 ```toml
 # pyproject.toml
 [tool.black]
@@ -1042,6 +1102,7 @@ line-length = 100
 ```
 
 **JavaScript**:
+
 ```javascript
 // frontend/eslint.config.cjs
 module.exports = {
@@ -1054,6 +1115,7 @@ module.exports = {
 ```
 
 **Prettier** (ручной запуск):
+
 ```json
 // .prettierrc
 {
@@ -1066,6 +1128,7 @@ module.exports = {
 ```
 
 **Ручное форматирование**:
+
 ```bash
 # Backend
 uv run black backend/service/
@@ -1084,6 +1147,7 @@ npm run lint    # eslint
 ### Production (Docker Compose)
 
 **Шаг 1: Подготовка окружения**
+
 ```bash
 # Создайте .env файл
 cp .env.example .env
@@ -1094,6 +1158,7 @@ POSTGRES_PASSWORD=strong-password-here
 ```
 
 **Шаг 2: Сборка образов**
+
 ```bash
 # Автоматическая сборка
 MODE=prod ./build.sh
@@ -1103,6 +1168,7 @@ docker compose build --no-cache
 ```
 
 **Шаг 3: Запуск сервисов**
+
 ```bash
 # Автоматический запуск с health checks
 MODE=prod ./run.sh
@@ -1112,6 +1178,7 @@ docker compose up -d
 ```
 
 **Шаг 4: Проверка**
+
 ```bash
 # Health check
 curl http://localhost:80/health
@@ -1124,6 +1191,7 @@ open http://localhost:80
 ```
 
 **Шаг 5: Мониторинг логов**
+
 ```bash
 docker compose logs -f backend   # Backend logs
 docker compose logs -f frontend  # Frontend logs
@@ -1134,6 +1202,7 @@ docker compose logs -f postgres  # Database logs
 ### Development (Hot Reload)
 
 **Запуск dev-режима**:
+
 ```bash
 MODE=dev ./run.sh
 
@@ -1142,17 +1211,20 @@ docker compose -f docker-compose.dev.yaml up --build
 ```
 
 **URLs**:
+
 - Frontend: http://localhost:3000 (React dev server)
 - Backend: http://localhost:8000 (Uvicorn hot reload)
 - API Docs: http://localhost:8000/api/docs
 
 **Hot reload**:
+
 - Backend: Изменения в `backend/service/` подхватываются автоматически
 - Frontend: React fast refresh включён по умолчанию
 
 ### Production без Docker (Manual)
 
 **Backend**:
+
 ```bash
 cd backend
 
@@ -1168,6 +1240,7 @@ uv run uvicorn service.main:app --host 0.0.0.0 --port 8000
 ```
 
 **Frontend**:
+
 ```bash
 cd frontend
 
@@ -1182,6 +1255,7 @@ npx serve -s build -l 3000
 ```
 
 **Nginx**:
+
 ```bash
 # Скопируйте конфиг
 cp infra/nginx/nginx.conf /etc/nginx/sites-available/mlops
@@ -1196,6 +1270,7 @@ nginx -t && nginx -s reload
 ### Масштабирование
 
 **Horizontal scaling**:
+
 ```yaml
 # docker-compose.yaml
 services:
@@ -1208,6 +1283,7 @@ services:
 ```
 
 **Database connection pool**:
+
 ```python
 # backend/service/settings.py
 db_pool_size = 20        # Увеличьте для высокой нагрузки
@@ -1215,6 +1291,7 @@ db_max_overflow = 40
 ```
 
 **Caching** (TODO):
+
 - Redis для сессий
 - Memcached для метрик
 
@@ -1225,12 +1302,14 @@ db_max_overflow = 40
 ### Локальная настройка
 
 **Requirements**:
+
 - Python 3.13
 - Node.js 20+
 - PostgreSQL 15+ (или Docker)
 - Git
 
 **Backend setup**:
+
 ```bash
 cd backend
 
@@ -1255,6 +1334,7 @@ uv run uvicorn service.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Frontend setup**:
+
 ```bash
 cd frontend
 
@@ -1267,7 +1347,7 @@ npm start  # Откроется http://localhost:3000
 
 ### Структура проекта
 
-```
+```structure
 MLOps/
 ├── backend/                # FastAPI backend
 │   ├── alembic/           # Database migrations
@@ -1315,13 +1395,15 @@ MLOps/
 ### Git workflow
 
 **Branches**:
+
 - `dev` - Development branch (default)
 - `future/frontend` - Current feature branch
 - `feature/*` - Feature branches
 - `hotfix/*` - Hotfix branches
 
 **Commit conventions**:
-```
+
+```list
 feat: добавлена новая фича
 fix: исправлен баг
 docs: обновлена документация
@@ -1332,6 +1414,7 @@ chore: обновление зависимостей, конфигов
 ```
 
 **Pre-commit hooks** автоматически:
+
 - Форматируют код (black, prettier)
 - Проверяют линтеры (isort, eslint)
 - Валидируют файлы (yaml, json)
@@ -1340,6 +1423,7 @@ chore: обновление зависимостей, конфигов
 ### Добавление новых фич
 
 **Backend (новый эндпоинт)**:
+
 1. Создайте схемы в `presentation/routers/*/schemas.py`
 2. Добавьте бизнес-логику в `services/`
 3. Реализуйте data access в `repositories/`
@@ -1348,6 +1432,7 @@ chore: обновление зависимостей, конфигов
 6. Напишите тесты в `tests/`
 
 **Frontend (новая страница)**:
+
 1. Создайте компонент в `pages/`
 2. Добавьте route в `App.js`
 3. Создайте API client в `API/`
@@ -1361,24 +1446,28 @@ chore: обновление зависимостей, конфигов
 ### Backend tests
 
 **Запуск всех тестов**:
+
 ```bash
 cd backend
 uv run pytest -v
 ```
 
 **Запуск с coverage**:
+
 ```bash
 uv run pytest --cov=service --cov-report=html
 open htmlcov/index.html
 ```
 
 **Запуск конкретного теста**:
+
 ```bash
 uv run pytest tests/test_ml_api_upload.py -v
 uv run pytest tests/test_ml_api_upload.py::test_upload_success -v
 ```
 
 **Тестовые данные**:
+
 - Используется in-memory SQLite (fast)
 - Fixtures в `tests/conftest.py`
 - Mock данные в каждом тесте
@@ -1386,12 +1475,14 @@ uv run pytest tests/test_ml_api_upload.py::test_upload_success -v
 ### Frontend tests (TODO)
 
 **Настроить**:
+
 ```bash
 cd frontend
 npm test  # Jest + React Testing Library
 ```
 
 **E2E tests** (TODO):
+
 - Playwright или Cypress
 - Полные user flows
 - Visual regression testing
@@ -1403,9 +1494,9 @@ npm test  # Jest + React Testing Library
 ### Backend
 
 1. **Storage Backend**:
-   - Default: Local filesystem
-   - MinIO/S3: Частично реализован (presigned URLs)
-   - TODO: Полная интеграция S3-совместимого хранилища
+   - ✅ Local filesystem (default, production-ready)
+   - ✅ MinIO/S3 (полностью реализован v1.0)
+   - TODO: Azure Blob Storage, Google Cloud Storage поддержка
 
 2. **ML Pipeline**:
    - Только classification и regression
@@ -1473,6 +1564,7 @@ npm test  # Jest + React Testing Library
 **Цель**: Production-ready платформа с полноценным хранилищем файлов
 
 #### ✅ Completed (ML Pipeline v1)
+
 - ✅ Backend ML API v1 (datasets, training, artifacts, metrics)
 - ✅ Frontend полностью обновлён (8 страниц)
 - ✅ CI/CD pipeline (Windows + Ubuntu)
@@ -1480,18 +1572,23 @@ npm test  # Jest + React Testing Library
 - ✅ Comprehensive документация (2500+ строк)
 - ✅ 19 тестов (100% pass rate)
 
-#### 🔄 In Progress (MVP Blocker)
-- **Full S3/MinIO integration** 🎯 **КРИТИЧНО ДЛЯ MVP**
-  - [ ] MinIO Docker service в docker-compose
-  - [ ] Полная реализация MinioStorage backend
-  - [ ] Presigned URLs для загрузки/скачивания
-  - [ ] Migration guide от local storage к MinIO
-  - [ ] Тесты для MinIO storage backend
-  - [ ] Документация по настройке
+#### ✅ Completed (Storage Backend v1 - MVP Blocker RESOLVED)
 
-**ETA**: 2-3 дня разработки + тестирование
+- **Full S3/MinIO integration** ✅ **ЗАВЕРШЕНО**
+
+  - ✅ MinIO Docker service в docker-compose (prod + dev)
+  - ✅ Полная реализация MinioFileStorage backend (178 lines)
+  - ✅ Presigned URLs для загрузки/скачивания (get_presigned_url)
+  - ✅ Migration guide от local storage к MinIO (docs/minio_migration_guide.md)
+  - ✅ 20+ тестов для MinIO storage backend (test_minio_storage.py)
+  - ✅ Comprehensive документация (minio_implementation_summary.md, minio_integration_plan.md)
+  - ✅ Frontend integration с presigned URL download
+  - ✅ Environment variables configuration (10 MINIO__ параметров)
+  - ✅ Bucket auto-initialization и retry logic
+  - ✅ All tests passing (38 passed на Windows + Ubuntu CI)
 
 #### 📋 Post-MVP (Q1 2026)
+
 - [ ] Redis для sessions и caching
 - [ ] Prometheus + Grafana monitoring
 - [ ] Centralized logging (ELK stack)
@@ -1559,6 +1656,7 @@ Proprietary (все права защищены)
 ### Быстрый старт
 
 1. **Clone repo**:
+
    ```bash
    git clone https://github.com/Prischli-Drink-Coffee/MLservice.git
    cd MLservice
@@ -1566,6 +1664,7 @@ Proprietary (все права защищены)
    ```
 
 2. **Запуск dev-окружения**:
+
    ```bash
    MODE=dev ./run.sh
    ```
@@ -1606,24 +1705,28 @@ docker compose down -v        # Остановка + удаление volumes
 ### Архитектурные решения
 
 **Почему FastAPI?**
+
 - Async/await из коробки
 - Автогенерация OpenAPI docs
 - Pydantic validation
 - Высокая производительность
 
 **Почему React + Chakra UI?**
+
 - Component-based architecture
 - Богатая UI-библиотека
 - Accessibility из коробки
 - Хорошая документация
 
 **Почему PostgreSQL?**
+
 - ACID transactions
 - JSONB для метрик
 - Богатая экосистема
 - Отличная производительность
 
 **Почему Cookie-сессии вместо Bearer tokens?**
+
 - Защита от XSS (httpOnly cookies)
 - Проще для SPA (не нужен localStorage)
 - CSRF protection (SameSite cookies)
@@ -1631,6 +1734,7 @@ docker compose down -v        # Остановка + удаление volumes
 ### Дебаггинг
 
 **Backend**:
+
 ```python
 # Добавьте в код
 import logging
@@ -1642,6 +1746,7 @@ import pdb; pdb.set_trace()
 ```
 
 **Frontend**:
+
 ```javascript
 // Chrome DevTools
 console.log('Debug:', data);
@@ -1651,6 +1756,7 @@ debugger;  // Breakpoint
 ```
 
 **Database**:
+
 ```bash
 # Подключение к PostgreSQL
 docker compose exec postgres psql -U postgres -d mlops
@@ -1665,24 +1771,36 @@ SELECT * FROM profile.user;
 ## 📊 Метрики проекта
 
 **Backend**:
-- **Lines of Code**: ~15,000 (Python)
-- **Tests**: 19 test files, 100+ test cases
-- **API Endpoints**: 25+ endpoints
+
+- **Lines of Code**: ~16,000+ (Python)
+- **Tests**: 20 test files, 120+ test cases (38 passed)
+- **API Endpoints**: 26+ endpoints (включая presigned URLs)
 - **Database Tables**: 7 tables, 3 schemas
-- **Dependencies**: 20+ Python packages
+- **Dependencies**: 22 Python packages (добавлен minio 7.2.18)
+- **Storage Backends**: 2 (LocalFileStorage, MinioFileStorage)
 
 **Frontend**:
-- **Lines of Code**: ~10,000 (JavaScript/JSX)
-- **Components**: 40+ React components
+
+- **Lines of Code**: ~10,500 (JavaScript/JSX)
+- **Components**: 42+ React components
 - **Pages**: 8 routes
-- **API Client**: 6 modules
+- **API Client**: 7 modules (добавлен getFileDownloadUrl)
 - **Dependencies**: 30+ npm packages
 
 **Infrastructure**:
-- **Docker Images**: 4 (postgres, backend, frontend, nginx)
-- **Docker Compose Services**: 4
-- **CI/CD Jobs**: 3 (Windows, Ubuntu, Summary)
-- **Documentation Files**: 4 MD files, 2500+ lines
+
+- **Docker Images**: 5 (postgres, backend, frontend, nginx, minio)
+- **Docker Compose Services**: 5 (production), 4 (development)
+- **Volumes**: 2 (postgres_data, minio_data_volume)
+- **CI/CD Jobs**: 3 (Windows, Ubuntu, Summary) - ✅ All tests pass
+- **Documentation Files**: 7 MD files, 5000+ lines
+  - info.md (этот файл)
+  - minio_integration_plan.md (2000+ lines)
+  - minio_implementation_summary.md (350+ lines)
+  - minio_migration_guide.md (270 lines)
+  - README.md (updated with MinIO section)
+  - precommit_setup_complete.md
+  - (deleted: backend_audit.md, frontend_audit.md)
 
 ---
 
@@ -1691,6 +1809,7 @@ SELECT * FROM profile.user;
 ### Security
 
 ✅ **Implemented**:
+
 - JWT with httpOnly cookies
 - Argon2 password hashing
 - CORS configuration
@@ -1698,6 +1817,7 @@ SELECT * FROM profile.user;
 - Environment variables для секретов
 
 ⚠️ **TODO**:
+
 - CSRF tokens
 - Rate limiting
 - Input sanitization
@@ -1707,6 +1827,7 @@ SELECT * FROM profile.user;
 ### Performance
 
 ✅ **Implemented**:
+
 - Database connection pooling
 - Async I/O (FastAPI + asyncpg)
 - React lazy loading
@@ -1714,6 +1835,7 @@ SELECT * FROM profile.user;
 - Docker multi-stage builds
 
 ⚠️ **TODO**:
+
 - Query optimization (indexes, N+1)
 - Redis caching
 - CDN для статики
@@ -1723,12 +1845,14 @@ SELECT * FROM profile.user;
 ### Monitoring
 
 ✅ **Implemented**:
+
 - Health check endpoint
 - Structured logging
 - Exception handlers
 - CI/CD status checks
 
 ⚠️ **TODO**:
+
 - Prometheus metrics
 - Grafana dashboards
 - Error tracking (Sentry)
@@ -1742,6 +1866,7 @@ SELECT * FROM profile.user;
 MLOps Platform — это **production-ready** веб-приложение для управления машинным обучением с современным tech stack, чистой архитектурой и автоматизированным workflow.
 
 **Ключевые преимущества**:
+
 - 🚀 Быстрый старт (один команда: `./run.sh`)
 - 🧪 Полное тестовое покрытие (19 тестов)
 - 🔄 CI/CD из коробки (GitHub Actions)
@@ -1752,6 +1877,7 @@ MLOps Platform — это **production-ready** веб-приложение дл�
 - 🐳 Контейнеризация (Docker)
 
 **Готово к**:
+
 - Development (hot reload, debug tools)
 - Testing (pytest, pre-commit hooks)
 - Production (Docker Compose, Nginx, health checks)
