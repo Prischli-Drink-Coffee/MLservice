@@ -113,8 +113,11 @@ GitHub Actions workflow (`.github/workflows/backend-ci.yml`):
 - Ubuntu: прогон тестов с `ENABLE_REAL_TRAINING=1` для проверки heavy пути (pandas/sklearn).
 - Сводный джоб завершает сборку при падении любой матрицы.
 
+<<<<<<< HEAD
 ---
 
+=======
+>>>>>>> origin/dev
 ## Быстрые подсказки
 
 - Если фронт в dev не видит API, проверьте `REACT_APP_API_BASE_URL` в `docker-compose.dev.yaml` (должен быть `http://localhost:8000`).
