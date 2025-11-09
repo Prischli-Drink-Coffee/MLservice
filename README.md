@@ -36,17 +36,20 @@ docker compose up -d --build
 Платформа поддерживает два режима хранения файлов:
 
 #### Local Storage (по умолчанию)
+
 - Файлы хранятся в `infra/storage/` (Docker volume)
 - Подходит для development и small-scale deployments
 - Настройка: `STORAGE_BACKEND=local`
 
 #### MinIO (рекомендовано для production)
+
 - S3-совместимое объектное хранилище
 - Presigned URLs для прямого скачивания (без нагрузки на backend)
 - Horizontal scaling support
 - Простое backup/restore
 
 **Настройка MinIO**:
+
 ```bash
 # В .env
 STORAGE_BACKEND=minio
