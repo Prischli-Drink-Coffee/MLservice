@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from service.infrastructure.storage.minio_file_storage import MinioFileStorage
 from service.settings import MinioConfig
 
 
@@ -32,13 +31,17 @@ def mock_minio_config():
 @pytest.fixture
 def minio_storage(mock_minio_config):
     """Create MinioFileStorage instance with mocked Minio client"""
-    with patch("service.infrastructure.storage.minio_file_storage.Minio") as mock_minio_class:
+    # Patch the import inside __init__ method
+    with patch("minio.Minio") as mock_minio_class:
         # Create mock client
         mock_client = MagicMock()
         mock_minio_class.return_value = mock_client
 
         # Mock bucket_exists to return True (bucket already exists)
         mock_client.bucket_exists.return_value = True
+
+        # Import here after patching
+        from service.infrastructure.storage.minio_file_storage import MinioFileStorage
 
         # Create storage instance
         storage = MinioFileStorage(mock_minio_config)
@@ -54,12 +57,14 @@ class TestMinioFileStorageInit:
 
     def test_init_creates_bucket_if_not_exists(self, mock_minio_config):
         """Test that bucket is created if it doesn't exist"""
-        with patch("service.infrastructure.storage.minio_file_storage.Minio") as mock_minio_class:
+        with patch("minio.Minio") as mock_minio_class:
             mock_client = MagicMock()
             mock_minio_class.return_value = mock_client
 
             # Mock bucket doesn't exist
             mock_client.bucket_exists.return_value = False
+
+            from service.infrastructure.storage.minio_file_storage import MinioFileStorage
 
             _ = MinioFileStorage(mock_minio_config)
 
@@ -70,12 +75,14 @@ class TestMinioFileStorageInit:
 
     def test_init_skips_bucket_creation_if_exists(self, mock_minio_config):
         """Test that bucket creation is skipped if bucket exists"""
-        with patch("service.infrastructure.storage.minio_file_storage.Minio") as mock_minio_class:
+        with patch("minio.Minio") as mock_minio_class:
             mock_client = MagicMock()
             mock_minio_class.return_value = mock_client
 
             # Mock bucket exists
             mock_client.bucket_exists.return_value = True
+
+            from service.infrastructure.storage.minio_file_storage import MinioFileStorage
 
             _ = MinioFileStorage(mock_minio_config)
 
@@ -84,12 +91,14 @@ class TestMinioFileStorageInit:
 
     def test_init_raises_on_bucket_error(self, mock_minio_config):
         """Test that RuntimeError is raised if bucket operations fail"""
-        with patch("service.infrastructure.storage.minio_file_storage.Minio") as mock_minio_class:
+        with patch("minio.Minio") as mock_minio_class:
             mock_client = MagicMock()
             mock_minio_class.return_value = mock_client
 
             # Mock bucket_exists raises exception
             mock_client.bucket_exists.side_effect = Exception("Connection error")
+
+            from service.infrastructure.storage.minio_file_storage import MinioFileStorage
 
             with pytest.raises(RuntimeError, match="Failed to create/verify MinIO bucket"):
                 MinioFileStorage(mock_minio_config)

@@ -56,7 +56,6 @@ class _FakeTrainingRepo:
         return run
 
 
-@pytest.mark.asyncio
 @pytest.mark.skipif(sys.platform.startswith('win'), reason='Heavy training disabled / unstable on Windows imports')
 def test_heavy_training_joblib_artifact(tmp_path, monkeypatch):
     # Only run when ENABLE_REAL_TRAINING is enabled
@@ -78,8 +77,6 @@ def test_heavy_training_joblib_artifact(tmp_path, monkeypatch):
     train_repo = _FakeTrainingRepo()
     monkeypatch.setenv('ENABLE_REAL_TRAINING', '1')
     svc = TrainingService(training_repo=train_repo, file_repo=file_repo, storage_root=str(tmp_path))
-
-    metrics = pytest.run(asyncio_run=lambda: None)  # placeholder; we'll run manually below
 
     import asyncio
     metrics = asyncio.get_event_loop().run_until_complete(svc.run_for_job(job))
