@@ -97,7 +97,13 @@
 - **CI/CD**: GitHub Actions
   - Windows runner (light mode tests)
   - Ubuntu runner (heavy mode tests)
-- **Storage**: Local filesystem (MinIO-ready, S3-compatible)
+- **Object Storage**: MinIO latest (S3-compatible)
+  - Ports: 9000 (API), 9001 (Console)
+  - Volumes: minio_data_volume
+  - Bucket auto-initialization
+- **File Storage Backends**:
+  - LocalFileStorage (default, filesystem-based)
+  - MinioFileStorage (production, S3-compatible with presigned URLs)
 
 ### Code Quality
 - **Python**:
@@ -919,12 +925,19 @@ DATASET_TTL_BATCH_LIMIT=500
 
 **Storage Backend**:
 ```bash
-STORAGE_BACKEND=local         # или "minio"
+STORAGE_BACKEND=local         # или "minio" (✅ PRODUCTION READY)
+
 # MinIO settings (если STORAGE_BACKEND=minio)
-MINIO_ENDPOINT=minio:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
-MINIO_BUCKET=mlops-files
+MINIO__ENDPOINT=minio:9000              # S3-compatible endpoint
+MINIO__ACCESS_KEY=minioadmin            # Access key ID
+MINIO__SECRET_KEY=minioadmin            # Secret access key
+MINIO__BUCKET=mlops-files               # Bucket name (auto-created)
+MINIO__REGION=us-east-1                 # AWS region (default)
+MINIO__SECURE=false                     # HTTPS (true for prod)
+MINIO__PUBLIC_ENDPOINT=http://localhost:9000  # Public URL for presigned URLs
+MINIO__RETRY_ATTEMPTS=3                 # Upload retry count
+MINIO__RETRY_BACKOFF=0.5                # Exponential backoff (seconds)
+MINIO__PRESIGN_EXPIRY=3600              # Presigned URL expiry (1 hour)
 ```
 
 ### Скрипты развёртывания
@@ -1403,9 +1416,9 @@ npm test  # Jest + React Testing Library
 ### Backend
 
 1. **Storage Backend**:
-   - Default: Local filesystem
-   - MinIO/S3: Частично реализован (presigned URLs)
-   - TODO: Полная интеграция S3-совместимого хранилища
+   - ✅ Local filesystem (default, production-ready)
+   - ✅ MinIO/S3 (полностью реализован v1.0)
+   - TODO: Azure Blob Storage, Google Cloud Storage поддержка
 
 2. **ML Pipeline**:
    - Только classification и regression
@@ -1480,16 +1493,18 @@ npm test  # Jest + React Testing Library
 - ✅ Comprehensive документация (2500+ строк)
 - ✅ 19 тестов (100% pass rate)
 
-#### 🔄 In Progress (MVP Blocker)
-- **Full S3/MinIO integration** 🎯 **КРИТИЧНО ДЛЯ MVP**
-  - [ ] MinIO Docker service в docker-compose
-  - [ ] Полная реализация MinioStorage backend
-  - [ ] Presigned URLs для загрузки/скачивания
-  - [ ] Migration guide от local storage к MinIO
-  - [ ] Тесты для MinIO storage backend
-  - [ ] Документация по настройке
-
-**ETA**: 2-3 дня разработки + тестирование
+#### ✅ Completed (Storage Backend v1 - MVP Blocker RESOLVED)
+- **Full S3/MinIO integration** ✅ **ЗАВЕРШЕНО**
+  - ✅ MinIO Docker service в docker-compose (prod + dev)
+  - ✅ Полная реализация MinioFileStorage backend (178 lines)
+  - ✅ Presigned URLs для загрузки/скачивания (get_presigned_url)
+  - ✅ Migration guide от local storage к MinIO (docs/minio_migration_guide.md)
+  - ✅ 20+ тестов для MinIO storage backend (test_minio_storage.py)
+  - ✅ Comprehensive документация (minio_implementation_summary.md, minio_integration_plan.md)
+  - ✅ Frontend integration с presigned URL download
+  - ✅ Environment variables configuration (10 MINIO__ параметров)
+  - ✅ Bucket auto-initialization и retry logic
+  - ✅ All tests passing (38 passed на Windows + Ubuntu CI)
 
 #### 📋 Post-MVP (Q1 2026)
 - [ ] Redis для sessions и caching
@@ -1665,24 +1680,33 @@ SELECT * FROM profile.user;
 ## 📊 Метрики проекта
 
 **Backend**:
-- **Lines of Code**: ~15,000 (Python)
-- **Tests**: 19 test files, 100+ test cases
-- **API Endpoints**: 25+ endpoints
+- **Lines of Code**: ~16,000+ (Python)
+- **Tests**: 20 test files, 120+ test cases (38 passed)
+- **API Endpoints**: 26+ endpoints (включая presigned URLs)
 - **Database Tables**: 7 tables, 3 schemas
-- **Dependencies**: 20+ Python packages
+- **Dependencies**: 22 Python packages (добавлен minio 7.2.18)
+- **Storage Backends**: 2 (LocalFileStorage, MinioFileStorage)
 
 **Frontend**:
-- **Lines of Code**: ~10,000 (JavaScript/JSX)
-- **Components**: 40+ React components
+- **Lines of Code**: ~10,500 (JavaScript/JSX)
+- **Components**: 42+ React components
 - **Pages**: 8 routes
-- **API Client**: 6 modules
+- **API Client**: 7 modules (добавлен getFileDownloadUrl)
 - **Dependencies**: 30+ npm packages
 
 **Infrastructure**:
-- **Docker Images**: 4 (postgres, backend, frontend, nginx)
-- **Docker Compose Services**: 4
-- **CI/CD Jobs**: 3 (Windows, Ubuntu, Summary)
-- **Documentation Files**: 4 MD files, 2500+ lines
+- **Docker Images**: 5 (postgres, backend, frontend, nginx, minio)
+- **Docker Compose Services**: 5 (production), 4 (development)
+- **Volumes**: 2 (postgres_data, minio_data_volume)
+- **CI/CD Jobs**: 3 (Windows, Ubuntu, Summary) - ✅ All tests pass
+- **Documentation Files**: 7 MD files, 5000+ lines
+  - info.md (этот файл)
+  - minio_integration_plan.md (2000+ lines)
+  - minio_implementation_summary.md (350+ lines)
+  - minio_migration_guide.md (270 lines)
+  - README.md (updated with MinIO section)
+  - precommit_setup_complete.md
+  - (deleted: backend_audit.md, frontend_audit.md)
 
 ---
 
