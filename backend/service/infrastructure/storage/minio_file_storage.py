@@ -57,10 +57,8 @@ class MinioFileStorage(AbstractFileStorage):
             raise RuntimeError(f"Failed to create/verify MinIO bucket {self._bucket}") from e
 
     def build_file_path(self, folder: str, mode: str, file_name: str) -> str:
-        key = f"{folder}/{mode}/{file_name}"
-        if self._prefix:
-            return f"{self._prefix.rstrip('/')}/{key}"
-        return key
+        """Build S3 object key from folder, mode, and filename"""
+        return f"{folder}/{mode}/{file_name}"
 
     async def upload_file(self, *, file_key: str, file_data: bytes) -> str:
         """Upload file to MinIO with retry logic"""
