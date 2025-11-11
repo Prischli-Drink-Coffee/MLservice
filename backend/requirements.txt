@@ -131,6 +131,8 @@ rich-toolkit==0.15.1
     # via
     #   fastapi-cli
     #   fastapi-cloud-cli
+redis==5.0.4
+    # via backend (pyproject.toml)
 rignore==0.6.4
     # via fastapi-cloud-cli
 scikit-learn==1.7.2

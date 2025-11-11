@@ -1,17 +1,28 @@
 import logging
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from service.models.db.db_models import User, UserSession
+from service.models.db.db_models import UserSession
 from service.repositories.base_repository import BaseRepository
 from service.repositories.decorators.session_processor import connection
 
 logger = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    from service.infrastructure.cache.redis_session_store import RedisSessionStore
+
 
 class AuthRepository(BaseRepository):
+
+    def __init__(
+        self,
+        connector,
+        session_store: "RedisSessionStore | None" = None,
+    ) -> None:
+        super().__init__(connector)
+        self._session_store = session_store
 
     @connection()
     async def create_session(
@@ -37,10 +48,16 @@ class AuthRepository(BaseRepository):
             del_stmt = delete(UserSession).where(UserSession.id.in_(sessions_to_delete))
             await session.execute(del_stmt)
 
+        if self._session_store:
+            await self._session_store.invalidate_user_sessions(user_session.user_id)
+
         logger.debug(f"Creating new session: {user_session}")
         session.add(instance=user_session)
         await session.flush()
         logger.debug(f"Session created: {user_session}")
+
+        if self._session_store:
+            await self._session_store.store_session(user_session)
         return user_session
 
     @connection()
@@ -51,4 +68,7 @@ class AuthRepository(BaseRepository):
         await session.merge(user_session)
         await session.flush()
         logger.debug(f"Session updated: {user_session}")
+
+        if self._session_store:
+            await self._session_store.store_session(user_session)
         return user_session
