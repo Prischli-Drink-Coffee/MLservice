@@ -1662,9 +1662,16 @@ npm test  # Jest + React Testing Library
 - ✅ Документация: redis_integration_plan.md, redis_implementation_summary.md, redis_integration_guide.md
 - ✅ Новый тестовый набор `tests/test_profile_service_cache.py` (3 сценария)
 
+#### ✅ Completed (Prometheus + Grafana monitoring v1)
+
+- ✅ Инструментирование FastAPI (`/metrics`) через `prometheus-fastapi-instrumentator`
+- ✅ Доменные метрики ML пайплайна в `service/monitoring/metrics.py`
+- ✅ Сервисы `prometheus` и `grafana` в docker-compose (prod + dev) + run.sh orchestration
+- ✅ Provisioning конфигурации в `infra/monitoring/` (datasource + dashboard)
+- ✅ Обновлённые документы: prometheus_integration_plan.md, prometheus_implementation_summary.md, prometheus_integration_guide.md
+
 #### 📋 Post-MVP (Q1 2026)
 
-- [ ] Prometheus + Grafana monitoring
 - [ ] Centralized logging (ELK stack)
 - [ ] Rate limiting (per-user, per-IP)
 - [ ] API versioning (v2)
