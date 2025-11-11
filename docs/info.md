@@ -1,8 +1,9 @@
 # MLOps Platform - Полная документация проекта
 
-**Версия**: 0.1.0
+**Версия**: 0.1.2
 **Дата последнего обновления**: Ноябрь 2025
 **Статус**: Production-ready (ML Pipeline v1)
+**Главное обновление**: Redis-кеш профилей и хранение JWT-сессий
 
 ---
 
@@ -59,6 +60,11 @@
 - Агрегированная статистика (avg/best/count)
 - Поддержка classification и regression задач
 
+✅ **Высокоскоростные сессии и кеширование**
+- Redis 7.4 хранит профили пользователей и метаданные кеша
+- RedisSessionStore обеспечивает мгновенный отзыв JWT-сессий
+- TTL и namespace управляются через `REDIS__*` переменные
+
 ---
 
 ## 💻 Технический стек
@@ -68,6 +74,7 @@
 - **Framework**: FastAPI 0.116.1
 - **ORM**: SQLAlchemy 2.0 (Async)
 - **Database**: PostgreSQL 15+ (asyncpg драйвер)
+- **Cache / Session Store**: Redis 7.4 (redis.asyncio client)
 - **Migrations**: Alembic 1.16.4
 - **ML Stack**:
   - scikit-learn 1.5.0
@@ -101,6 +108,7 @@
   - Ports: 9000 (API), 9001 (Console)
   - Volumes: minio_data_volume
   - Bucket auto-initialization
+- **In-memory Cache**: Redis 7.4 (Alpine, health checks, volume `infra/redis_data`)
 - **File Storage Backends**:
   - LocalFileStorage (default, filesystem-based)
   - MinioFileStorage (production, S3-compatible with presigned URLs)
@@ -133,12 +141,14 @@
         │ Frontend │                 │ Backend  │
         │  React   │                 │ FastAPI  │
         │ (Nginx)  │                 │ (Uvicorn)│
-        └──────────┘                 └────┬─────┘
-                                          │
-                                     ┌────▼────────┐
-                                     │ PostgreSQL  │
-                                     │   Database  │
-                                     └─────────────┘
+  └──────────┘                 └────┬─────┘
+            │
+         ┌────────────────────┴─────────────────────┐
+         │                                          │
+    ┌────▼────────┐                           ┌─────▼────┐
+    │ PostgreSQL  │                           │  Redis   │
+    │   Database  │                           │ Cache/SS │
+    └─────────────┘                           └──────────┘
 ```
 
 ### Слои Backend (Clean Architecture)
@@ -184,6 +194,10 @@ backend/service/
 │   ├── storage/
 │   │   ├── local_storage.py  # Local FS backend
 │   │   └── minio_storage.py  # S3-compatible backend
+│   ├── cache/
+│   │   ├── redis_manager.py       # Redis client factory
+│   │   ├── redis_cache.py         # Namespaced JSON cache
+│   │   └── redis_session_store.py # Session store & token index
 │   └── job_state/
 │       └── postgres_store.py # Job state persistence
 │
@@ -833,6 +847,7 @@ pool_pre_ping = True
 # Production
 services:
   postgres:      # PostgreSQL 15
+  redis:         # Redis 7.4 (cache + session store)
   backend:       # FastAPI app
   frontend:      # React build (Nginx)
   nginx:         # Reverse proxy (port 80)
@@ -840,6 +855,7 @@ services:
 # Development
 services:
   postgres:      # PostgreSQL 15
+  redis:         # Redis 7.4 (cache + session store)
   backend:       # FastAPI + hot reload
   frontend:      # React dev server (port 3000)
   # No nginx in dev mode
@@ -910,7 +926,7 @@ matrix:
 - **Timeout**: 15 минут на job
 - **Summary job**: Завершается при падении любой матрицы
 
-**Статус**: ✅ All tests pass (19 passed, 1 skipped)
+**Статус**: ✅ All tests pass (40 passed, 1 skipped)
 
 ### Переменные окружения
 
@@ -931,6 +947,17 @@ PG__PORT=5432
 PG__USER=postgres
 PG__PASSWORD=postgres
 PG__DB=mlops
+
+# Redis
+REDIS__ENABLED=true
+REDIS__HOST=redis
+REDIS__PORT=6379
+REDIS__DB=0
+REDIS__SESSION_PREFIX=session
+REDIS__SESSION_TTL_SECONDS=3600
+REDIS__CACHE_PREFIX=cache
+REDIS__CACHE_DEFAULT_TTL_SECONDS=300
+REDIS__PROFILE_CACHE_TTL_SECONDS=900
 
 # CORS
 CORS__ALLOW_ORIGINS=["http://localhost:3000"]
@@ -996,6 +1023,7 @@ MODE=dev ./run.sh     # Start development
 **Healthcheck логика**:
 
 - Ожидание PostgreSQL: 60 секунд
+- Ожидание Redis: 60 секунд (prod/dev)
 - Ожидание Backend API: 120 секунд (prod), 180 секунд (dev)
 - Health endpoint: `GET /api/health`
 
@@ -1290,10 +1318,10 @@ db_pool_size = 20        # Увеличьте для высокой нагруз
 db_max_overflow = 40
 ```
 
-**Caching** (TODO):
+**Caching**:
 
-- Redis для сессий
-- Memcached для метрик
+- ✅ Redis 7.4 обрабатывает JWT-сессии и кеш профилей (TTL, namespace, `REDIS__*`)
+- ⏳ Кэширование метрик вынесено в Post-MVP backlog
 
 ---
 
@@ -1365,13 +1393,17 @@ MLOps/
 │   └── nginx.conf
 │
 ├── infra/                # Infrastructure configs
-│   └── nginx/
-│       └── nginx.conf    # Reverse proxy config
+│   ├── nginx/
+│   │   └── nginx.conf    # Reverse proxy config
+│   └── redis_data/       # Персистентный том Redis (dev)
 │
 ├── docs/                 # Documentation
 │   ├── info.md          # Этот файл
 │   ├── backend_audit.md
 │   ├── frontend_audit.md
+│   ├── redis_integration_plan.md
+│   ├── redis_implementation_summary.md
+│   ├── redis_integration_guide.md
 │   └── precommit_setup_complete.md
 │
 ├── scripts/             # Utility scripts
@@ -1397,9 +1429,8 @@ MLOps/
 **Branches**:
 
 - `dev` - Development branch (default)
-- `future/frontend` - Current feature branch
+- `future/redis` - Active feature branch (Redis интеграция)
 - `feature/*` - Feature branches
-- `hotfix/*` - Hotfix branches
 
 **Commit conventions**:
 
@@ -1464,6 +1495,7 @@ open htmlcov/index.html
 ```bash
 uv run pytest tests/test_ml_api_upload.py -v
 uv run pytest tests/test_ml_api_upload.py::test_upload_success -v
+uv run pytest tests/test_profile_service_cache.py -v
 ```
 
 **Тестовые данные**:
@@ -1512,8 +1544,8 @@ npm test  # Jest + React Testing Library
    - TODO: Prometheus metrics, Grafana dashboards
 
 5. **Caching**:
-   - Нет кэширования метрик
-   - TODO: Redis для sessions и metrics
+  - JWT-сессии и профили кешируются в Redis (prod + dev)
+  - TODO: Добавить кэширование метрик (aggregations)
 
 ### Frontend
 
@@ -1570,7 +1602,7 @@ npm test  # Jest + React Testing Library
 - ✅ CI/CD pipeline (Windows + Ubuntu)
 - ✅ Pre-commit хуки (Python + JavaScript)
 - ✅ Comprehensive документация (2500+ строк)
-- ✅ 19 тестов (100% pass rate)
+- ✅ 40 тестов (100% pass rate, включая Redis-кеш)
 
 #### ✅ Completed (Storage Backend v1 - MVP Blocker RESOLVED)
 
@@ -1587,9 +1619,18 @@ npm test  # Jest + React Testing Library
   - ✅ Bucket auto-initialization и retry logic
   - ✅ All tests passing (38 passed на Windows + Ubuntu CI)
 
+#### ✅ Completed (Redis Cache & Sessions v1)
+
+- ✅ Redis 7.4 сервис в docker-compose (prod + dev)
+- ✅ RedisManager, RedisCacheService, RedisSessionStore (async redis client)
+- ✅ ProfileService кеширует профили с TTL и инвалидацией
+- ✅ AuthRepository синхронизирует сессии через RedisSessionStore
+- ✅ run.sh ожидает Redis health, `.env` дополнен `REDIS__*`
+- ✅ Документация: redis_integration_plan.md, redis_implementation_summary.md, redis_integration_guide.md
+- ✅ Новый тестовый набор `tests/test_profile_service_cache.py` (3 сценария)
+
 #### 📋 Post-MVP (Q1 2026)
 
-- [ ] Redis для sessions и caching
 - [ ] Prometheus + Grafana monitoring
 - [ ] Centralized logging (ELK stack)
 - [ ] Rate limiting (per-user, per-IP)
@@ -1642,7 +1683,7 @@ npm test  # Jest + React Testing Library
 ### Разработка
 
 **Repository**: https://github.com/Prischli-Drink-Coffee/MLservice
-**Branch**: `future/frontend`
+**Branch**: `future/redis`
 **Default branch**: `dev`
 
 ### Лицензия
@@ -1660,20 +1701,21 @@ Proprietary (все права защищены)
    ```bash
    git clone https://github.com/Prischli-Drink-Coffee/MLservice.git
    cd MLservice
-   git checkout future/frontend
+   git checkout future/redis
    ```
 
-2. **Запуск dev-окружения**:
+1. **Запуск dev-окружения**:
 
    ```bash
    MODE=dev ./run.sh
    ```
 
-3. **Откройте браузер**:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000/api/docs
+1. **Откройте браузер**:
 
-4. **Зарегистрируйтесь** и начните работу!
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - Backend API: [http://localhost:8000/api/docs](http://localhost:8000/api/docs)
+
+1. **Зарегистрируйтесь** и начните работу!
 
 ### Полезные команды
 
