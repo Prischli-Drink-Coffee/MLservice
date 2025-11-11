@@ -25,9 +25,11 @@ MODE="${MODE:-prod}"
 if [[ "$MODE" == "dev" ]]; then
     COMPOSE_FILE="$PROJECT_ROOT/docker-compose.dev.yaml"
     echo "[mode] development"
+    REDIS_CONTAINER_NAME="redis-dev"
 else
     COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yaml"
     echo "[mode] production"
+    REDIS_CONTAINER_NAME="redis"
 fi
 
 if docker compose version >/dev/null 2>&1; then
@@ -83,14 +85,17 @@ echo "[step] Starting services..."
 if [[ "$MODE" == "dev" ]]; then
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d postgres
     wait_for_container_health postgres 60 || true
+    $COMPOSE_BIN -f "$COMPOSE_FILE" up -d redis
+    wait_for_container_health "$REDIS_CONTAINER_NAME" 60 || true
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d backend
     FRONTEND_URL="http://localhost:3000"
     BACKEND_URL="http://localhost:8000/api"
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d frontend
 else
     # Prod: start infra, wait for postgres, then backend, then frontend+nginx
-    $COMPOSE_BIN -f "$COMPOSE_FILE" up -d postgres
+    $COMPOSE_BIN -f "$COMPOSE_FILE" up -d postgres redis
     wait_for_container_health postgres 60 || true
+    wait_for_container_health "$REDIS_CONTAINER_NAME" 60 || true
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d backend
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d frontend nginx
     FRONTEND_URL="http://localhost:${NGINX_PORT:-8080}"

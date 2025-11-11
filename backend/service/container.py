@@ -22,14 +22,50 @@ def build(config: Config):
     _CONTAINER[BackgroundTaskManagerName] = BackgroundTaskManager()
     _CONTAINER[PgConnectorName] = PgConnector(config.pg)
 
+    redis_cache = None
+    redis_session_store = None
+
+    if getattr(config, "redis", None) and config.redis.enabled:
+        try:
+            from service.infrastructure.cache.redis_cache import RedisCacheService
+            from service.infrastructure.cache.redis_manager import RedisManager
+            from service.infrastructure.cache.redis_session_store import RedisSessionStore
+
+            redis_manager = RedisManager(config.redis)
+            redis_client = redis_manager.get_client()
+
+            _CONTAINER[RedisManagerName] = redis_manager
+            _CONTAINER[RedisClientName] = redis_client
+
+            redis_cache = RedisCacheService(redis_client, config.redis)
+            redis_session_store = RedisSessionStore(redis_client, config.redis)
+
+            _CONTAINER[RedisCacheServiceName] = redis_cache
+            _CONTAINER[RedisSessionStoreName] = redis_session_store
+
+            logger.info("Initialized Redis cache and session backends")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Failed to initialize Redis backend: %s", exc)
+    else:
+        logger.info("Redis backend disabled via configuration")
+
     # Repositories
-    _CONTAINER[AuthRepositoryName] = AuthRepository(get(PgConnectorName))
+    _CONTAINER[AuthRepositoryName] = AuthRepository(
+        get(PgConnectorName), session_store=redis_session_store
+    )
     _CONTAINER[JobRepositoryName] = JobRepository(get(PgConnectorName))
     _CONTAINER[ProfileRepositoryName] = ProfileRepository(get(PgConnectorName))
     _CONTAINER[FileRepositoryName] = FileRepository(get(PgConnectorName))
 
     # Services
-    _CONTAINER[ProfileServiceName] = ProfileService(config.profile, get(ProfileRepositoryName))
+    _CONTAINER[ProfileServiceName] = ProfileService(
+        config.profile,
+        get(ProfileRepositoryName),
+        cache=redis_cache,
+        cache_ttl_seconds=(
+            config.redis.profile_cache_ttl_seconds if redis_cache and config.redis else None
+        ),
+    )
     _CONTAINER[AuthServiceName] = AuthService(
         config.auth,
         get(AuthRepositoryName),
@@ -133,5 +169,11 @@ NewJobProcessorName = "NewJobProcessor"
 BackgroundTaskManagerT = BackgroundTaskManager
 BackgroundTaskManagerName = "BackgroundTaskManager"
 PgConnectorName = "PgConnector"
+
+# Redis related names
+RedisManagerName = "RedisManager"
+RedisClientName = "RedisClient"
+RedisCacheServiceName = "RedisCacheService"
+RedisSessionStoreName = "RedisSessionStore"
 
 _CONTAINER = {}

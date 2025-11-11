@@ -107,6 +107,32 @@ class MinioConfig(BaseModel):
     presign_expiry: int = 3600  # 1 hour default
 
 
+class RedisConfig(BaseModel):
+    """Redis cache/session configuration"""
+
+    enabled: bool = True
+    host: str = "redis"
+    port: int = 6379
+    db: int = 0
+    password: str | None = None
+    use_ssl: bool = False
+    decode_responses: bool = True
+    health_check_interval: int = 30
+
+    session_prefix: str = "session"
+    session_ttl_seconds: int = 3600
+
+    cache_prefix: str = "cache"
+    cache_default_ttl_seconds: int = 300
+    profile_cache_ttl_seconds: int = 900
+
+    @property
+    def dsn(self) -> str:
+        auth = f":{self.password}@" if self.password else ""
+        scheme = "rediss" if self.use_ssl else "redis"
+        return f"{scheme}://{auth}{self.host}:{self.port}/{self.db}"
+
+
 class Config(BaseSettings):
     service_name: str = "service-api"
 
@@ -118,6 +144,7 @@ class Config(BaseSettings):
     ml: MLConfig = Field(default_factory=MLConfig)
     cors: CorsConfig = Field(default_factory=CorsConfig)
     minio: MinioConfig = Field(default_factory=MinioConfig)
+    redis: RedisConfig = Field(default_factory=RedisConfig)
 
     # Storage backend selection
     storage_backend: str = "local"  # "local" or "minio"

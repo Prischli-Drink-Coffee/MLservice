@@ -9,7 +9,7 @@ docker compose -f docker-compose.dev.yaml up --build
 - Фронтенд: <http://localhost:3000>
 - Бэкенд: <http://localhost:8000> (доки: <http://localhost:8000/api/docs>)
 - Во время dev CORS разрешён для <http://localhost:3000>
-- Postgres, Zookeeper и Kafka поднимаются локально в `docker-compose.dev`
+- Postgres, Redis и MinIO поднимаются локально в `docker-compose.dev`
 - Бэкенд стартует с auto-migrations (Alembic) и hot reload (`SERVICE_DEBUG=1`)
 
 ## Продакшен через Nginx (единая точка входа)
@@ -66,6 +66,20 @@ docker compose up -d minio backend
 ```
 
 📖 **Подробнее**: см. [docs/minio_migration_guide.md](docs/minio_migration_guide.md)
+
+### Redis Cache & Sessions
+
+Redis используется для хранения активных пользовательских сессий и кеширования профилей.
+
+- В docker-compose сервис `redis` стартует автоматически (в dev — `redis-dev`).
+- Настройка включена по умолчанию: `REDIS__ENABLED=true`.
+- Основные переменные окружения (см. `.env`):
+  - `REDIS__HOST`, `REDIS__PORT`, `REDIS__DB`
+  - `REDIS__SESSION_PREFIX`, `REDIS__SESSION_TTL_SECONDS`
+  - `REDIS__CACHE_PREFIX`, `REDIS__PROFILE_CACHE_TTL_SECONDS`
+- Для отключения Redis выставьте `REDIS__ENABLED=false` и перезапустите backend.
+
+📖 **Документация по интеграции**: `docs/redis_integration_plan.md`, `docs/redis_implementation_summary.md`, `docs/redis_integration_guide.md`.
 
 ### ML / Upload feature flags
 
