@@ -9,6 +9,7 @@ import logging.config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from service.monitoring.setup import setup_monitoring
 from service.presentation.handlers.exceptions_handlers import setup_exception_handlers
 from service.presentation.routers.auth_api.auth_api import auth_router
 from service.presentation.routers.files_api.files_api import files_router
@@ -50,6 +51,7 @@ def create_app() -> FastAPI:
     app.include_router(ml_router, tags=["ML-API"])  # минимальные эндпоинты
 
     setup_exception_handlers(app)
+    setup_monitoring(app)
 
     @app.get("/api/health", include_in_schema=False)
     async def health() -> dict:

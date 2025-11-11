@@ -1027,6 +1027,43 @@ MODE=dev ./run.sh     # Start development
 - Ожидание Backend API: 120 секунд (prod), 180 секунд (dev)
 - Health endpoint: `GET /api/health`
 
+### Monitoring & Observability
+
+**Цели**: обеспечить прозрачность по HTTP-трафику, ML-пайплайну и фоновой очистке.
+
+**Компоненты**:
+
+- `prometheus` (порт 9090) — собирает метрики с backend (`/metrics`), конфиг в `infra/monitoring/prometheus/prometheus.yml`.
+- `grafana` (порт 3001) — визуализация, datasource и дашборды автопровиженятся из `infra/monitoring/grafana/`.
+- Backend экспортирует метрики через `prometheus-fastapi-instrumentator` + доменные helper'ы в `service/monitoring/metrics.py`.
+
+**Ключевые метрики**:
+
+- `http_requests_total`, `http_request_duration_seconds_bucket` — техническая телеметрия.
+- `mlops_backend_dataset_uploads_total`, `mlops_backend_dataset_upload_size_bytes` — загрузки датасетов по режимам (light/heavy).
+- `mlops_backend_training_runs_total`, `mlops_backend_training_duration_seconds` — исходы и длительность тренировок по типу задачи.
+- `mlops_backend_dataset_ttl_*` — статусы и объёмы очистки протухших датасетов.
+
+**Настройка**:
+
+- Переменные окружения `PROMETHEUS__*` управляют namespace, путём и latency buckets (по умолчанию `/metrics`, 11 buckets 5ms…10s).
+- `PROMETHEUS_PORT`, `GRAFANA_PORT`, `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD` — порты и учётные данные UI.
+- Отключение экспорта: `PROMETHEUS__ENABLED=false` (эндпоинт `/metrics` будет недоступен, Prometheus отмечен DOWN).
+
+**Дашборды**:
+
+- `infra/monitoring/grafana/dashboards/mlops/backend-overview.json` отображает HTTP rate, скорость загрузок, p50/p95 длительность тренингов, сравнение success/failure.
+- Вход в Grafana: `http://localhost:3001` (смените пароль сразу после первого логина).
+
+**Проверка**:
+
+1. `docker compose up -d backend prometheus grafana`
+2. `curl http://localhost:8000/metrics` — метрики доступны и содержат `mlops_backend_*`.
+3. Prometheus UI (`/targets`) показывает `backend` со статусом `UP`.
+4. Grafana Dashboard автоматически доступен в разделе Dashboards.
+
+**Документация**: `docs/prometheus_integration_plan.md`, `docs/prometheus_implementation_summary.md`, `docs/prometheus_integration_guide.md`.
+
 ---
 
 ## ✅ Качество кода
@@ -1174,7 +1211,7 @@ npm run lint    # eslint
 
 ### Production (Docker Compose)
 
-**Шаг 1: Подготовка окружения**
+#### Шаг 1: Подготовка окружения
 
 ```bash
 # Создайте .env файл
@@ -1185,7 +1222,7 @@ AUTH__SECRET=your-secure-random-secret-key-here
 POSTGRES_PASSWORD=strong-password-here
 ```
 
-**Шаг 2: Сборка образов**
+#### Шаг 2: Сборка образов
 
 ```bash
 # Автоматическая сборка
@@ -1195,7 +1232,7 @@ MODE=prod ./build.sh
 docker compose build --no-cache
 ```
 
-**Шаг 3: Запуск сервисов**
+#### Шаг 3: Запуск сервисов
 
 ```bash
 # Автоматический запуск с health checks
@@ -1205,7 +1242,7 @@ MODE=prod ./run.sh
 docker compose up -d
 ```
 
-**Шаг 4: Проверка**
+#### Шаг 4: Проверка
 
 ```bash
 # Health check
@@ -1218,7 +1255,7 @@ curl http://localhost:80/api/docs
 open http://localhost:80
 ```
 
-**Шаг 5: Мониторинг логов**
+#### Шаг 5: Мониторинг логов
 
 ```bash
 docker compose logs -f backend   # Backend logs
@@ -1240,9 +1277,9 @@ docker compose -f docker-compose.dev.yaml up --build
 
 **URLs**:
 
-- Frontend: http://localhost:3000 (React dev server)
-- Backend: http://localhost:8000 (Uvicorn hot reload)
-- API Docs: http://localhost:8000/api/docs
+- Frontend: <http://localhost:3000> (React dev server)
+- Backend: <http://localhost:8000> (Uvicorn hot reload)
+- API Docs: <http://localhost:8000/api/docs>
 
 **Hot reload**:
 
@@ -1523,31 +1560,27 @@ npm test  # Jest + React Testing Library
 
 ## ⚠️ Известные ограничения
 
-### Backend
+### Backend ограничения
 
-1. **Storage Backend**:
-   - ✅ Local filesystem (default, production-ready)
-   - ✅ MinIO/S3 (полностью реализован v1.0)
-   - TODO: Azure Blob Storage, Google Cloud Storage поддержка
-
-2. **ML Pipeline**:
-   - Только classification и regression
-   - Baseline-модели в light mode
-   - TODO: Deep learning, NLP, computer vision
-
-3. **Job Processing**:
-   - Однопоточный background worker
-   - TODO: Celery/RQ для распределённой обработки
-
-4. **Monitoring**:
-   - Базовый health check
-   - TODO: Prometheus metrics, Grafana dashboards
-
-5. **Caching**:
+- **Storage Backend**:
+  - ✅ Local filesystem (default, production-ready)
+  - ✅ MinIO/S3 (полностью реализован v1.0)
+  - TODO: Azure Blob Storage, Google Cloud Storage поддержка
+- **ML Pipeline**:
+  - Только classification и regression
+  - Baseline-модели в light mode
+  - TODO: Deep learning, NLP, computer vision
+- **Job Processing**:
+  - Однопоточный background worker
+  - TODO: Celery/RQ для распределённой обработки
+- **Monitoring**:
+  - ✅ Prometheus metrics + Grafana dashboards (v1)
+  - TODO: Alertmanager, Loki, Tempo интеграции
+- **Caching**:
   - JWT-сессии и профили кешируются в Redis (prod + dev)
   - TODO: Добавить кэширование метрик (aggregations)
 
-### Frontend
+### Frontend ограничения
 
 1. **Testing**:
    - Нет unit/integration тестов
@@ -1569,7 +1602,7 @@ npm test  # Jest + React Testing Library
    - Частичная поддержка a11y
    - TODO: Полная WCAG 2.1 AA compliance
 
-### Infrastructure
+### Infrastructure ограничения
 
 1. **Scalability**:
    - Вертикальное масштабирование
@@ -1677,12 +1710,12 @@ npm test  # Jest + React Testing Library
 
 ### API Документация
 
-- **Swagger UI**: http://localhost:8000/api/docs (dev) или http://yourdomain.com/api/docs (prod)
-- **ReDoc**: http://localhost:8000/api/redoc
+- **Swagger UI**: <http://localhost:8000/api/docs> (dev) или <http://yourdomain.com/api/docs> (prod)
+- **ReDoc**: <http://localhost:8000/api/redoc>
 
 ### Разработка
 
-**Repository**: https://github.com/Prischli-Drink-Coffee/MLservice
+**Repository**: <https://github.com/Prischli-Drink-Coffee/MLservice>
 **Branch**: `future/redis`
 **Default branch**: `dev`
 

@@ -1,10 +1,16 @@
 import logging
 import os
 import uuid
+from time import perf_counter
 from typing import Any
 
 from service.models.jobs_models import JobLogic
 from service.models.key_value import ProcessingStatus
+from service.monitoring.metrics import (
+    record_training_failure,
+    record_training_started,
+    record_training_success,
+)
 from service.repositories.file_repository import FileRepository
 from service.repositories.training_repository import TrainingRepository
 
@@ -51,83 +57,99 @@ class TrainingService:
         """
         logger.info("Starting training for job %s", job.id)
 
+        record_training_started(job.mode)
+        started_at = perf_counter()
+        metrics: dict[str, Any] = {}
+
         # 1) Find latest user file for the job.mode
-        latest_files = await self._file_repo.fetch_user_files_metadata(job.user_id, job.mode)
-        if not latest_files:
-            logger.warning("No user files found for user=%s mode=%s", job.user_id, job.mode)
-            raise ValueError("No input dataset available for training")
-
-        user_file = sorted(latest_files, key=lambda f: getattr(f, "created_at", 0), reverse=True)[0]
-
-        # 2) Ensure dataset exists (registry record)
-        dataset = await self._training_repo.get_or_create_dataset_from_file(
-            user_id=job.user_id,
-            launch_id=job.id,
-            mode=job.mode,
-            file_name=user_file.file_name,
-            file_url=user_file.file_url,
-        )
-
-        # 3) Create training run
-        run = await self._training_repo.create_training_run(
-            user_id=job.user_id,
-            launch_id=job.id,
-            dataset_id=dataset.id,
-            status=ProcessingStatus.PROCESSING,
-        )
-
-        # 4) Load dataset and train a simple model
-        data_path = self._resolve_data_path(user_file.file_url)
-        metrics: dict[str, Any] = await self._train_and_export_model(data_path)
-
-        # 5) Persist a model artifact file (already created by _train_and_export_model)
-        model_url = metrics.get("model_url")
-        if not model_url:
-            raise ValueError("Training completed but no model_url was generated")
-
-        # 6) Save artifact and mark run done
-        await self._training_repo.create_model_artifact(
-            user_id=job.user_id,
-            launch_id=job.id,
-            model_url=model_url,
-            metrics=metrics,
-        )
-        await self._training_repo.update_training_run_status(
-            run_id=run.id, status=ProcessingStatus.SUCCESS, model_url=model_url, metrics=metrics
-        )
-
-        # 7) Retention: limit number of artifacts per user (env MAX_MODEL_ARTIFACTS, default 5)
         try:
-            import os
+            latest_files = await self._file_repo.fetch_user_files_metadata(job.user_id, job.mode)
+            if not latest_files:
+                logger.warning("No user files found for user=%s mode=%s", job.user_id, job.mode)
+                raise ValueError("No input dataset available for training")
 
-            max_artifacts = int(os.getenv("MAX_MODEL_ARTIFACTS", "5"))
-        except Exception:  # noqa: BLE001
-            max_artifacts = 5
-        if max_artifacts > 0:
+            user_file = sorted(
+                latest_files, key=lambda f: getattr(f, "created_at", 0), reverse=True
+            )[0]
+
+            # 2) Ensure dataset exists (registry record)
+            dataset = await self._training_repo.get_or_create_dataset_from_file(
+                user_id=job.user_id,
+                launch_id=job.id,
+                mode=job.mode,
+                file_name=user_file.file_name,
+                file_url=user_file.file_url,
+            )
+
+            # 3) Create training run
+            run = await self._training_repo.create_training_run(
+                user_id=job.user_id,
+                launch_id=job.id,
+                dataset_id=dataset.id,
+                status=ProcessingStatus.PROCESSING,
+            )
+
+            # 4) Load dataset and train a simple model
+            data_path = self._resolve_data_path(user_file.file_url)
+            metrics = await self._train_and_export_model(data_path)
+
+            # 5) Persist a model artifact file (already created by _train_and_export_model)
+            model_url = metrics.get("model_url")
+            if not model_url:
+                raise ValueError("Training completed but no model_url was generated")
+
+            # 6) Save artifact and mark run done
+            await self._training_repo.create_model_artifact(
+                user_id=job.user_id,
+                launch_id=job.id,
+                model_url=model_url,
+                metrics=metrics,
+            )
+            await self._training_repo.update_training_run_status(
+                run_id=run.id,
+                status=ProcessingStatus.SUCCESS,
+                model_url=model_url,
+                metrics=metrics,
+            )
+
+            # 7) Retention: limit number of artifacts per user (env MAX_MODEL_ARTIFACTS, default 5)
             try:
-                total = await self._training_repo.count_artifacts(job.user_id)
-                if total > max_artifacts:
-                    deleted_urls = await self._training_repo.delete_oldest_artifacts(
-                        job.user_id, keep=max_artifacts
-                    )
-                    removed_files = 0
-                    for url in deleted_urls:
-                        path = self._resolve_model_path(url)
-                        try:
-                            os.remove(path)
-                            removed_files += 1
-                        except FileNotFoundError:
-                            logger.debug("Retention cleanup skipped missing file: %s", path)
-                        except Exception as e:  # noqa: BLE001
-                            logger.warning("Failed to delete artifact file %s: %s", path, e)
-                    logger.info(
-                        "Artifact retention: removed %s DB records and %s files for user %s",
-                        len(deleted_urls),
-                        removed_files,
-                        job.user_id,
-                    )
+                max_artifacts = int(os.getenv("MAX_MODEL_ARTIFACTS", "5"))
             except Exception:  # noqa: BLE001
-                logger.warning("Artifact retention step failed for user %s", job.user_id)
+                max_artifacts = 5
+            if max_artifacts > 0:
+                try:
+                    total = await self._training_repo.count_artifacts(job.user_id)
+                    if total > max_artifacts:
+                        deleted_urls = await self._training_repo.delete_oldest_artifacts(
+                            job.user_id, keep=max_artifacts
+                        )
+                        removed_files = 0
+                        for url in deleted_urls:
+                            path = self._resolve_model_path(url)
+                            try:
+                                os.remove(path)
+                                removed_files += 1
+                            except FileNotFoundError:
+                                logger.debug("Retention cleanup skipped missing file: %s", path)
+                            except Exception as e:  # noqa: BLE001
+                                logger.warning("Failed to delete artifact file %s: %s", path, e)
+                        logger.info(
+                            "Artifact retention: removed %s DB records and %s files for user %s",
+                            len(deleted_urls),
+                            removed_files,
+                            job.user_id,
+                        )
+                except Exception:  # noqa: BLE001
+                    logger.warning("Artifact retention step failed for user %s", job.user_id)
+
+        except Exception as exc:
+            record_training_failure(job.mode, exc)
+            raise
+
+        duration = perf_counter() - started_at
+        task_label = metrics.get("task") if isinstance(metrics, dict) else None
+        record_training_success(job.mode, task_label, duration)
 
         logger.info("Training for job %s finished successfully", job.id)
         return metrics

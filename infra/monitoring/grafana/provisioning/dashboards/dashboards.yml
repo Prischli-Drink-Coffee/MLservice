@@ -1,0 +1,9 @@
+apiVersion: 1
+
+providers:
+  - name: "mlops"
+    folder: "MLOps"
+    type: file
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/mlops

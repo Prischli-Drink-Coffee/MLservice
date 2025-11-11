@@ -18,7 +18,7 @@ if [[ -f "$ENV_FILE" ]]; then
     done < "$ENV_FILE"
 else
     echo "[warn] .env not found, using local defaults (see build.sh to scaffold one)."
-    export POSTGRES_USER=postgres POSTGRES_PASSWORD=postgres POSTGRES_DB=telerag POSTGRES_PORT=5432 NGINX_PORT=8080
+    export POSTGRES_USER=postgres POSTGRES_PASSWORD=postgres POSTGRES_DB=telerag POSTGRES_PORT=5432 NGINX_PORT=8080 PROMETHEUS_PORT=9090 GRAFANA_PORT=3001
 fi
 
 MODE="${MODE:-prod}"
@@ -26,10 +26,14 @@ if [[ "$MODE" == "dev" ]]; then
     COMPOSE_FILE="$PROJECT_ROOT/docker-compose.dev.yaml"
     echo "[mode] development"
     REDIS_CONTAINER_NAME="redis-dev"
+    PROMETHEUS_CONTAINER_NAME="prometheus-dev"
+    GRAFANA_CONTAINER_NAME="grafana-dev"
 else
     COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yaml"
     echo "[mode] production"
     REDIS_CONTAINER_NAME="redis"
+    PROMETHEUS_CONTAINER_NAME="prometheus"
+    GRAFANA_CONTAINER_NAME="grafana"
 fi
 
 if docker compose version >/dev/null 2>&1; then
@@ -88,6 +92,7 @@ if [[ "$MODE" == "dev" ]]; then
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d redis
     wait_for_container_health "$REDIS_CONTAINER_NAME" 60 || true
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d backend
+    $COMPOSE_BIN -f "$COMPOSE_FILE" up -d prometheus grafana
     FRONTEND_URL="http://localhost:3000"
     BACKEND_URL="http://localhost:8000/api"
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d frontend
@@ -97,6 +102,7 @@ else
     wait_for_container_health postgres 60 || true
     wait_for_container_health "$REDIS_CONTAINER_NAME" 60 || true
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d backend
+    $COMPOSE_BIN -f "$COMPOSE_FILE" up -d prometheus grafana
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d frontend nginx
     FRONTEND_URL="http://localhost:${NGINX_PORT:-8080}"
     BACKEND_URL="$FRONTEND_URL/api"
@@ -125,6 +131,10 @@ echo "--- Services are up ---"
 echo "Frontend:  $FRONTEND_URL"
 echo "API docs:  ${BACKEND_URL}/docs"
 echo "API health: ${BACKEND_URL}/health"
+PROMETHEUS_URL="http://localhost:${PROMETHEUS_PORT:-9090}"
+GRAFANA_URL="http://localhost:${GRAFANA_PORT:-3001}"
+echo "Prometheus: $PROMETHEUS_URL"
+echo "Grafana:    $GRAFANA_URL"
 echo
 echo "[tip] To view logs: $COMPOSE_BIN -f $COMPOSE_FILE logs -f --tail=200"
 echo "[tip] To stop:      $COMPOSE_BIN -f $COMPOSE_FILE down --remove-orphans"
