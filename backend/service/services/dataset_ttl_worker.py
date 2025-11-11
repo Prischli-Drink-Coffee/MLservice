@@ -3,6 +3,11 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Callable
 
+from service.monitoring.metrics import (
+    record_dataset_ttl_empty,
+    record_dataset_ttl_failure,
+    record_dataset_ttl_success,
+)
 from service.repositories.training_repository import TrainingRepository
 from service.services.file_saver_service import FileSaverService
 
@@ -60,10 +65,17 @@ async def run_dataset_ttl_loop(
                     files_removed,
                     files_missing,
                 )
+                record_dataset_ttl_success(
+                    datasets_removed=len(file_keys),
+                    files_removed=files_removed,
+                    files_missing=files_missing,
+                )
             else:
                 logger.debug("Dataset TTL cleanup: no expired datasets found")
+                record_dataset_ttl_empty()
 
         except Exception:
             logger.exception("Dataset TTL cleanup cycle failed")
+            record_dataset_ttl_failure()
 
         await asyncio.sleep(interval_sec)

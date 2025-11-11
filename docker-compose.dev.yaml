@@ -48,16 +48,22 @@ services:
       - MINIO__RETRY_ATTEMPTS=${MINIO__RETRY_ATTEMPTS:-3}
       - MINIO__RETRY_BACKOFF=${MINIO__RETRY_BACKOFF:-0.5}
       - MINIO__PRESIGN_EXPIRY=${MINIO__PRESIGN_EXPIRY:-3600}
-      - "REDIS__ENABLED=${REDIS__ENABLED:-true}"
-      - "REDIS__HOST=${REDIS__HOST:-redis}"
-      - "REDIS__PORT=${REDIS__PORT:-6379}"
-      - "REDIS__DB=${REDIS__DB:-0}"
-      - "REDIS__PASSWORD=${REDIS__PASSWORD:-}"
-      - "REDIS__SESSION_PREFIX=${REDIS__SESSION_PREFIX:-session}"
-      - "REDIS__SESSION_TTL_SECONDS=${REDIS__SESSION_TTL_SECONDS:-3600}"
-      - "REDIS__CACHE_PREFIX=${REDIS__CACHE_PREFIX:-cache}"
-      - "REDIS__CACHE_DEFAULT_TTL_SECONDS=${REDIS__CACHE_DEFAULT_TTL_SECONDS:-300}"
-      - "REDIS__PROFILE_CACHE_TTL_SECONDS=${REDIS__PROFILE_CACHE_TTL_SECONDS:-900}"
+      - PROMETHEUS__ENABLED=${PROMETHEUS__ENABLED:-true}
+      - PROMETHEUS__METRICS_PATH=${PROMETHEUS__METRICS_PATH:-/metrics}
+      - PROMETHEUS__METRIC_NAMESPACE=${PROMETHEUS__METRIC_NAMESPACE:-mlops}
+      - PROMETHEUS__METRIC_SUBSYSTEM=${PROMETHEUS__METRIC_SUBSYSTEM:-backend}
+      - PROMETHEUS__LATENCY_BUCKETS=${PROMETHEUS__LATENCY_BUCKETS:-'[0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2,5,10]'}
+      - PROMETHEUS__INSTRUMENT_INPROGRESS=${PROMETHEUS__INSTRUMENT_INPROGRESS:-true}
+      - REDIS__ENABLED=${REDIS__ENABLED:-true}
+      - REDIS__HOST=${REDIS__HOST:-redis}
+      - REDIS__PORT=${REDIS__PORT:-6379}
+      - REDIS__DB=${REDIS__DB:-0}
+      - REDIS__PASSWORD=${REDIS__PASSWORD:-}
+      - REDIS__SESSION_PREFIX=${REDIS__SESSION_PREFIX:-session}
+      - REDIS__SESSION_TTL_SECONDS=${REDIS__SESSION_TTL_SECONDS:-3600}
+      - REDIS__CACHE_PREFIX=${REDIS__CACHE_PREFIX:-cache}
+      - REDIS__CACHE_DEFAULT_TTL_SECONDS=${REDIS__CACHE_DEFAULT_TTL_SECONDS:-300}
+      - REDIS__PROFILE_CACHE_TTL_SECONDS=${REDIS__PROFILE_CACHE_TTL_SECONDS:-900}
       - ENABLE_REAL_TRAINING=${ENABLE_REAL_TRAINING:-false}
       - MAX_MODEL_ARTIFACTS=${MAX_MODEL_ARTIFACTS:-5}
       - MAX_CSV_UPLOAD_BYTES=${MAX_CSV_UPLOAD_BYTES:-10485760}
@@ -125,5 +131,40 @@ services:
       retries: 3
     restart: "always"
 
+  prometheus:
+    container_name: prometheus-dev
+    image: prom/prometheus:v2.54.1
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    volumes:
+      - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_dev_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - backend
+    restart: "always"
+
+  grafana:
+    container_name: grafana-dev
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/mlops/backend-overview.json
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+      - ./infra/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./infra/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+    restart: "always"
+
 volumes:
   pg_data_volume:
+  prometheus_dev_data:
+  grafana_dev_data:

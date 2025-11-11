@@ -133,6 +133,34 @@ class RedisConfig(BaseModel):
         return f"{scheme}://{auth}{self.host}:{self.port}/{self.db}"
 
 
+class MonitoringConfig(BaseSettings):
+    """Prometheus/Grafana monitoring configuration"""
+
+    enabled: bool = True
+    metrics_path: str = "/metrics"
+    metric_namespace: str = "mlops"
+    metric_subsystem: str = "backend"
+    latency_buckets: list[float] = Field(  # seconds
+        default_factory=lambda: [
+            0.005,
+            0.01,
+            0.025,
+            0.05,
+            0.1,
+            0.25,
+            0.5,
+            1.0,
+            2.0,
+            5.0,
+            10.0,
+        ]
+    )
+    gather_default_metrics: bool = True
+    instrument_inprogress: bool = True
+
+    model_config = SettingsConfigDict(env_prefix="PROMETHEUS__")
+
+
 class Config(BaseSettings):
     service_name: str = "service-api"
 
@@ -145,6 +173,7 @@ class Config(BaseSettings):
     cors: CorsConfig = Field(default_factory=CorsConfig)
     minio: MinioConfig = Field(default_factory=MinioConfig)
     redis: RedisConfig = Field(default_factory=RedisConfig)
+    monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
 
     # Storage backend selection
     storage_backend: str = "local"  # "local" or "minio"

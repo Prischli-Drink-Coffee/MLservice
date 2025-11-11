@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, 
 
 from service.models.auth_models import AuthProfile
 from service.models.key_value import ServiceMode
+from service.monitoring.metrics import record_dataset_upload
 from service.presentation.dependencies.auth_checker import check_auth
 from service.presentation.routers.ml_api.schemas import (
     ArtifactDeleteResponse,
@@ -279,6 +280,8 @@ async def upload_dataset(
             )
     except Exception:
         presigned = None
+
+    record_dataset_upload(mode=mode, size_bytes=len(raw))
 
     return DatasetUploadResponse(
         dataset_id=dataset.id,

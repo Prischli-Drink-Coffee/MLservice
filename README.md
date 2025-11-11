@@ -81,6 +81,16 @@ Redis используется для хранения активных поль
 
 📖 **Документация по интеграции**: `docs/redis_integration_plan.md`, `docs/redis_implementation_summary.md`, `docs/redis_integration_guide.md`.
 
+### Monitoring & Observability
+
+- Prometheus (`http://localhost:9090`) и Grafana (`http://localhost:3001`) поднимаются вместе с бэкендом как в prod, так и в dev-compose.
+- Экспорт метрик включён по умолчанию (`PROMETHEUS__ENABLED=true`) и доступен на `http://localhost:8000/metrics`.
+- Готовый Grafana дашборд «Backend Monitoring Overview» подключается автоматически; логин/пароль по умолчанию `admin/admin`.
+- Основные переменные окружения: `PROMETHEUS__*` (namespace, путь, buckets), `PROMETHEUS_PORT`, `GRAFANA_PORT`, `GRAFANA_ADMIN_*`.
+- Для отключения мониторинга задайте `PROMETHEUS__ENABLED=false` и перезапустите backend.
+
+📖 **Документация**: `docs/prometheus_integration_plan.md`, `docs/prometheus_implementation_summary.md`, `docs/prometheus_integration_guide.md`.
+
 ### ML / Upload feature flags
 
 - `ENABLE_REAL_TRAINING` — включает реальное обучение (pandas + scikit-learn + joblib). По умолчанию выключено (fallback лёгкий baseline). Любая ошибка heavy-пути приводит к автоматическому откату на лёгкий путь.
