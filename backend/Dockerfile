@@ -1,4 +1,4 @@
-FROM python:3.13.7-slim-bookworm
+FROM python:3.13-slim
 
 ARG NEXUS_PYPI_INDEX_URL
 
@@ -27,6 +27,8 @@ RUN uv pip install --system --index-url "${NEXUS_PYPI_INDEX_URL:-https://pypi.or
 COPY --chown=dude:dudes ./service ${HOME}/service
 COPY --chown=dude:dudes ./alembic ${HOME}/alembic
 COPY --chown=dude:dudes ./entrypoints.sh ${HOME}
+
+RUN chmod +x ${HOME}/entrypoints.sh
 
 USER dude
 ENTRYPOINT ["/dude/entrypoints.sh"]

@@ -5,9 +5,8 @@ set -euo pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$PROJECT_ROOT/.env"
 
-echo "=== Run: TeleRAG Stack ==="
+echo "=== Run ==="
 
-# Load .env if present, set minimal defaults if not
 if [[ -f "$ENV_FILE" ]]; then
     while IFS='=' read -r key value; do
         if [[ -n $key && $key != '#'* ]]; then
@@ -68,23 +67,6 @@ wait_for_container_health() {
     return 1
 }
 
-wait_for_kafka() {
-    local container_name="kafka"
-    local timeout="${1:-120}"
-    local i=0
-    echo "[info] Waiting for Kafka to be ready (timeout ${timeout}s)..."
-    while [[ $i -lt $timeout ]]; do
-        if docker exec "$container_name" bash -lc "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"; then
-            echo "[ok] Kafka is ready"
-            return 0
-        fi
-        sleep 2
-        i=$((i+2))
-    done
-    echo "[warn] Kafka readiness timed out after ${timeout}s"
-    return 1
-}
-
 echo "[step] Starting services..."
 if [[ "$MODE" == "dev" ]]; then
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d postgres
@@ -93,8 +75,8 @@ if [[ "$MODE" == "dev" ]]; then
     wait_for_container_health "$REDIS_CONTAINER_NAME" 60 || true
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d backend
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d prometheus grafana
-    FRONTEND_URL="http://localhost:3000"
-    BACKEND_URL="http://localhost:8000/api"
+    FRONTEND_URL="http://localhost:${FRONTEND_PORT:-3000}"
+    BACKEND_URL="http://localhost:${BACKEND_PORT:-8000}/api"
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d frontend
 else
     # Prod: start infra, wait for postgres, then backend, then frontend+nginx
