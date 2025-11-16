@@ -5,7 +5,7 @@ export async function listDatasets({ limit = 20 } = {}) {
   return res.data;
 }
 
-export async function uploadDataset(file, { mode = "LIPS" } = {}) {
+export async function uploadDataset(file, { mode = "TRAINING" } = {}) {
   const form = new FormData();
   form.append("file", file);
   const res = await client.post(`/api/ml/v1/datasets/upload`, form, {

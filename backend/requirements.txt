@@ -30,10 +30,6 @@ click==8.3.0
     #   rich-toolkit
     #   typer
     #   uvicorn
-colorama==0.4.6
-    # via
-    #   click
-    #   uvicorn
 dnspython==2.8.0
     # via email-validator
 email-validator==2.3.0
@@ -92,6 +88,12 @@ numpy==1.26.4
     #   scipy
 pandas==2.3.3
     # via backend (pyproject.toml)
+prometheus-client==0.23.1
+    # via
+    #   backend (pyproject.toml)
+    #   prometheus-fastapi-instrumentator
+prometheus-fastapi-instrumentator==7.1.0
+    # via backend (pyproject.toml)
 pycparser==2.23
     # via cffi
 pycryptodome==3.23.0
@@ -123,6 +125,8 @@ pytz==2025.2
     # via pandas
 pyyaml==6.0.2
     # via uvicorn
+redis==5.0.4
+    # via backend (pyproject.toml)
 rich==14.1.0
     # via
     #   rich-toolkit
@@ -131,8 +135,6 @@ rich-toolkit==0.15.1
     # via
     #   fastapi-cli
     #   fastapi-cloud-cli
-redis==5.0.4
-    # via backend (pyproject.toml)
 rignore==0.6.4
     # via fastapi-cloud-cli
 scikit-learn==1.7.2
@@ -154,7 +156,9 @@ sqlalchemy==2.0.43
     #   backend (pyproject.toml)
     #   alembic
 starlette==0.48.0
-    # via fastapi
+    # via
+    #   fastapi
+    #   prometheus-fastapi-instrumentator
 threadpoolctl==3.6.0
     # via scikit-learn
 typer==0.19.2
@@ -188,6 +192,8 @@ uvicorn==0.35.0
     #   fastapi
     #   fastapi-cli
     #   fastapi-cloud-cli
+uvloop==0.22.1
+    # via uvicorn
 watchfiles==1.1.0
     # via uvicorn
 websockets==15.0.1

@@ -11,6 +11,10 @@ import { tokens } from "../theme/tokens";
 
 const MotionBox = motion(Box);
 
+
+const nameProject = "MLservice";
+
+
 function SignUpPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -40,6 +44,35 @@ function SignUpPage() {
   const passwordsMismatch = password && confirmPassword && password !== confirmPassword;
   const passwordStrongEnough = hasMinLen && hasLetter && hasDigit;
 
+  const formatErrorMessage = (error) => {
+    if (!error) {
+      return "Не удалось завершить регистрацию";
+    }
+
+    const detail = error.response?.data?.detail;
+    if (typeof detail === "string" && detail.trim()) {
+      return detail;
+    }
+
+    if (Array.isArray(detail)) {
+      const detailMessages = detail
+        .map((entry) =>
+          typeof entry === "string" ? entry : entry?.msg || entry?.message || JSON.stringify(entry),
+        )
+        .filter(Boolean);
+      if (detailMessages.length) {
+        return detailMessages.join("; ");
+      }
+    }
+
+    const message = error.response?.data?.message;
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+
+    return error.message || "Не удалось завершить регистрацию";
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
@@ -53,8 +86,7 @@ function SignUpPage() {
       await registerUser({ email, password, first_name: firstName || null, phone: phone || null });
       navigate("/login", { replace: true });
     } catch (err) {
-      const message = err.response?.data?.detail || err.message;
-      setError(message);
+      setError(formatErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +100,7 @@ function SignUpPage() {
           <Title size="medium" textAlign="center">
             Регистрация в{" "}
             <Box as="span" color={tokens.colors.brand.secondary}>
-              TeleRAG
+              {nameProject}
             </Box>
           </Title>
           <Body size="small" color={tokens.colors.text.tertiary} textAlign="center">

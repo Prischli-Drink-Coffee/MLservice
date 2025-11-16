@@ -5,8 +5,6 @@ import App from "./App";
 import theme from "./theme";
 import { AuthProvider } from "./context/AuthContext";
 import "./xy-theme.css";
-import "@xyflow/react/dist/style.css";
-import "./styles/reactflow-custom.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 

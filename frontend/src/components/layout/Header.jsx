@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Box,
   Button,
@@ -18,6 +17,10 @@ import { MoonIcon, SunIcon, HamburgerIcon } from "@chakra-ui/icons";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../common/assets/Logo";
+
+
+const nameProject = "MLservice";
+
 
 const navItems = [
   { label: "Главная", to: "/" },
@@ -58,7 +61,7 @@ function Header() {
             color={linkActiveColor}
             display={{ base: "none", sm: "block" }}
           >
-            ML Console
+            {nameProject} Console
           </Text>
         </HStack>
 

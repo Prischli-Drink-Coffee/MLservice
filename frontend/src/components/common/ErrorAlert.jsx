@@ -1,4 +1,3 @@
-import React from "react";
 import { Alert, AlertDescription, AlertIcon, AlertTitle, CloseButton } from "@chakra-ui/react";
 
 function ErrorAlert({ title = "Something went wrong", description, onClose }) {

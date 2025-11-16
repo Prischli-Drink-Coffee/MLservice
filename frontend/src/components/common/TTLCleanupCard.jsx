@@ -12,7 +12,7 @@ function TTLCleanupCard({ isAdmin = true }) {
   const runCleanup = async () => {
     setLoading(true);
     try {
-      const resp = await cleanupExpiredDatasets({ limit: 1000 });
+  const resp = await cleanupExpiredDatasets({ limit: 100 });
       setResult(resp);
     } catch (e) {
       setResult({ error: e.response?.data?.detail || e.message });

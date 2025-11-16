@@ -14,11 +14,11 @@ case "$1" in
 
     "server")
         echo "Starting server ..."
-        echo "Skipping database migrations for now..."
-        # alembic -c /dude/alembic/alembic.ini upgrade head || {
-        #     echo "Alembic migration failed" >&2
-        #     exit 1
-        # }
+        echo "Running database migrations (alembic upgrade head)"
+        if ! alembic -c /dude/alembic/alembic.ini upgrade head; then
+            echo "Alembic migration failed" >&2
+            exit 1
+        fi
         # Enable reload in dev if requested
         RELOAD_ARGS=""
         if [ "${SERVICE_DEBUG}" = "1" ] || [ "${UVICORN_RELOAD}" = "1" ]; then
@@ -32,16 +32,6 @@ case "$1" in
             --workers ${UVICORN_WORKERS:-1} \
             --proxy-headers \
             ${RELOAD_ARGS}
-        ;;
-
-    "node-worker")
-        echo "Starting distributed node worker ..."
-        exec python -m service.workers.run_node_worker
-        ;;
-
-    "node-result-listener")
-        echo "Starting node result listener ..."
-        exec python -m service.workers.run_node_result_listener
         ;;
 
     *)

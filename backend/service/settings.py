@@ -158,7 +158,7 @@ class MonitoringConfig(BaseSettings):
     gather_default_metrics: bool = True
     instrument_inprogress: bool = True
 
-    model_config = SettingsConfigDict(env_prefix="PROMETHEUS__")
+    model_config = SettingsConfigDict(env_prefix="PROMETHEUS__", env_json=True)
 
 
 class Config(BaseSettings):

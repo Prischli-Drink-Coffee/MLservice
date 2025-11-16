@@ -1,9 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Box } from "@chakra-ui/react";
-import { motion, useAnimation } from "framer-motion";
 import { colors, borderRadius } from "../../theme/tokens";
-
-const MotionBox = motion(Box);
 
 /**
  * GlowingCard - Card with animated gradient border and glow effect
@@ -14,7 +11,6 @@ const MotionBox = motion(Box);
  */
 export default function GlowingCard({ children, intensity = "medium", ...rest }) {
   const [gradientPos, setGradientPos] = useState({ x: 50, y: 50 });
-  const controls = useAnimation();
 
   const accent = colors.brand.primary;
   const glowSecondary = colors.brand.secondary;
@@ -24,29 +20,19 @@ export default function GlowingCard({ children, intensity = "medium", ...rest })
     subtle: {
       boxShadow: "0 0 18px rgba(47, 116, 255, 0.15)",
       hoverShadow: "0 0 28px rgba(139, 92, 246, 0.45)",
+      borderWidth: "3px",
     },
     medium: {
       boxShadow: "0 0 18px rgba(47, 116, 255, 0.25)",
       hoverShadow: "0 0 28px rgba(139, 92, 246, 0.65)",
+      borderWidth: "5px",
     },
     strong: {
       boxShadow: "0 0 28px rgba(47, 116, 255, 0.35)",
       hoverShadow: "0 0 45px rgba(139, 92, 246, 0.85)",
+      borderWidth: "7px",
     },
   };
-
-  useEffect(() => {
-    controls.start({
-      x: [42, 58, 47, 60, 40, 50],
-      y: [48, 52, 60, 40, 55, 50],
-      transition: {
-        repeat: Infinity,
-        repeatType: "mirror",
-        duration: 12,
-        ease: "easeInOut",
-      },
-    });
-  }, [controls]);
 
   const gradientCss = useMemo(
     () =>
@@ -65,30 +51,22 @@ export default function GlowingCard({ children, intensity = "medium", ...rest })
   };
 
   return (
-    <MotionBox
+    <Box
       role="presentation"
       onMouseMove={handleMouseMove}
-      animate={controls}
-      custom={gradientPos}
-      initial={{
-        boxShadow: intensityMap[intensity].boxShadow,
-        scale: 1,
-      }}
-      whileHover={{
-        boxShadow: intensityMap[intensity].hoverShadow,
-        scale: 1.01,
-      }}
-      transition={{ duration: 0.45 }}
       bg="transparent"
       borderRadius={borderRadius.md}
       position="relative"
       overflow="hidden"
+      boxShadow={intensityMap[intensity].boxShadow}
+      transition="box-shadow 0.35s ease, transform 0.35s ease"
+      _hover={{ boxShadow: intensityMap[intensity].hoverShadow, transform: "translateY(-2px)" }}
       _before={{
         content: '""',
         position: "absolute",
         inset: 0,
         borderRadius: "inherit",
-        padding: "2px",
+        padding: intensityMap[intensity].borderWidth,
         background: gradientCss,
         backgroundSize: "200% 200%",
         WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
@@ -109,6 +87,6 @@ export default function GlowingCard({ children, intensity = "medium", ...rest })
       >
         {children}
       </Box>
-    </MotionBox>
+    </Box>
   );
 }

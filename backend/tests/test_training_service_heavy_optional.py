@@ -63,7 +63,12 @@ def test_heavy_training_joblib_artifact(tmp_path, monkeypatch):
         pytest.skip('ENABLE_REAL_TRAINING not set')
 
     user_id = uuid.uuid4()
-    job = JobLogic(user_id=user_id, mode=ServiceMode.LIPS, type=ServiceType.TRAIN, status=ProcessingStatus.NEW)
+    job = JobLogic(
+        user_id=user_id,
+        mode=ServiceMode.TRAINING,
+        type=ServiceType.TRAIN,
+        status=ProcessingStatus.NEW,
+    )
 
     datasets_dir = tmp_path / 'datasets'
     datasets_dir.mkdir(parents=True, exist_ok=True)

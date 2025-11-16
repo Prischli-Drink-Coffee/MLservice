@@ -92,7 +92,7 @@ def test_job_flow_train_enrichment():
 
     body = {
         "file_id": str(uuid.uuid4()),
-        "mode": ServiceMode.LIPS.value,
+        "mode": ServiceMode.TRAINING.value,
         "type": ServiceType.TRAIN.value,
     }
 

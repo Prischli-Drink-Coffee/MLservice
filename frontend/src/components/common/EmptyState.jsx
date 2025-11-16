@@ -1,4 +1,3 @@
-import React from "react";
 import { Text, VStack } from "@chakra-ui/react";
 
 function EmptyState({ title = "Nothing here yet", description }) {

@@ -89,7 +89,7 @@ async def test_training_service_retention_file_cleanup(tmp_path, monkeypatch):
     user_id = uuid.uuid4()
     job_base = {
         "user_id": user_id,
-        "mode": ServiceMode.LIPS,
+        "mode": ServiceMode.TRAINING,
         "type": ServiceType.TRAIN,
         "status": ProcessingStatus.NEW,
     }

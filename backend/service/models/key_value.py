@@ -6,7 +6,7 @@ class UserTypes(StrEnum):
 
 
 class ServiceMode(StrEnum):
-    LIPS = "LIPS"
+    TRAINING = "TRAINING"
 
 
 class Languages(StrEnum):
@@ -38,5 +38,4 @@ class BotJobStatus(StrEnum):
 
 
 class ServiceType(StrEnum):
-    FRENCH = "FRENCH"
     TRAIN = "TRAIN"  # ML training job type

@@ -12,6 +12,8 @@ import { tokens } from "../theme/tokens";
 
 const MotionBox = motion(Box);
 
+const nameProject = "MLservice";
+
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,7 +24,7 @@ function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const from = location.state?.from?.pathname || "/graphs";
+  const from = location.state?.from?.pathname || "/datasets";
   const emailInvalid = email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSubmit = async (event) => {
@@ -52,11 +54,11 @@ function LoginPage() {
           <Title size="medium" textAlign="center">
             Вход в{" "}
             <Box as="span" color={tokens.colors.brand.primary}>
-              TeleRAG
+              {nameProject}
             </Box>
           </Title>
           <Body size="small" color={tokens.colors.text.tertiary} textAlign="center">
-            Войдите в систему для управления графами
+            Войдите в систему для доступа к платформе
           </Body>
         </VStack>
 
@@ -140,13 +142,13 @@ function LoginPage() {
         <VStack spacing={3} pt={2}>
           <Box w="full" h="1px" bg={tokens.colors.border.subtle} />
 
-          <Text
+          {/* <Text
             fontSize={tokens.typography.footnote.small}
             color={tokens.colors.text.tertiary}
             textAlign="center"
           >
             Данные авторизации выдаёт администратор платформы
-          </Text>
+          </Text> */}
 
           <HStack spacing={1} fontSize={tokens.typography.footnote.medium}>
             <Text color={tokens.colors.text.tertiary}>Нет аккаунта?</Text>

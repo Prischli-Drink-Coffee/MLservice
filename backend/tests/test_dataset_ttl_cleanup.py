@@ -56,7 +56,7 @@ def _build_app(keys):
 
 
 def test_ttl_cleanup_deletes_files_and_reports():
-    keys = ["uploads/LIPS/a.csv", "uploads/LIPS/b.csv", "uploads/LIPS/c.csv"]
+    keys = ["uploads/TRAINING/a.csv", "uploads/TRAINING/b.csv", "uploads/TRAINING/c.csv"]
     app, storage = _build_app(keys)
     client = TestClient(app)
 

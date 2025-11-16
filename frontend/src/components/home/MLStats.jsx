@@ -113,8 +113,8 @@ function MLStats() {
     datasets: 0,
     trainingRuns: 0,
     artifacts: 0,
-    bestAccuracy: 0,
-    bestR2: 0,
+    avgAccuracy: 0,
+    avgR2: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -124,18 +124,18 @@ function MLStats() {
       try {
         // Fetch data in parallel (requesting more items to get accurate counts)
         const [datasetsRes, runsRes, artifactsRes, metricsRes] = await Promise.allSettled([
-          listDatasets({ limit: 1000 }),
-          listTrainingRuns({ limit: 1000 }),
-          listArtifacts({ limit: 1000 }),
-          getMetricsSummary({ limit: 1000 }),
+          listDatasets({ limit: 100 }),
+          listTrainingRuns({ limit: 100 }),
+          listArtifacts({ limit: 100 }),
+          getMetricsSummary({ limit: 200 }),
         ]);
 
         const newStats = {
           datasets: 0,
           trainingRuns: 0,
           artifacts: 0,
-          bestAccuracy: 0,
-          bestR2: 0,
+          avgAccuracy: 0,
+          avgR2: 0,
         };
 
         // Extract counts from responses
@@ -158,12 +158,11 @@ function MLStats() {
           if (summary.aggregates) {
             // Best accuracy (classification)
             if (summary.aggregates.best_accuracy !== null && summary.aggregates.best_accuracy !== undefined) {
-              newStats.bestAccuracy = (summary.aggregates.best_accuracy * 100) || 0;
+              newStats.avgAccuracy = (summary.aggregates.avg_accuracy * 100) || 0;
             }
 
-            // Best R2 (regression)
-            if (summary.aggregates.best_r2 !== null && summary.aggregates.best_r2 !== undefined) {
-              newStats.bestR2 = (summary.aggregates.best_r2 * 100) || 0;
+            if (summary.aggregates.avg_r2 !== null && summary.aggregates.avg_r2 !== undefined) {
+              newStats.avgR2 = (summary.aggregates.avg_r2 * 100) || 0;
             }
           }
         }
@@ -214,16 +213,16 @@ function MLStats() {
           index={2}
         />
         <StatCard
-          label="Лучшая точность"
-          value={stats.bestAccuracy}
+          label="Средняя точность"
+          value={stats.avgAccuracy}
           suffix="%"
           isLoading={isLoading}
           color="#10b981"
           index={3}
         />
         <StatCard
-          label="Лучший R²"
-          value={stats.bestR2}
+          label="Средний R²"
+          value={stats.avgR2}
           suffix="%"
           isLoading={isLoading}
           color="#f59e0b"

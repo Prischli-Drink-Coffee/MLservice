@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@xyflow/react": "^12.9.3",
     "@chakra-ui/icons": "^2.1.1",
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.11.1",
@@ -28,8 +29,8 @@
     "react-scripts": "^5.0.1",
     "react-select": "^5.8.0",
     "react-select-async-paginate": "^0.7.3",
-    "web-vitals": "^2.1.4",
-    "recharts": "^2.10.3"
+    "recharts": "^2.10.3",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -42,7 +43,10 @@
   "eslintConfig": {
     "extends": [
       "react-app"
-    ]
+    ],
+    "globals": {
+      "process": "readonly"
+    }
   },
   "browserslist": {
     "production": [
@@ -56,12 +60,12 @@
       "last 1 safari version"
     ]
   },
-  "description": "Frontend for TeleRAG control panel",
+  "description": "Frontend for mlservice",
   "main": "index.js",
   "keywords": [
-    "telerag",
+    "mlservice",
     "fastapi",
-    "telegram"
+    "react"
   ],
   "author": "dfvolkhin@edu.hse.ru",
   "license": "MIT",

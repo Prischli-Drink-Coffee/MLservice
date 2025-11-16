@@ -1,5 +1,11 @@
-import React from "react";
 import { Box, Flex, Text, useColorModeValue } from "@chakra-ui/react";
+
+
+const nameProject = "MLservice";
+const versionProject = "1.0.0";
+const authorProject = "Prischli-Drink-Coffee Team";
+const yearCurrent = new Date().getFullYear();
+
 
 function Footer() {
   return (
@@ -14,10 +20,10 @@ function Footer() {
     >
       <Flex direction={{ base: "column", md: "row" }} justify="space-between" gap={2}>
         <Text fontSize="sm" color={useColorModeValue("text.muted", "text.muted")}>
-          TeleRAG Platform | Version 1.0.0
+          {nameProject} | Version {versionProject}
         </Text>
         <Text fontSize="sm" color={useColorModeValue("text.muted", "text.muted")}>
-          © {new Date().getFullYear()} Prischli-Drink-Coffee Team. All rights reserved.
+          © {yearCurrent} {authorProject}. All rights reserved.
         </Text>
       </Flex>
     </Box>

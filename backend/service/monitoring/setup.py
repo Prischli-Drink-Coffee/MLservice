@@ -59,13 +59,16 @@ def setup_monitoring(app: FastAPI) -> None:
         excluded_handlers=[monitoring_cfg.metrics_path],
     )
 
-    instrumentator.add(metrics.requests(method=True, handler=True, status=True))
-    instrumentator.add(metrics.latency(buckets=latency_buckets, labels=True))
+    instrumentator.add(metrics.requests(
+        should_include_method=True,
+        should_include_handler=True,
+        should_include_status=True,
+    ))
+    instrumentator.add(metrics.latency(buckets=latency_buckets))
     instrumentator.add(metrics.response_size())
     instrumentator.add(metrics.request_size())
-    instrumentator.add(metrics.exceptions())
     if monitoring_cfg.instrument_inprogress:
-        instrumentator.add(metrics.inprogress())
+        logger.info("Instrument-in-progress metric ignored because the helper is unavailable in this version")
 
     instrumentator.instrument(app)
     instrumentator.expose(

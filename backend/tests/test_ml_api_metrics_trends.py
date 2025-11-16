@@ -70,7 +70,7 @@ def test_metrics_trends_basic(app):
 
 def test_metrics_trends_with_mode_filter(app):
     client = TestClient(app)
-    r = client.get(f"/api/ml/v1/metrics/trends?mode={ServiceMode.LIPS.value}")
+    r = client.get(f"/api/ml/v1/metrics/trends?mode={ServiceMode.TRAINING.value}")
     assert r.status_code == 200
     data = r.json()
     assert len(data) >= 1

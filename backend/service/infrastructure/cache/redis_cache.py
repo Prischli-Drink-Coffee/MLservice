@@ -42,7 +42,7 @@ class RedisCacheService:
     ) -> None:
         key = self._key(namespace, identifier)
         ttl = ttl_seconds or self._config.cache_default_ttl_seconds
-        await self._client.set(key, json.dumps(payload), ex=max(ttl, 1))
+        await self._client.set(key, json.dumps(payload, default=str), ex=max(ttl, 1))
 
     async def invalidate(self, namespace: str, identifier: str) -> None:
         key = self._key(namespace, identifier)

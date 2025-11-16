@@ -1,5 +1,17 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Stack, useToast, Button, HStack, Input, Text, SimpleGrid, Box } from "@chakra-ui/react";
+import {
+  Badge,
+  Box,
+  Button,
+  Flex,
+  HStack,
+  IconButton,
+  Input,
+  SimpleGrid,
+  Stack,
+  Text,
+  useToast,
+} from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 import PageHeader from "../components/common/PageHeader";
 import Card from "../components/common/Card";
@@ -7,6 +19,30 @@ import { listDatasets, uploadDataset, getFileDownloadUrl } from "../API";
 import { ErrorAlert, LoadingState, EmptyState } from "../components";
 import TTLCleanupCard from "../components/common/TTLCleanupCard";
 import GlowingInput from "../components/common/GlowingInput";
+import { colors, borderRadius, spacing } from "../theme/tokens";
+
+const safeProcessEnv =
+  typeof globalThis !== "undefined" && globalThis.process && globalThis.process.env
+    ? globalThis.process.env
+    : {};
+
+const defaultOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
+const apiBaseUrl = (() => {
+  const raw = safeProcessEnv.REACT_APP_API_BASE_URL;
+  if (typeof raw === "string" && /^https?:\/\//i.test(raw)) {
+    return raw;
+  }
+  return defaultOrigin || "";
+})();
+
+const toAbsoluteApiUrl = (url) => {
+  if (!url) return url;
+  try {
+    return new URL(url, apiBaseUrl || defaultOrigin || "").toString();
+  } catch (e) {
+    return url;
+  }
+};
 
 function DatasetsPage() {
   const toast = useToast();
@@ -16,7 +52,7 @@ function DatasetsPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const isAdminUI = String(process.env.REACT_APP_ENABLE_ADMIN_UI || "false").toLowerCase() === "true";
+  const isAdminUI = String(safeProcessEnv.REACT_APP_ENABLE_ADMIN_UI || "false").toLowerCase() === "true";
 
   const fetchDatasets = async () => {
     setIsLoading(true);
@@ -58,13 +94,13 @@ function DatasetsPage() {
     try {
       // If presigned URL is already in dataset, use it directly
       if (dataset.download_url) {
-        window.open(dataset.download_url, '_blank');
+        window.open(toAbsoluteApiUrl(dataset.download_url), '_blank');
         return;
       }
 
       // Otherwise, request presigned URL from API
       const { url } = await getFileDownloadUrl(dataset.id);
-      window.open(url, '_blank');
+      window.open(toAbsoluteApiUrl(url), '_blank');
 
       toast({
         title: 'Скачивание началось',
@@ -104,21 +140,57 @@ function DatasetsPage() {
     }
 
     return (
-      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+      <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={5} w="full">
         {filteredDatasets.map((ds) => (
-          <Card key={ds.id} p={4}>
-            <Stack spacing={2}>
-              <Text fontWeight="semibold">Версия v{ds.version}</Text>
-              <Text fontSize="sm" color="text.muted">{new Date(ds.created_at).toLocaleString()}</Text>
-              <Text fontSize="sm" wordBreak="break-all">{ds.name}</Text>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleDownload(ds)}
+          <Card key={ds.id} p={0} h="100%" borderRadius={borderRadius.xl} overflow="hidden">
+            <Flex direction="column" h="100%">
+              <Box
+                px={spacing[4]}
+                py={spacing[3]}
+                borderBottom={`1px solid ${colors.border.default}`}
+                bg={colors.background.jet30}
               >
-                Скачать
-              </Button>
-            </Stack>
+                <HStack justify="space-between" align="center" spacing={3}>
+                  <Stack spacing={1} maxW="75%">
+                    <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="text.muted">
+                      Датасет
+                    </Text>
+                    <Text fontWeight={600} fontSize="md" noOfLines={1}>
+                      {ds.name || "Без названия"}
+                    </Text>
+                  </Stack>
+                  <Badge variant="subtle" colorScheme="brand" borderRadius="full" px={3} py={1} fontSize="xs">
+                    v{ds.version}
+                  </Badge>
+                </HStack>
+              </Box>
+
+              <Stack spacing={2} px={spacing[4]} py={spacing[3]} flex="1">
+                <Text fontSize="xs" color="text.muted">
+                  ID: {ds.id}
+                </Text>
+                <Text fontSize="xs" color="text.muted">
+                  Загружен: {new Date(ds.created_at).toLocaleString()}
+                </Text>
+              </Stack>
+
+              <Flex
+                px={spacing[4]}
+                py={spacing[3]}
+                borderTop={`1px solid ${colors.border.subtle}`}
+                justify="flex-end"
+                align="center"
+                gap={2}
+              >
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => handleDownload(ds)}
+                >
+                  Скачать
+                </Button>
+              </Flex>
+            </Flex>
           </Card>
         ))}
       </SimpleGrid>
@@ -126,20 +198,31 @@ function DatasetsPage() {
   };
 
   return (
-    <Stack spacing={6}>
+    <Stack spacing={6} w="full">
       <PageHeader
         title="Датасеты"
         subtitle="Загружайте CSV файлы для обучения моделей"
         actions={
-          <HStack>
+          <HStack spacing={3} align="center">
             <Input
               type="file"
               accept=".csv"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               size="sm"
+              maxW="260px"
             />
-            <Button onClick={handleUpload} isLoading={isUploading} colorScheme="brand" size="sm" disabled={!file}>Загрузить</Button>
-            <Button variant="ghost" size="sm" onClick={fetchDatasets}>Обновить</Button>
+            <Button
+              onClick={handleUpload}
+              isLoading={isUploading}
+              colorScheme="brand"
+              size="sm"
+              isDisabled={!file}
+            >
+              Загрузить
+            </Button>
+            <Button variant="ghost" size="sm" onClick={fetchDatasets}>
+              Обновить
+            </Button>
           </HStack>
         }
       />
@@ -148,20 +231,27 @@ function DatasetsPage() {
 
       {/* Поиск датасетов */}
       {datasets.length > 0 && (
-        <Box maxW="600px">
-          <GlowingInput
-            placeholder="Поиск по названию, версии или ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            showSubmitButton={false}
-            leftIcon={SearchIcon}
-          />
-        </Box>
+        <Flex
+          direction={{ base: "column", md: "row" }}
+          justify="space-between"
+          align={{ base: "stretch", md: "center" }}
+          gap={4}
+        >
+          <Box flex="1" maxW="600px">
+            <GlowingInput
+              placeholder="Поиск по названию, версии или ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              showSubmitButton={false}
+              leftIcon={SearchIcon}
+            />
+          </Box>
+        </Flex>
       )}
 
-      <Card p={4}>
+      <Card p={{ base: 4, md: 5 }} borderRadius={borderRadius.xl}>
         <Stack spacing={2} fontSize="sm" color="text.muted">
-          <Text>Требования к CSV:</Text>
+          <Text fontWeight={600}>Требования к CSV</Text>
           <Text>• Расширение .csv; минимум 2 колонки</Text>
           <Text>• Заголовок обязателен, не пустой файл</Text>
           <Text>• Допустимая доля пустых значений ограничена (MAX_EMPTY_RATIO)</Text>

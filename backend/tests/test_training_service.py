@@ -67,7 +67,10 @@ class _FakeTrainingRepo:
 async def test_training_service_happy_path_classification(tmp_path):
     user_id = uuid.uuid4()
     job = JobLogic(
-        user_id=user_id, mode=ServiceMode.LIPS, type=ServiceType.TRAIN, status=ProcessingStatus.NEW
+        user_id=user_id,
+        mode=ServiceMode.TRAINING,
+        type=ServiceType.TRAIN,
+        status=ProcessingStatus.NEW,
     )
 
     datasets_dir = tmp_path / "datasets"
@@ -94,7 +97,10 @@ async def test_training_service_happy_path_classification(tmp_path):
 async def test_training_service_happy_path_regression(tmp_path):
     user_id = uuid.uuid4()
     job = JobLogic(
-        user_id=user_id, mode=ServiceMode.LIPS, type=ServiceType.TRAIN, status=ProcessingStatus.NEW
+        user_id=user_id,
+        mode=ServiceMode.TRAINING,
+        type=ServiceType.TRAIN,
+        status=ProcessingStatus.NEW,
     )
 
     datasets_dir = tmp_path / "datasets"
@@ -125,7 +131,10 @@ async def test_training_service_happy_path_regression(tmp_path):
 async def test_training_service_no_files(tmp_path):
     user_id = uuid.uuid4()
     job = JobLogic(
-        user_id=user_id, mode=ServiceMode.LIPS, type=ServiceType.TRAIN, status=ProcessingStatus.NEW
+        user_id=user_id,
+        mode=ServiceMode.TRAINING,
+        type=ServiceType.TRAIN,
+        status=ProcessingStatus.NEW,
     )
     file_repo = _FakeFileRepo([])
     train_repo = _FakeTrainingRepo()

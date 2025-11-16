@@ -58,7 +58,7 @@ def _build_app():
 def _post(client: TestClient, content: bytes, name: str = "dataset.csv"):
     files = {"file": (name, io.BytesIO(content), "text/csv")}
     return client.post(
-        "/api/ml/v1/datasets/upload", params={"mode": ServiceMode.LIPS.value}, files=files
+        "/api/ml/v1/datasets/upload", params={"mode": ServiceMode.TRAINING.value}, files=files
     )
 
 

@@ -241,6 +241,18 @@ class TrainingRepository(BaseRepository):
         result = await session.execute(stmt)
         return list(result.scalars().all())
 
+    @connection()
+    async def get_dataset_by_id(
+        self, user_id: UUID, dataset_id: UUID, session: AsyncSession | None = None
+    ) -> Dataset | None:
+        stmt = (
+            select(Dataset)
+            .where(Dataset.user_id == user_id, Dataset.id == dataset_id)
+            .limit(1)
+        )
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
+
     # --- New helpers for Job API enrichment ---
     @connection()
     async def get_training_run_by_launch(

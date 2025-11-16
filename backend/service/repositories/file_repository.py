@@ -32,6 +32,15 @@ class FileRepository(BseRepository):
         return result.scalar_one_or_none()
 
     @connection()
+    async def fetch_user_file_by_name(
+        self, user_id: UUID, file_name: str, session: AsyncSession | None = None
+    ) -> UserFile | None:
+        result = await session.execute(
+            select(UserFile).where(UserFile.user_id == user_id, UserFile.file_name == file_name)
+        )
+        return result.scalar_one_or_none()
+
+    @connection()
     async def add_file_metadata(
         self, file_metadata: UserFile, session: AsyncSession | None = None
     ) -> UserFile:

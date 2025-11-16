@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import useHealth from "../hooks/useHealth";
 import HeroSection from "../components/home/HeroSection";
 import PlatformInfoCard from "../components/home/PlatformInfoCard";
-import MLStats from "../components/home/MLStats";
+import AuthenticatedMetricsDistributions from "../components/home/AuthenticatedMetricsDistributions";
 import BenefitsSection from "../components/home/BenefitsSection";
 import FeatureSlider from "../components/home/FeatureSlider";
 import SectionDivider from "../components/common/SectionDivider";
@@ -20,7 +20,6 @@ function HomePage() {
 
   return (
     <Box as="main" bg={colors.background.darkPrimary} w="full" minH="100vh">
-      {/* Hero Section with Two-Column Layout */}
       <Box pt={{ base: 10, md: 16 }} pb={{ base: 12, md: 18 }} px={{ base: 4, md: 6, lg: 8 }}>
         <Container maxW="1400px" px={0}>
           <SimpleGrid
@@ -45,9 +44,9 @@ function HomePage() {
       {/* ML Stats Section with GlowingCard */}
       {isAuthenticated && (
         <Box py={{ base: 12, md: 14 }} px={{ base: 4, md: 6, lg: 8 }}>
-          <Container maxW="1400px" px={0}>
-            <GlowingCard intensity="medium">
-              <MLStats />
+          <Container maxW="1100px" px={0}>
+            <GlowingCard intensity="medium" w="full">
+              <AuthenticatedMetricsDistributions />
             </GlowingCard>
           </Container>
         </Box>

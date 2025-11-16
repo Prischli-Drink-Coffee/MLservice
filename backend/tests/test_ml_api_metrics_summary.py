@@ -78,7 +78,7 @@ def test_metrics_summary_aggregates():
 def test_metrics_summary_with_mode_filter():
     app = _build_app()
     client = TestClient(app)
-    r = client.get(f"/api/ml/v1/metrics/summary?mode={ServiceMode.LIPS.value}")
+    r = client.get(f"/api/ml/v1/metrics/summary?mode={ServiceMode.TRAINING.value}")
     assert r.status_code == 200
     data = r.json()
     assert data["aggregates"]["count"] == 3  # fake repo ignores mode but endpoint handles param

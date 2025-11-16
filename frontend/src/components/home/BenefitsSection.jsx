@@ -7,23 +7,30 @@ import { CheckCircleIcon, TimeIcon, LockIcon, RepeatIcon } from "@chakra-ui/icon
 
 const MotionBox = motion(Box);
 
+{/* advantages */}
+const titleAdvantages = "Ключевые преимущества";
+const subtitleAdvantages = "Почему выбирают наш сервис?";
+const descriptionAdvantages =
+  "Наш сервис предлагает уникальные возможности для эффективного управления вашими ML-моделями и ресурсами.";
+
+{/* benefits */}
 const benefits = [
   {
     icon: CheckCircleIcon,
-    title: "Специализация",
-    description: "Таргетный подход к RAG с возможностью кастомизации под задачи пользователя",
+    title: "Простота использования",
+    description: "Интуитивно понятный интерфейс",
     color: colors.brand.primary,
   },
   {
     icon: TimeIcon,
-    title: "Масштабируемость",
-    description: "Kafka для обработки больших объемов данных с горизонтальным масштабированием",
+    title: "Скорость",
+    description: "Работа с классическими моделями на GPU через технологию RAPIDS",
     color: colors.brand.secondary,
   },
   {
     icon: RepeatIcon,
-    title: "Асинхронность",
-    description: "Ноды устроены как асинхронные микросервисы для высокой производительности",
+    title: "Повторяемость",
+    description: "Легкость воспроизведения результатов",
     color: "#f59e0b",
   },
   {
@@ -34,6 +41,9 @@ const benefits = [
   },
 ];
 
+
+
+{/* code */}
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -69,13 +79,13 @@ function BenefitsSection() {
             letterSpacing="wider"
             fontWeight={600}
           >
-            Ключевые преимущества
+            {titleAdvantages}
           </Footnote>
           <Subtitle variant="large" fontSize={{ base: "26px", md: "32px" }}>
-            Готовая инфраструктура для сложных пайплайнов
+            {subtitleAdvantages}
           </Subtitle>
           <Body variant="medium" color={colors.text.tertiary} maxW="650px">
-            От прототипа до production за часы, а не недели. Без vendor lock-in.
+            {descriptionAdvantages}
           </Body>
         </Stack>
 

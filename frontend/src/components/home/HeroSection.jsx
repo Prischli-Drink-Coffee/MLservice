@@ -11,6 +11,28 @@ import { colors, borderRadius } from "../../theme/tokens";
 const MotionBox = motion(Box);
 const MotionBadge = motion(Badge);
 
+const nameProject = "MLservice";
+const futureList = [
+  "FastAPI",
+  "Alembic",
+  "PostgreSQL",
+  "React",
+  "Chakra UI",
+  "Docker",
+  "Nginx",
+  "Pydantic",
+  "Scikit-learn",
+  "Radis",
+];
+
+const textDescription = {
+  text1: "MLservice — это платформа для обучения ML-моделей. Загрузите данные, настройте параметры, а дальше мы сами позаботимся обо всём остальном.",
+  text2: "Платформа создавалась ML инженерами для неподкованных пользователей, которым нужна надёжная инфраструктура и воспроизводимость экспериментов."
+}
+
+const textPrimaryButton = "Загрузить данные";
+const textSecondaryButton = "Обучить модель";
+
 /**
  * HeroSection - Main landing section with title, description and CTAs
  * @param {boolean} isAuthenticated - User authentication status
@@ -28,26 +50,13 @@ function HeroSection({ isAuthenticated }) {
         <HStack spacing={3}>
           <Logo boxSize={{ base: 8, md: 10 }} />
           <Footnote variant="medium" color={colors.text.secondary}>
-            TeleRAG Platform
+            {nameProject} Platform
           </Footnote>
         </HStack>
 
         {/* Feature Pills */}
         <Wrap spacing={2}>
-          {[
-            "FastAPI",
-            "Alembic",
-            "PostgreSQL",
-            "Kafka",
-            "React",
-            "Chakra UI",
-            "React Flow",
-            "Docker",
-            "Nginx",
-            "LangChain",
-            "Pydantic",
-            "Ollama",
-          ].map((tech, i) => (
+          {futureList.map((tech, i) => (
             <WrapItem key={tech}>
               <MotionBadge
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -71,8 +80,8 @@ function HeroSection({ isAuthenticated }) {
 
         {/* Main Title */}
         <Title variant="large" fontSize={{ base: "32px", md: "44px", lg: "52px" }} lineHeight="1.2">
-          Асинхронные графы
-          <br />и Телеграм-пайплайны
+          Обработка данных
+          <br />и ML-модели
           <br />
           <Box as="span" color={colors.brand.primary}>
             на нашей совести
@@ -82,16 +91,14 @@ function HeroSection({ isAuthenticated }) {
         {/* Description */}
         <VStack align="flex-start" spacing={3} maxW={{ base: "full", md: "650px" }}>
           <Body variant="large" fontSize={{ base: "15px", md: "17px" }}>
-            Собирайте RAG ботов в телеграме, интегрируйте LLM, базы знаний и внешние сервисы. Всё
-            это — в удобном визуальном билдере с поддержкой микросервисной архитектуры.
+            {textDescription.text1}
           </Body>
           <Body
             variant="medium"
             color={colors.text.tertiary}
             fontSize={{ base: "13px", md: "15px" }}
           >
-            Платформа создавалась ML инженерами для разработчиков и команд, которым нужна надёжная и
-            масштабируемая инфраструктура для RAG проектов. Наша бизнес метрика это Ваше время.
+            {textDescription.text2}
           </Body>
         </VStack>
 
@@ -100,13 +107,13 @@ function HeroSection({ isAuthenticated }) {
           {isAuthenticated ? (
             <HStack spacing={3} flexWrap="wrap" w="full">
               <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <PrimaryButton as={NavLink} to="/graphs" size="md">
-                  Перейти к сборке
+                <PrimaryButton as={NavLink} to="/datasets" size="md">
+                  {textPrimaryButton}
                 </PrimaryButton>
               </MotionBox>
               <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <SecondaryButton as={NavLink} to="/nodes" size="md">
-                  Посмотреть реестр нод
+                <SecondaryButton as={NavLink} to="/training" size="md">
+                  {textSecondaryButton}
                 </SecondaryButton>
               </MotionBox>
             </HStack>

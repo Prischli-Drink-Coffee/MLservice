@@ -1,6 +1,6 @@
 {
-  "name": "TelegramRAG",
-  "short_name": "TeleRAG",
+  "name": "MLservice",
+  "short_name": "MLS",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

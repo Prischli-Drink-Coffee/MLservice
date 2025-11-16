@@ -129,23 +129,27 @@ async def list_datasets(
     # Add presigned URLs if storage backend supports it
     result = []
     for dataset in items:
-        dataset_dict = dataset.model_dump()
+        dataset_response = DatasetResponse.model_validate(dataset)
 
         # Try to get presigned URL for MinIO backend
+        download_url = None
         try:
             # Get file metadata to retrieve file_name (storage key)
-            user_file = await file_repo.fetch_user_file_by_id(profile.user_id, dataset.id)
+            user_file = await file_repo.fetch_user_file_by_name(profile.user_id, dataset.name)
             if user_file:
                 presigned_url = await saver.get_presigned_url_by_key(
                     file_key=user_file.file_name, expiry_sec=3600  # 1 hour default
                 )
                 if presigned_url:
-                    dataset_dict["download_url"] = presigned_url
+                    download_url = presigned_url
         except Exception:
             # If presigned URL generation fails, just skip it
             pass
 
-        result.append(DatasetResponse(**dataset_dict))
+        if download_url:
+            dataset_response = dataset_response.model_copy(update={"download_url": download_url})
+
+        result.append(dataset_response)
 
     return result
 
@@ -153,7 +157,7 @@ async def list_datasets(
 @ml_router.post("/datasets/upload", response_model=DatasetUploadResponse, status_code=201)
 async def upload_dataset(
     profile: Annotated[AuthProfile, Depends(check_auth)],
-    mode: ServiceMode = Query(ServiceMode.LIPS),
+    mode: ServiceMode = Query(ServiceMode.TRAINING),
     file: UploadFile = File(...),
     saver: FileSaverService = Depends(get_file_saver),
     repo: TrainingRepository = Depends(get_training_repo),
@@ -301,6 +305,7 @@ async def get_file_download_url(
     expiry_sec: int = Query(3600, ge=1, le=86400),
     saver: FileSaverService = Depends(get_file_saver),
     file_repo: FileRepository = Depends(get_file_repo),
+    repo: TrainingRepository = Depends(get_training_repo),
 ):
     """Получить ссылку для скачивания файла.
 
@@ -314,9 +319,19 @@ async def get_file_download_url(
     except Exception:  # noqa: BLE001
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Некорректный UUID")
 
+    dataset = None
     user_file = await file_repo.fetch_user_file_by_id(profile.user_id, fid)
     if not user_file:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
+        dataset = await repo.get_dataset_by_id(profile.user_id, fid)
+        if not dataset:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
+        user_file = await file_repo.fetch_user_file_by_name(profile.user_id, dataset.name)
+
+    # Если метаданные отсутствуют (например, TTL очистил запись), используем информацию датасета
+    if not user_file and dataset:
+        from types import SimpleNamespace
+
+        user_file = SimpleNamespace(file_name=dataset.name, file_url=dataset.file_url)
 
     backend = None
     url = None
@@ -331,8 +346,11 @@ async def get_file_download_url(
         url = None
 
     if not url:
-        url = user_file.file_url
+        url = user_file.file_url if user_file else (dataset.file_url if dataset else None)
         backend = backend or "local"
+
+    if not url:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
 
     return PresignedUrlResponse(file_id=fid, url=url, expiry_sec=expiry_sec, backend=backend)
 

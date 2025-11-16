@@ -1,12 +1,1 @@
-# Ignore legacy graph/telegram code during migration
-src/pages/GraphBuilderPage.jsx
-src/pages/GraphsPage.jsx
-src/pages/GraphDetailPage.jsx
-src/pages/NodeRegistryPage.jsx
-src/pages/TelegramPage.jsx
-src/components/graph/**
-src/components/graphs/**
-src/components/nodes/**
-src/components/edges/**
-src/components/telegram/**
-src/components/GraphNode.jsx
+
