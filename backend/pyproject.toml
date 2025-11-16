@@ -1,6 +1,6 @@
 [project]
-name = "backend"
-version = "0.1.0"
+name = "mlservice"
+version = "1.4.0"
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "pydantic>=2.11.7,<3.0.0",
