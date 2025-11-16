@@ -60,6 +60,17 @@ class _FakeFileRepo:
 
         return _UserFile(self._file_name, self._file_url)
 
+    async def fetch_user_file_by_name(self, user_id, file_name):  # noqa: D401
+        if not self._file_name or file_name != self._file_name:
+            return None
+
+        class _UserFile:
+            def __init__(self, name: str, url: str | None):
+                self.file_name = name
+                self.file_url = url
+
+        return _UserFile(self._file_name, self._file_url)
+
 
 class _FakeSaverWithPresign(_FakeSaver):
     async def get_presigned_url_by_key(self, file_key, expiry_sec=3600):  # noqa: D401
