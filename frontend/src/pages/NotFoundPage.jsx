@@ -1,4 +1,3 @@
-import React from "react";
 import { Box, Button, Heading, Stack, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 
@@ -12,7 +11,7 @@ function NotFoundPage() {
         <Text fontSize="lg" color="text.muted">
           Страница не найдена или перемещена.
         </Text>
-        <Button colorScheme="brand" onClick={() => navigate("/graphs")}>
+        <Button colorScheme="brand" onClick={() => navigate("/")}>
           На главную
         </Button>
       </Stack>

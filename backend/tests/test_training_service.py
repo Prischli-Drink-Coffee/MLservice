@@ -29,11 +29,19 @@ class _FakeTrainingRepo:
         self._runs = {}
         self._artifacts = {}
 
-    async def get_or_create_dataset_from_file(self, user_id, launch_id, mode, file_name, file_url):
+    async def get_or_create_dataset_from_file(
+        self, user_id, launch_id, mode, *, display_name, storage_key, file_url
+    ):
         key = (user_id, file_url)
         ds = self._datasets.get(key)
         if ds is None:
-            ds = types.SimpleNamespace(id=uuid.uuid4(), user_id=user_id, file_url=file_url)
+            ds = types.SimpleNamespace(
+                id=uuid.uuid4(),
+                user_id=user_id,
+                file_url=file_url,
+                name=display_name,
+                storage_key=storage_key,
+            )
             self._datasets[key] = ds
         return ds
 

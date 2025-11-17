@@ -17,6 +17,7 @@ class DatasetResponse(BaseModel):
     version: int
     created_at: datetime
     download_url: str | None = None  # Presigned URL if MinIO backend is used
+    columns: list[str] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -111,6 +112,19 @@ class DatasetTTLResponse(BaseModel):
     files_missing: int
 
 
+class DatasetDeleteResponse(BaseModel):
+    """Ответ на удаление конкретного датасета."""
+
+    dataset_id: UUID
+    deleted: bool = Field(..., description="Удалена ли запись в БД")
+    file_removed: bool = Field(
+        False, description="Удалён ли файл из storage (или отсутствовал изначально)"
+    )
+    file_metadata_deleted: bool = Field(
+        False, description="Удалена ли запись о файле из user_file"
+    )
+
+
 class DatasetUploadResponse(BaseModel):
     """Ответ на успешную загрузку датасета (CSV)."""
 
@@ -142,6 +156,7 @@ __all__ = [
     "MetricsAggregate",
     "MetricsSummaryResponse",
     "DatasetTTLResponse",
+    "DatasetDeleteResponse",
     "DatasetUploadResponse",
     "PresignedUrlResponse",
 ]

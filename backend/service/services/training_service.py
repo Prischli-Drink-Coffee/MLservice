@@ -3,6 +3,7 @@ import os
 import uuid
 from time import perf_counter
 from typing import Any
+from uuid import UUID
 
 from service.models.jobs_models import JobLogic
 from service.models.key_value import ProcessingStatus
@@ -61,37 +62,69 @@ class TrainingService:
         started_at = perf_counter()
         metrics: dict[str, Any] = {}
 
-        # 1) Find latest user file for the job.mode
+        payload = job.payload or {}
+        target_column = payload.get("target_column")
+        if isinstance(target_column, str):
+            target_column = target_column.strip() or None
+        else:
+            target_column = None
+
+        if self._training_repo is None:
+            raise RuntimeError("Training repository is not configured")
+
+        dataset_record = None
+        dataset_identifier = payload.get("dataset_id")
+        if dataset_identifier is not None:
+            try:
+                dataset_uuid = UUID(str(dataset_identifier))
+            except ValueError as exc:  # noqa: BLE001
+                raise ValueError("Invalid dataset identifier provided") from exc
+            dataset_record = await self._training_repo.get_dataset_by_id(job.user_id, dataset_uuid)
+            if dataset_record is None:
+                raise ValueError("Dataset not found or access denied")
+
+        # 1) Find latest user file for the job.mode when dataset isn't explicitly selected
         try:
-            latest_files = await self._file_repo.fetch_user_files_metadata(job.user_id, job.mode)
-            if not latest_files:
-                logger.warning("No user files found for user=%s mode=%s", job.user_id, job.mode)
-                raise ValueError("No input dataset available for training")
+            if dataset_record is None:
+                latest_files = await self._file_repo.fetch_user_files_metadata(job.user_id, job.mode)
+                if not latest_files:
+                    logger.warning("No user files found for user=%s mode=%s", job.user_id, job.mode)
+                    raise ValueError("No input dataset available for training")
 
-            user_file = sorted(
-                latest_files, key=lambda f: getattr(f, "created_at", 0), reverse=True
-            )[0]
+                user_file = sorted(
+                    latest_files, key=lambda f: getattr(f, "created_at", 0), reverse=True
+                )[0]
 
-            # 2) Ensure dataset exists (registry record)
-            dataset = await self._training_repo.get_or_create_dataset_from_file(
-                user_id=job.user_id,
-                launch_id=job.id,
-                mode=job.mode,
-                file_name=user_file.file_name,
-                file_url=user_file.file_url,
-            )
+                storage_key = getattr(user_file, "file_name", None) or os.path.basename(
+                    getattr(user_file, "file_url", "dataset.csv")
+                )
+                display_name = os.path.basename(
+                    getattr(user_file, "original_name", None) or storage_key
+                )
+
+                dataset_record = await self._training_repo.get_or_create_dataset_from_file(
+                    user_id=job.user_id,
+                    launch_id=job.id,
+                    mode=job.mode,
+                    display_name=display_name,
+                    storage_key=storage_key,
+                    file_url=user_file.file_url,
+                )
 
             # 3) Create training run
+            if dataset_record is None:
+                raise ValueError("Dataset record could not be resolved for training")
+
             run = await self._training_repo.create_training_run(
                 user_id=job.user_id,
                 launch_id=job.id,
-                dataset_id=dataset.id,
+                dataset_id=dataset_record.id,
                 status=ProcessingStatus.PROCESSING,
             )
 
             # 4) Load dataset and train a simple model
-            data_path = self._resolve_data_path(user_file.file_url)
-            metrics = await self._train_and_export_model(data_path)
+            data_path = self._resolve_data_path(dataset_record.file_url)
+            metrics = await self._train_and_export_model(data_path, target_column=target_column)
 
             # 5) Persist a model artifact file (already created by _train_and_export_model)
             model_url = metrics.get("model_url")
@@ -163,7 +196,9 @@ class TrainingService:
             return file_url
         return os.path.join(self._storage_root, file_url)
 
-    async def _train_and_export_model(self, csv_path: str) -> dict[str, Any]:
+    async def _train_and_export_model(
+        self, csv_path: str, *, target_column: str | None = None
+    ) -> dict[str, Any]:
         """Train a simple model on CSV.
 
         If ENABLE_REAL_TRAINING is set, try pandas/sklearn path; otherwise use lightweight fallback.
@@ -193,10 +228,25 @@ class TrainingService:
 
                 # Target selection
                 target_col = None
-                for cand in ["target", "label", "y"]:
-                    if cand in df.columns:
-                        target_col = cand
-                        break
+                preferred = target_column
+                if preferred:
+                    if preferred in df.columns:
+                        target_col = preferred
+                    else:
+                        lowered = {col.lower(): col for col in df.columns}
+                        match = lowered.get(preferred.lower())
+                        if match:
+                            target_col = match
+                        else:
+                            logger.warning(
+                                "Target column %s not found in dataset; falling back to heuristic",
+                                preferred,
+                            )
+                if target_col is None:
+                    for cand in ["target", "label", "y"]:
+                        if cand in df.columns:
+                            target_col = cand
+                            break
                 if target_col is None:
                     target_col = df.columns[-1]
 
@@ -263,9 +313,11 @@ class TrainingService:
             except Exception as e:  # noqa: BLE001
                 logger.warning("Heavy training failed or unavailable, falling back: %s", e)
         # fallback
-        return await self._train_lightweight(csv_path)
+        return await self._train_lightweight(csv_path, target_column=target_column)
 
-    async def _train_lightweight(self, csv_path: str) -> dict[str, Any]:
+    async def _train_lightweight(
+        self, csv_path: str, *, target_column: str | None = None
+    ) -> dict[str, Any]:
         """Pure-Python fallback: CSV parsing and simple baseline metrics with pickle artifact.
 
         - Determines target column like primary path
@@ -291,13 +343,26 @@ class TrainingService:
 
         # target column selection
         target_idx = None
-        for cand in ("target", "label", "y"):
+        preferred = target_column
+        if preferred:
             try:
-                idx = header.index(cand)
-                target_idx = idx
-                break
+                target_idx = header.index(preferred)
             except ValueError:
-                continue
+                lowered = [col.lower() for col in header]
+                if preferred.lower() in lowered:
+                    target_idx = lowered.index(preferred.lower())
+                else:
+                    logger.warning(
+                        "Target column %s not found in CSV; falling back to heuristic",
+                        preferred,
+                    )
+        if target_idx is None:
+            for cand in ("target", "label", "y"):
+                try:
+                    target_idx = header.index(cand)
+                    break
+                except ValueError:
+                    continue
         if target_idx is None:
             target_idx = len(header) - 1
 

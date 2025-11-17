@@ -1,8 +1,15 @@
 """Minimal ML API (v1): datasets, training runs, artifacts lists."""
 
+import csv
+import logging
+import os
+from pathlib import Path
+from types import SimpleNamespace
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 
 from service.models.auth_models import AuthProfile
 from service.models.key_value import ServiceMode
@@ -11,6 +18,7 @@ from service.presentation.dependencies.auth_checker import check_auth
 from service.presentation.routers.ml_api.schemas import (
     ArtifactDeleteResponse,
     DatasetResponse,
+    DatasetDeleteResponse,
     DatasetTTLResponse,
     DatasetUploadResponse,
     MetricsSummaryResponse,
@@ -23,7 +31,161 @@ from service.repositories.file_repository import FileRepository
 from service.repositories.training_repository import TrainingRepository
 from service.services.file_saver_service import FileSaverService
 
+logger = logging.getLogger(__name__)
 ml_router = APIRouter(prefix="/api/ml/v1")
+
+
+def _storage_root() -> Path:
+    return Path(os.getenv("STORAGE_ROOT", "/var/lib/app/storage")).resolve()
+
+
+def _normalize_dataset_display_name(file_name: str) -> str:
+    candidate = Path(file_name).name.strip()
+    if not candidate:
+        candidate = "dataset.csv"
+    return candidate[:255]
+
+
+async def _resolve_user_file_or_dataset(
+    *,
+    user_id,
+    file_id,
+    file_repo: FileRepository,
+    repo: TrainingRepository,
+):
+    dataset = None
+    user_file = await file_repo.fetch_user_file_by_id(user_id, file_id)
+    if not user_file:
+        dataset = await repo.get_dataset_by_id(user_id, file_id)
+        if not dataset:
+            return None, None
+        storage_key = getattr(dataset, "storage_key", None) or dataset.name
+        user_file = await file_repo.fetch_user_file_by_name(user_id, storage_key)
+
+    if not user_file and dataset:
+        storage_key = getattr(dataset, "storage_key", None) or dataset.name
+        user_file = SimpleNamespace(file_name=storage_key, file_url=dataset.file_url)
+
+    return dataset, user_file
+
+
+def _resolve_local_file_path(file_url: str | None) -> Path | None:
+    if not file_url:
+        return None
+    root = _storage_root()
+    candidates: list[Path] = []
+    path = Path(file_url)
+    if path.is_absolute():
+        candidates.append(path)
+    if file_url.startswith("/storage/"):
+        candidates.append(root / file_url[len("/storage/") :])
+    if not path.is_absolute():
+        candidates.append(root / file_url.lstrip("/"))
+
+    for candidate in candidates:
+        try:
+            resolved = candidate.resolve()
+        except FileNotFoundError:
+            continue
+        try:
+            resolved.relative_to(root)
+        except ValueError:
+            continue
+        if resolved.is_file():
+            return resolved
+    return None
+
+
+def _build_local_download_route(file_id) -> str:
+    return f"/api/ml/v1/files/{file_id}/download"
+
+
+def _build_local_artifact_download_route(artifact_id) -> str:
+    return f"/api/ml/v1/artifacts/{artifact_id}/download"
+
+
+def _extract_csv_columns(file_path: Path, limit: int = 200) -> list[str]:
+    try:
+        with file_path.open("r", encoding="utf-8", errors="replace", newline="") as fh:
+            reader = csv.reader(fh)
+            header = next(reader, [])
+    except Exception:
+        return []
+
+    columns: list[str] = []
+    for idx, cell in enumerate(header[:limit]):
+        value = (cell or "").strip()
+        if not value:
+            value = f"column_{idx + 1}"
+        columns.append(value[:255])
+    return columns
+
+
+DATASET_REMOVED_CODE = "DATASET_REMOVED"
+FILE_NOT_FOUND_CODE = "FILE_NOT_FOUND"
+
+
+async def _cleanup_missing_dataset(
+    *,
+    user_id,
+    dataset,
+    user_file,
+    file_repo: FileRepository,
+    repo: TrainingRepository,
+):
+    deleted_dataset = False
+    if dataset:
+        try:
+            deleted_dataset = await repo.delete_dataset(user_id=user_id, dataset_id=dataset.id)
+        except Exception:  # noqa: BLE001
+            deleted_dataset = False
+
+    file_id = getattr(user_file, "id", None)
+    if file_id:
+        try:
+            await file_repo.delete_file_metadata(user_id=user_id, file_id=file_id)
+        except Exception:  # noqa: BLE001
+            pass
+
+    return deleted_dataset
+
+
+def _missing_file_http_error(dataset_id, deleted: bool) -> HTTPException:
+    code = DATASET_REMOVED_CODE if deleted else FILE_NOT_FOUND_CODE
+    message = (
+        "Файл датасета недоступен и запись была удалена"
+        if deleted
+        else "Файл датасета недоступен"
+    )
+    detail = {"code": code, "message": message}
+    if dataset_id is not None:
+        detail["dataset_id"] = str(dataset_id)
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail)
+
+
+def _artifact_storage_key(model_url: str) -> str:
+    if model_url.startswith("/storage/"):
+        return model_url[len("/storage/") :]
+    return model_url.lstrip("/")
+
+
+async def _get_artifact_or_404(
+    *,
+    user_id: UUID,
+    artifact_id: UUID,
+    repo: TrainingRepository,
+):
+    artifact = await repo.get_artifact_by_id(user_id, artifact_id)
+    if not artifact:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Артефакт не найден")
+
+    model_url = getattr(artifact, "model_url", None)
+    if not model_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Файл артефакта отсутствует",
+        )
+    return artifact, model_url
 
 
 def get_training_repo() -> TrainingRepository:
@@ -115,6 +277,77 @@ async def delete_artifact(
     return ArtifactDeleteResponse(id=art_uuid)
 
 
+@ml_router.get(
+    "/artifacts/{artifact_id}/download-url", response_model=PresignedUrlResponse
+)
+async def get_artifact_download_url(
+    artifact_id: UUID,
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    expiry_sec: int = Query(3600, ge=60, le=86400),
+    repo: TrainingRepository = Depends(get_training_repo),
+    saver: FileSaverService = Depends(get_file_saver),
+):
+    artifact, model_url = await _get_artifact_or_404(
+        user_id=profile.user_id, artifact_id=artifact_id, repo=repo
+    )
+
+    storage_backend = os.getenv("STORAGE_BACKEND", "local").lower()
+    if storage_backend != "local":
+        file_key = _artifact_storage_key(model_url)
+        try:
+            presigned = await saver.get_presigned_url_by_key(
+                file_key=file_key, expiry_sec=expiry_sec
+            )
+        except Exception:  # noqa: BLE001
+            presigned = None
+
+        if presigned:
+            return PresignedUrlResponse(
+                file_id=artifact.id,
+                url=presigned,
+                expiry_sec=expiry_sec,
+                backend=storage_backend,
+            )
+
+    file_path = _resolve_local_file_path(model_url)
+    if file_path:
+        return PresignedUrlResponse(
+            file_id=artifact.id,
+            url=_build_local_artifact_download_route(artifact.id),
+            expiry_sec=expiry_sec,
+            backend="local",
+        )
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="Файл артефакта недоступен",
+    )
+
+
+@ml_router.get("/artifacts/{artifact_id}/download")
+async def download_artifact(
+    artifact_id: UUID,
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    repo: TrainingRepository = Depends(get_training_repo),
+):
+    _, model_url = await _get_artifact_or_404(
+        user_id=profile.user_id, artifact_id=artifact_id, repo=repo
+    )
+
+    file_path = _resolve_local_file_path(model_url)
+    if not file_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Файл артефакта недоступен",
+        )
+
+    return FileResponse(
+        path=str(file_path),
+        filename=file_path.name,
+        media_type="application/octet-stream",
+    )
+
+
 @ml_router.get("/datasets", response_model=list[DatasetResponse])
 async def list_datasets(
     profile: Annotated[AuthProfile, Depends(check_auth)],
@@ -133,21 +366,35 @@ async def list_datasets(
 
         # Try to get presigned URL for MinIO backend
         download_url = None
+        columns: list[str] | None = None
         try:
+            storage_key = getattr(dataset, "storage_key", None) or dataset.name
             # Get file metadata to retrieve file_name (storage key)
-            user_file = await file_repo.fetch_user_file_by_name(profile.user_id, dataset.name)
+            user_file = await file_repo.fetch_user_file_by_name(profile.user_id, storage_key)
             if user_file:
                 presigned_url = await saver.get_presigned_url_by_key(
                     file_key=user_file.file_name, expiry_sec=3600  # 1 hour default
                 )
                 if presigned_url:
                     download_url = presigned_url
+                file_url = user_file.file_url
+            else:
+                file_url = dataset.file_url
+
+            file_path = _resolve_local_file_path(file_url)
+            if file_path:
+                cols = _extract_csv_columns(file_path)
+                if cols:
+                    columns = cols
         except Exception:
             # If presigned URL generation fails, just skip it
             pass
 
         if download_url:
             dataset_response = dataset_response.model_copy(update={"download_url": download_url})
+
+        if columns is not None:
+            dataset_response = dataset_response.model_copy(update={"columns": columns})
 
         result.append(dataset_response)
 
@@ -264,13 +511,16 @@ async def upload_dataset(
     # Persist file via FileSaverService (will generate masked name)
     upload_resp = await saver.save(profile.user_id, mode, file.filename, raw)
 
+    display_name = _normalize_dataset_display_name(file.filename)
+    storage_key = upload_resp.file_key or upload_resp.file_url or display_name
+
     # Register Dataset
     dataset = await repo.get_or_create_dataset_from_file(
         user_id=profile.user_id,
         launch_id=None,
         mode=mode,
-        # Store internal storage key rather than original filename for TTL alignment
-        file_name=upload_resp.file_key or file.filename,
+        display_name=display_name,
+        storage_key=storage_key,
         file_url=upload_resp.file_url,
     )
 
@@ -290,11 +540,57 @@ async def upload_dataset(
     return DatasetUploadResponse(
         dataset_id=dataset.id,
         file_url=dataset.file_url,
-        name=dataset.name,  # internal key or original name
+        name=dataset.name,  # original file name stored with dataset
         mode=dataset.mode.value if hasattr(dataset.mode, "value") else str(dataset.mode),
         version=getattr(dataset, "version", 1),
         created_at=dataset.created_at,
         download_url=presigned,
+    )
+
+
+@ml_router.delete("/datasets/{dataset_id:uuid}", response_model=DatasetDeleteResponse)
+async def delete_dataset(
+    dataset_id: UUID,
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    repo: TrainingRepository = Depends(get_training_repo),
+    file_repo: FileRepository = Depends(get_file_repo),
+    saver: FileSaverService = Depends(get_file_saver),
+):
+    dataset = await repo.get_dataset_by_id(profile.user_id, dataset_id)
+    if not dataset:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Датасет не найден")
+
+    deleted = await repo.delete_dataset(profile.user_id, dataset_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Датасет уже удалён или недоступен",
+        )
+
+    storage_key = getattr(dataset, "storage_key", None) or dataset.name
+    file_removed = False
+    file_metadata_deleted = False
+
+    if storage_key:
+        try:
+            await file_repo.delete_file_metadata_by_name(profile.user_id, storage_key)
+            file_metadata_deleted = True
+        except Exception:  # noqa: BLE001
+            file_metadata_deleted = False
+
+        try:
+            await saver.storage.delete_file(file_key=storage_key)
+            file_removed = True
+        except FileNotFoundError:
+            file_removed = False
+        except Exception:  # noqa: BLE001
+            file_removed = False
+
+    return DatasetDeleteResponse(
+        dataset_id=dataset_id,
+        deleted=True,
+        file_removed=file_removed,
+        file_metadata_deleted=file_metadata_deleted,
     )
 
 
@@ -319,40 +615,97 @@ async def get_file_download_url(
     except Exception:  # noqa: BLE001
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Некорректный UUID")
 
-    dataset = None
-    user_file = await file_repo.fetch_user_file_by_id(profile.user_id, fid)
+    dataset, user_file = await _resolve_user_file_or_dataset(
+        user_id=profile.user_id, file_id=fid, file_repo=file_repo, repo=repo
+    )
     if not user_file:
-        dataset = await repo.get_dataset_by_id(profile.user_id, fid)
-        if not dataset:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
-        user_file = await file_repo.fetch_user_file_by_name(profile.user_id, dataset.name)
-
-    # Если метаданные отсутствуют (например, TTL очистил запись), используем информацию датасета
-    if not user_file and dataset:
-        from types import SimpleNamespace
-
-        user_file = SimpleNamespace(file_name=dataset.name, file_url=dataset.file_url)
-
-    backend = None
-    url = None
-    try:
-        presigned = await saver.get_presigned_url_by_key(
-            file_key=user_file.file_name, expiry_sec=expiry_sec
-        )
-        if presigned:
-            url = presigned
-            backend = "minio"
-    except Exception:
-        url = None
-
-    if not url:
-        url = user_file.file_url if user_file else (dataset.file_url if dataset else None)
-        backend = backend or "local"
-
-    if not url:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
 
-    return PresignedUrlResponse(file_id=fid, url=url, expiry_sec=expiry_sec, backend=backend)
+    storage_backend = os.getenv("STORAGE_BACKEND", "local").lower()
+    is_local_backend = storage_backend == "local"
+    file_url = getattr(user_file, "file_url", None) or (dataset.file_url if dataset else None)
+
+    if not is_local_backend:
+        presigned: str | None = None
+        try:
+            presigned = await saver.get_presigned_url_by_key(
+                file_key=user_file.file_name, expiry_sec=expiry_sec
+            )
+        except Exception:  # noqa: BLE001
+            presigned = None
+
+        if presigned:
+            return PresignedUrlResponse(
+                file_id=fid, url=presigned, expiry_sec=expiry_sec, backend="minio"
+            )
+
+        deleted = await _cleanup_missing_dataset(
+            user_id=profile.user_id,
+            dataset=dataset,
+            user_file=user_file,
+            file_repo=file_repo,
+            repo=repo,
+        )
+        _missing_file_http_error(fid, deleted)
+
+    file_path = _resolve_local_file_path(file_url)
+    if file_path:
+        return PresignedUrlResponse(
+            file_id=fid,
+            url=_build_local_download_route(fid),
+            expiry_sec=expiry_sec,
+            backend="local",
+        )
+
+    deleted = await _cleanup_missing_dataset(
+        user_id=profile.user_id,
+        dataset=dataset,
+        user_file=user_file,
+        file_repo=file_repo,
+        repo=repo,
+    )
+    _missing_file_http_error(fid, deleted)
+
+
+@ml_router.get("/files/{file_id}/download")
+async def download_file(
+    file_id: str,
+    profile: Annotated[AuthProfile, Depends(check_auth)],
+    file_repo: FileRepository = Depends(get_file_repo),
+    repo: TrainingRepository = Depends(get_training_repo),
+):
+    from uuid import UUID as _UUID
+
+    try:
+        fid = _UUID(file_id)
+    except Exception:  # noqa: BLE001
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Некорректный UUID")
+
+    dataset, user_file = await _resolve_user_file_or_dataset(
+        user_id=profile.user_id, file_id=fid, file_repo=file_repo, repo=repo
+    )
+    if not user_file:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Файл не найден")
+
+    file_url = getattr(user_file, "file_url", None) or (dataset.file_url if dataset else None)
+    file_path = _resolve_local_file_path(file_url)
+    if not file_path:
+        deleted = await _cleanup_missing_dataset(
+            user_id=profile.user_id,
+            dataset=dataset,
+            user_file=user_file,
+            file_repo=file_repo,
+            repo=repo,
+        )
+        _missing_file_http_error(fid, deleted)
+
+    suffix = file_path.suffix.lower()
+    media_type = "text/csv" if suffix == ".csv" else "application/octet-stream"
+    return FileResponse(
+        path=str(file_path),
+        filename=file_path.name,
+        media_type=media_type,
+    )
 
 
 @ml_router.get("/metrics/trends", response_model=list[MetricTrendPoint])
@@ -360,6 +713,8 @@ async def list_metrics_trends(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     mode: ServiceMode | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
+    dataset_id: UUID | None = Query(None),
+    target_column: str | None = Query(None),
     repo: TrainingRepository = Depends(get_training_repo),
 ):
     """Список точек тренда метрик обучения.
@@ -369,7 +724,13 @@ async def list_metrics_trends(
     - mode: фильтр по режиму датасета (опционально)
     - limit: максимум точек (по умолчанию 50)
     """
-    rows = await repo.list_training_metrics_trends(profile.user_id, mode=mode, limit=limit)
+    rows = await repo.list_training_metrics_trends(
+        profile.user_id,
+        mode=mode,
+        limit=limit,
+        dataset_id=dataset_id,
+        target_column=target_column,
+    )
     return [
         MetricTrendPoint(
             run_id=tr.id,
@@ -386,6 +747,8 @@ async def get_metrics_summary(
     profile: Annotated[AuthProfile, Depends(check_auth)],
     mode: ServiceMode | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
+    dataset_id: UUID | None = Query(None),
+    target_column: str | None = Query(None),
     repo: TrainingRepository = Depends(get_training_repo),
 ):
     """Агрегированная сводка метрик по последним запускам.
@@ -393,7 +756,13 @@ async def get_metrics_summary(
     Возвращает агрегаты (count, averages) и ту же выборку трендов
     для унификации с фронтендом.
     """
-    rows = await repo.list_training_metrics_trends(profile.user_id, mode=mode, limit=limit)
+    rows = await repo.list_training_metrics_trends(
+        profile.user_id,
+        mode=mode,
+        limit=limit,
+        dataset_id=dataset_id,
+        target_column=target_column,
+    )
     trends = [
         MetricTrendPoint(
             run_id=tr.id,

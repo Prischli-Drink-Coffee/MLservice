@@ -19,3 +19,8 @@ export async function cleanupExpiredDatasets({ limit = 1000 } = {}) {
   const res = await client.delete("/api/ml/v1/datasets/expired", { params: { limit } });
   return res.data;
 }
+
+export async function deleteDataset(datasetId) {
+  const res = await client.delete(`/api/ml/v1/datasets/${datasetId}`);
+  return res.data;
+}

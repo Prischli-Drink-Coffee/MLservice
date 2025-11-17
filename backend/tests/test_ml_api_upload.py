@@ -21,13 +21,15 @@ from service.presentation.routers.ml_api.ml_api import (
 class _FakeSaver:
     async def save(self, user_id, mode, file_name, file_content: bytes):
         # emulate FileSaverService.save returning UploadResponse
-        # map to /storage/uploads/<mode>/<file_name>
-        url = f"/storage/uploads/{mode.value}/{file_name}"
-        return UploadResponse(file_id=uuid.uuid4(), file_url=url)
+        masked = f"uploads/{mode.value}/{uuid.uuid4().hex}.csv"
+        url = f"/storage/{masked}"
+        return UploadResponse(file_id=uuid.uuid4(), file_url=url, file_key=masked)
 
 
 class _FakeTrainingRepo:
-    async def get_or_create_dataset_from_file(self, user_id, launch_id, mode, file_name, file_url):
+    async def get_or_create_dataset_from_file(
+        self, user_id, launch_id, mode, *, display_name, storage_key, file_url
+    ):
         # minimal dataset-like object
         class _Obj:
             def __init__(self):
@@ -35,7 +37,8 @@ class _FakeTrainingRepo:
                 self.user_id = user_id
                 self.launch_id = launch_id
                 self.mode = mode
-                self.name = file_name
+                self.name = display_name
+                self.storage_key = storage_key
                 self.file_url = file_url
                 self.version = 3  # simulate next version
                 self.created_at = datetime.now(UTC)
@@ -85,8 +88,9 @@ class _FakeTrainingRepoWithDatasets(_FakeTrainingRepo):
                 self.user_id = user_id
                 self.launch_id = uuid.uuid4()
                 self.mode = ServiceMode.TRAINING
-                self.name = "uploads/TRAINING/masked.csv"
-                self.file_url = f"/storage/{self.name}"
+                self.name = "dataset.csv"
+                self.storage_key = "uploads/TRAINING/masked.csv"
+                self.file_url = f"/storage/{self.storage_key}"
                 self.version = 1
                 self.created_at = datetime.now(UTC)
 

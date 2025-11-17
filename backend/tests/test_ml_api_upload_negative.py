@@ -23,14 +23,17 @@ class _FakeSaver:
 
 
 class _FakeTrainingRepo:
-    async def get_or_create_dataset_from_file(self, user_id, launch_id, mode, file_name, file_url):  # pragma: no cover
+    async def get_or_create_dataset_from_file(
+        self, user_id, launch_id, mode, *, display_name, storage_key, file_url
+    ):  # pragma: no cover
         class _Obj:
             def __init__(self):
                 self.id = uuid.uuid4()
                 self.user_id = user_id
                 self.launch_id = launch_id
                 self.mode = mode
-                self.name = file_name
+                self.name = display_name
+                self.storage_key = storage_key
                 self.file_url = file_url
                 self.created_at = datetime.now(UTC)
 

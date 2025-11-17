@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,5 +17,6 @@ class JobLogic(BaseModel):
     created_at: datetime | None = None
     updated_at: datetime | None = None
     is_payment_taken: bool = False
+    payload: dict[str, Any] | None = None
 
     model_config = ConfigDict(from_attributes=True)

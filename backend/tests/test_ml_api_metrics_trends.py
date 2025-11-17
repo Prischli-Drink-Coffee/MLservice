@@ -12,7 +12,24 @@ from service.presentation.routers.ml_api.ml_api import ml_router
 
 
 class _FakeRepo:
-    async def list_training_metrics_trends(self, user_id, mode=None, limit: int = 50, session=None):
+    def __init__(self):
+        self.last_filters = None
+
+    async def list_training_metrics_trends(
+        self,
+        user_id,
+        mode=None,
+        limit: int = 50,
+        dataset_id=None,
+        target_column=None,
+        session=None,
+    ):
+        self.last_filters = {
+            "mode": mode,
+            "limit": limit,
+            "dataset_id": dataset_id,
+            "target_column": target_column,
+        }
         now = datetime.now(timezone.utc)
         # produce 3 fake entries
         items = []
@@ -29,9 +46,6 @@ class _FakeRepo:
                 "n_samples": 100 + i,
             })
             items.append((tr, 1 + i))
-        if mode is not None:
-            # Just validate that we can accept mode and ignore in fake
-            assert isinstance(mode, ServiceMode)
         return items[:limit]
 
 
@@ -39,8 +53,11 @@ def _fake_auth() -> AuthProfile:
     return AuthProfile(user_id=uuid4(), fingerprint=None, type=UserTypes.REGISTERED)
 
 
+_REPO_INSTANCE = _FakeRepo()
+
+
 def _get_fake_repo():
-    return _FakeRepo()
+    return _REPO_INSTANCE
 
 
 @pytest.fixture()
@@ -74,3 +91,17 @@ def test_metrics_trends_with_mode_filter(app):
     assert r.status_code == 200
     data = r.json()
     assert len(data) >= 1
+
+
+def test_metrics_trends_with_dataset_and_target_filters(app):
+    client = TestClient(app)
+    dataset_id = uuid4()
+    _REPO_INSTANCE.last_filters = None
+    r = client.get(
+        f"/api/ml/v1/metrics/trends?dataset_id={dataset_id}&target_column=price&limit=2"
+    )
+    assert r.status_code == 200
+    assert len(r.json()) == 2
+    assert _REPO_INSTANCE.last_filters is not None
+    assert _REPO_INSTANCE.last_filters["dataset_id"] == dataset_id
+    assert _REPO_INSTANCE.last_filters["target_column"] == "price"

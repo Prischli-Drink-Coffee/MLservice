@@ -8,6 +8,7 @@ from service.models.key_value import ProcessingStatus, ServiceType
 from service.models.profile_models import UserProfileLogic
 from service.presentation.routers.jobs_api.schemas import JobResponse, StartJobRequest
 from service.repositories.job_repository import JobRepository
+from service.repositories.training_repository import TrainingRepository
 from service.services.profile_service import ProfileService
 from service.settings import JobConf
 
@@ -20,10 +21,12 @@ class JobService:
         config: JobConf,
         repository: JobRepository,
         profile_source: ProfileService,
+        training_repo: TrainingRepository | None = None,
     ) -> None:
         self.config = config
         self.repository = repository
         self.profile_source = profile_source
+        self.training_repo = training_repo
 
     async def create_job(self, user_id: UUID, request_body: StartJobRequest) -> JobResponse:
         logger.info(
@@ -51,14 +54,31 @@ class JobService:
                 detail="User has an ongoing job. Please wait for it to complete before starting a new one.",
             )
 
-        # Примем file_id на уровне API, но пока не сохраняем его в user_launch
-        logger.info(f"Processing job with file_id: {request_body.file_id}")
+        payload: dict[str, str] = {}
+        dataset_id = request_body.dataset_id or request_body.file_id
+        if dataset_id:
+            if self.training_repo is None:
+                logger.error("Training repository is unavailable for dataset validation")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Training repository unavailable",
+                )
+            dataset = await self.training_repo.get_dataset_by_id(user_id, dataset_id)
+            if not dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Dataset not found or access denied",
+                )
+            payload["dataset_id"] = str(dataset.id)
+        if request_body.target_column:
+            payload["target_column"] = request_body.target_column.strip()
 
         new_job = JobLogic(
             user_id=user_id,
             mode=request_body.mode,
             type=request_body.type,
             status=ProcessingStatus.NEW,
+            payload=payload or None,
         )
         created_job = await self.repository.create_job(new_job)
 

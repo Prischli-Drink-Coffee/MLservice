@@ -63,6 +63,9 @@ class UserLaunch(Base):
     is_payment_taken: Mapped[bool] = mapped_column(
         default=False, comment="Flag indicating if payment was taken"
     )
+    payload: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True, comment="Optional JSON payload with job parameters"
+    )
 
     user: Mapped["User"] = relationship(
         back_populates="user_launches",
@@ -159,6 +162,9 @@ class Dataset(Base):
     )
     mode: Mapped[ServiceMode] = mapped_column(String(50), comment="Dataset mode type")
     name: Mapped[str] = mapped_column(String(255), comment="Human-friendly dataset name")
+    storage_key: Mapped[str] = mapped_column(
+        String(1000), comment="Internal storage file key for presigned downloads"
+    )
     file_url: Mapped[str] = mapped_column(String(1000), comment="Stored dataset file path/URL")
     version: Mapped[int] = mapped_column(
         default=1, comment="Sequential dataset version per user+mode"

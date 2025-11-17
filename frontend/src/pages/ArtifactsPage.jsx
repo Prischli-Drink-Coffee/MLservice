@@ -1,18 +1,37 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { Stack, Table, Thead, Tbody, Tr, Th, Td, IconButton, Text, useToast, Box } from "@chakra-ui/react";
+import { Stack, Table, Thead, Tbody, Tr, Th, Td, IconButton, Text, useToast } from "@chakra-ui/react";
 import { FiTrash2, FiDownload } from "react-icons/fi";
-import { SearchIcon } from "@chakra-ui/icons";
 import PageHeader from "../components/common/PageHeader";
 import Card from "../components/common/Card";
-import { listArtifacts, deleteArtifact } from "../API";
-import GlowingInput from "../components/common/GlowingInput";
+import { listArtifacts, deleteArtifact, getArtifactDownloadUrl } from "../API";
+import DatasetSearchBar from "../components/datasets/DatasetSearchBar";
 import { EmptyState } from "../components";
+
+const defaultOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || defaultOrigin || "";
+
+const toAbsoluteApiUrl = (url) => {
+  if (!url) return url;
+  try {
+    // If already absolute, return as-is
+    const u = new URL(url);
+    return u.toString();
+  } catch (e) {
+    // If relative (e.g. /storage/...), resolve against apiBaseUrl
+    try {
+      return new URL(url, apiBaseUrl || defaultOrigin || "").toString();
+    } catch (err) {
+      return url;
+    }
+  }
+};
 
 function ArtifactsPage() {
   const toast = useToast();
   const [items, setItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -52,27 +71,47 @@ function ArtifactsPage() {
     }
   };
 
+  const handleDownload = async (artifact) => {
+    setDownloadingId(artifact.id);
+    try {
+      const { url } = await getArtifactDownloadUrl(artifact.id);
+      if (!url) {
+        throw new Error("Не удалось получить ссылку на файл");
+      }
+      const absoluteUrl = toAbsoluteApiUrl(url);
+      window.open(absoluteUrl, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast({
+        title: "Не удалось скачать",
+        description: e.response?.data?.detail || e.message,
+        status: "error",
+      });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   return (
     <Stack spacing={6}>
       <PageHeader title="Артефакты моделей" subtitle="Хранение экспортированных моделей" />
 
-      {/* Поиск артефактов */}
-      {items.length > 0 && (
-        <Box maxW="600px">
-          <GlowingInput
-            placeholder="Поиск по дате, URL, метрикам или ID..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            showSubmitButton={false}
-            leftIcon={SearchIcon}
-          />
-        </Box>
-      )}
+      <DatasetSearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onClear={() => setSearchQuery("")}
+        totalCount={items.length}
+        filteredCount={filteredItems.length}
+        placeholder="Поиск по дате, URL, метрикам или ID..."
+        title="Репозиторий артефактов"
+        description="Отфильтруйте модели по идентификатору, ссылке или значениям метрик."
+        counterLabel="Отображается:"
+        badgeColorScheme="green"
+      />
 
       {filteredItems.length === 0 && searchQuery ? (
         <EmptyState title="Ничего не найдено" description={`По запросу "${searchQuery}" артефакты не найдены`} />
       ) : (
-        <Card p={0} overflowX="auto">
+        <Card p={0} overflowX="auto" padding={2}>
           <Table size="sm">
             <Thead>
               <Tr>
@@ -106,11 +145,9 @@ function ArtifactsPage() {
                       size="sm"
                       aria-label="Скачать"
                       icon={<FiDownload />}
-                      as="a"
-                      href={m.model_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       variant="outline"
+                      onClick={() => handleDownload(m)}
+                      isLoading={downloadingId === m.id}
                     />
                     <IconButton
                       size="sm"

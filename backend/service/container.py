@@ -56,6 +56,14 @@ def build(config: Config):
     _CONTAINER[JobRepositoryName] = JobRepository(get(PgConnectorName))
     _CONTAINER[ProfileRepositoryName] = ProfileRepository(get(PgConnectorName))
     _CONTAINER[FileRepositoryName] = FileRepository(get(PgConnectorName))
+    training_repo = None
+    try:
+        from service.repositories.training_repository import TrainingRepository
+
+        training_repo = TrainingRepository(get(PgConnectorName))
+        _CONTAINER[TrainingRepositoryName] = training_repo
+    except Exception:  # noqa: BLE001
+        logger.warning("TrainingRepository not available; training features will be limited")
 
     # Services
     _CONTAINER[ProfileServiceName] = ProfileService(
@@ -75,6 +83,7 @@ def build(config: Config):
         config.job,
         get(JobRepositoryName),
         get(ProfileServiceName),
+        training_repo=training_repo,
     )
     # Storage backend selection
     backend = config.storage_backend.strip().lower()
@@ -105,21 +114,9 @@ def build(config: Config):
     )
     # Training service (ML pipeline v1)
     _CONTAINER[TrainingServiceName] = TrainingService(
-        training_repo=None,  # will be set via DI names below if needed
+        training_repo=training_repo,
         file_repo=get(FileRepositoryName),
     )
-
-    # Переинициализируем TrainingService c TrainingRepository при наличии
-    try:
-        from service.repositories.training_repository import TrainingRepository
-
-        _CONTAINER[TrainingRepositoryName] = TrainingRepository(get(PgConnectorName))
-        _CONTAINER[TrainingServiceName] = TrainingService(
-            training_repo=get(TrainingRepositoryName),
-            file_repo=get(FileRepositoryName),
-        )
-    except Exception:
-        logger.warning("TrainingRepository not available; training service will be limited")
 
     _CONTAINER[NewJobProcessorName] = NewJobProcessor(
         config.job,

@@ -22,7 +22,7 @@ const futureList = [
   "Nginx",
   "Pydantic",
   "Scikit-learn",
-  "Radis",
+  "Redis",
 ];
 
 const textDescription = {

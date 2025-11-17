@@ -2,10 +2,10 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from service.models.db.db_models import Dataset, ModelArtifact, TrainingRun, UserFile
+from service.models.db.db_models import Dataset, ModelArtifact, TrainingRun, UserFile, UserLaunch
 from service.models.key_value import ProcessingStatus, ServiceMode
 from service.repositories.base_repository import BaseRepository
 from service.repositories.decorators.session_processor import connection
@@ -33,16 +33,34 @@ class TrainingRepository(BaseRepository):
         user_id: UUID,
         launch_id: UUID | None,
         mode: ServiceMode,
-        file_name: str,
+        *,
+        display_name: str,
+        storage_key: str,
         file_url: str,
         session: AsyncSession | None = None,
     ) -> Dataset:
-        # Deprecated semantics: previously reused dataset by file_url. Now always create new with version.
+        # Reuse existing dataset for same storage_key if present to keep display names consistent.
+        lookup_stmt = (
+            select(Dataset)
+            .where(
+                Dataset.user_id == user_id,
+                Dataset.mode == mode,
+                Dataset.storage_key == storage_key,
+            )
+            .order_by(Dataset.created_at.desc())
+            .limit(1)
+        )
+        existing = await session.execute(lookup_stmt)
+        dataset = existing.scalar_one_or_none()
+        if dataset:
+            return dataset
+
         return await self.create_dataset_with_version(
             user_id=user_id,
             launch_id=launch_id,
             mode=mode,
-            file_name=file_name,
+            display_name=display_name,
+            storage_key=storage_key,
             file_url=file_url,
             session=session,
         )
@@ -53,7 +71,9 @@ class TrainingRepository(BaseRepository):
         user_id: UUID,
         launch_id: UUID | None,
         mode: ServiceMode,
-        file_name: str,
+        *,
+        display_name: str,
+        storage_key: str,
         file_url: str,
         session: AsyncSession | None = None,
     ) -> Dataset:
@@ -70,7 +90,8 @@ class TrainingRepository(BaseRepository):
             user_id=user_id,
             launch_id=launch_id,
             mode=mode,
-            name=file_name,
+            name=display_name,
+            storage_key=storage_key,
             file_url=file_url,
             version=next_version,
         )
@@ -167,6 +188,18 @@ class TrainingRepository(BaseRepository):
         )
         result = await session.execute(stmt)
         return list(result.scalars().all())
+
+    @connection()
+    async def get_artifact_by_id(
+        self, user_id: UUID, artifact_id: UUID, session: AsyncSession | None = None
+    ) -> ModelArtifact | None:
+        stmt = (
+            select(ModelArtifact)
+            .where(ModelArtifact.user_id == user_id, ModelArtifact.id == artifact_id)
+            .limit(1)
+        )
+        result = await session.execute(stmt)
+        return result.scalar_one_or_none()
 
     @connection()
     async def count_artifacts(self, user_id: UUID, session: AsyncSession | None = None) -> int:
@@ -287,6 +320,8 @@ class TrainingRepository(BaseRepository):
         user_id: UUID,
         mode: ServiceMode | None = None,
         limit: int = 50,
+        dataset_id: UUID | None = None,
+        target_column: str | None = None,
         session: AsyncSession | None = None,
     ) -> list[tuple[TrainingRun, int]]:
         """Return recent training runs with associated dataset version.
@@ -302,10 +337,20 @@ class TrainingRepository(BaseRepository):
             .join(Dataset, TrainingRun.dataset_id == Dataset.id)
             .where(TrainingRun.user_id == user_id)
             .order_by(TrainingRun.created_at.desc())
-            .limit(limit)
         )
         if mode is not None:
             stmt = stmt.where(Dataset.mode == mode)
+        if dataset_id is not None:
+            stmt = stmt.where(TrainingRun.dataset_id == dataset_id)
+        if target_column is not None and target_column.strip() != "":
+            from sqlalchemy import literal
+
+            stmt = stmt.join(UserLaunch, TrainingRun.launch_id == UserLaunch.id)
+            stmt = stmt.where(
+                UserLaunch.payload["target_column"].astext == literal(target_column.strip())
+            )
+
+        stmt = stmt.limit(limit)
         result = await session.execute(stmt)
         return [(row[0], int(row[1])) for row in result.all()]
 
@@ -320,11 +365,11 @@ class TrainingRepository(BaseRepository):
     ) -> list[str]:
         """Delete datasets older than cutoff and their training runs.
 
-        Returns list of dataset file_keys (Dataset.name) for storage deletion.
+        Returns list of dataset storage keys for storage deletion.
         """
         # Select expired dataset IDs and file names
         ds_stmt = (
-            select(Dataset.id, Dataset.name)
+            select(Dataset.id, Dataset.storage_key)
             .where(Dataset.created_at < cutoff)
             .order_by(Dataset.created_at.asc())
             .limit(limit)
@@ -345,3 +390,21 @@ class TrainingRepository(BaseRepository):
         del_ds = delete(Dataset).where(Dataset.id.in_(ids))
         await session.execute(del_ds)
         return file_keys
+
+    @connection()
+    async def delete_dataset(
+        self, user_id: UUID, dataset_id: UUID, session: AsyncSession | None = None
+    ) -> bool:
+        stmt = (
+            select(Dataset)
+            .where(Dataset.user_id == user_id, Dataset.id == dataset_id)
+            .limit(1)
+        )
+        res = await session.execute(stmt)
+        dataset = res.scalar_one_or_none()
+        if not dataset:
+            return False
+
+        await session.execute(delete(TrainingRun).where(TrainingRun.dataset_id == dataset_id))
+        await session.execute(delete(Dataset).where(Dataset.id == dataset_id))
+        return True

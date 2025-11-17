@@ -58,3 +58,12 @@ class FileRepository(BseRepository):
         await session.execute(
             delete(UserFile).where(UserFile.user_id == user_id, UserFile.id == file_id)
         )
+
+    @connection()
+    async def delete_file_metadata_by_name(
+        self, user_id: UUID, file_name: str, session: AsyncSession | None = None
+    ) -> None:
+        logger.debug(f"Deleting file metadata: user_id={user_id}, file_name={file_name}")
+        await session.execute(
+            delete(UserFile).where(UserFile.user_id == user_id, UserFile.file_name == file_name)
+        )

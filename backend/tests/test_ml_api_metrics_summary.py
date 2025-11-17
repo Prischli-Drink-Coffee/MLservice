@@ -11,7 +11,15 @@ from service.presentation.routers.ml_api.ml_api import ml_router
 
 
 class _FakeRepo:
-    async def list_training_metrics_trends(self, user_id, mode=None, limit: int = 50, session=None):
+    async def list_training_metrics_trends(
+        self,
+        user_id,
+        mode=None,
+        limit: int = 50,
+        dataset_id=None,
+        target_column=None,
+        session=None,
+    ):
         now = datetime.now(timezone.utc)
         # Two classification, one regression
         items = []

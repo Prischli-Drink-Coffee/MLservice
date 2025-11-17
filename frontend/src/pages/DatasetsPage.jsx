@@ -1,39 +1,27 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Badge,
   Box,
   Button,
   Flex,
   HStack,
-  IconButton,
   Input,
   SimpleGrid,
   Stack,
   Text,
   useToast,
 } from "@chakra-ui/react";
-import { SearchIcon } from "@chakra-ui/icons";
 import PageHeader from "../components/common/PageHeader";
-import Card from "../components/common/Card";
-import { listDatasets, uploadDataset, getFileDownloadUrl } from "../API";
+import { listDatasets, uploadDataset, getFileDownloadUrl, deleteDataset } from "../API";
 import { ErrorAlert, LoadingState, EmptyState } from "../components";
 import TTLCleanupCard from "../components/common/TTLCleanupCard";
-import GlowingInput from "../components/common/GlowingInput";
-import { colors, borderRadius, spacing } from "../theme/tokens";
-
-const safeProcessEnv =
-  typeof globalThis !== "undefined" && globalThis.process && globalThis.process.env
-    ? globalThis.process.env
-    : {};
+import GlowingCard from "../components/common/GlowingCard";
+import DatasetCard from "../components/datasets/DatasetCard";
+import DatasetSearchBar from "../components/datasets/DatasetSearchBar";
 
 const defaultOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
-const apiBaseUrl = (() => {
-  const raw = safeProcessEnv.REACT_APP_API_BASE_URL;
-  if (typeof raw === "string" && /^https?:\/\//i.test(raw)) {
-    return raw;
-  }
-  return defaultOrigin || "";
-})();
+const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || defaultOrigin || "";
+const DATASET_REMOVED_CODE = "DATASET_REMOVED";
 
 const toAbsoluteApiUrl = (url) => {
   if (!url) return url;
@@ -51,8 +39,10 @@ function DatasetsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState(null);
-  const isAdminUI = String(safeProcessEnv.REACT_APP_ENABLE_ADMIN_UI || "false").toLowerCase() === "true";
+  const isAdminUI = String(process.env.REACT_APP_ENABLE_ADMIN_UI || "false").toLowerCase() === "true";
 
   const fetchDatasets = async () => {
     setIsLoading(true);
@@ -91,14 +81,8 @@ function DatasetsPage() {
   };
 
   const handleDownload = async (dataset) => {
+    setDownloadingId(dataset.id);
     try {
-      // If presigned URL is already in dataset, use it directly
-      if (dataset.download_url) {
-        window.open(toAbsoluteApiUrl(dataset.download_url), '_blank');
-        return;
-      }
-
-      // Otherwise, request presigned URL from API
       const { url } = await getFileDownloadUrl(dataset.id);
       window.open(toAbsoluteApiUrl(url), '_blank');
 
@@ -109,16 +93,59 @@ function DatasetsPage() {
         duration: 3000,
       });
     } catch (e) {
+      const detail = e.response?.data?.detail;
+      const code = typeof detail === 'string' ? detail : detail?.code;
+      const message = typeof detail === 'string' ? detail : detail?.message;
+
+      if (code === DATASET_REMOVED_CODE) {
+        toast({
+          title: 'Датасет удалён',
+          description: message || 'Файл недоступен, запись очищена',
+          status: 'warning',
+          duration: 5000,
+        });
+        await fetchDatasets();
+        return;
+      }
+
       toast({
         title: 'Ошибка скачивания',
-        description: e.response?.data?.detail || 'Не удалось получить ссылку для скачивания',
+        description: message || 'Не удалось получить ссылку для скачивания',
         status: 'error',
         duration: 5000,
       });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
-  // Фильтруем датасеты по поисковому запросу
+  const handleDelete = async (dataset) => {
+    const confirmed = window.confirm(`Удалить датасет "${dataset.name}"? Это действие необратимо.`);
+    if (!confirmed) return;
+
+    setDeletingId(dataset.id);
+    try {
+      await deleteDataset(dataset.id);
+      toast({
+        title: 'Датасет удалён',
+        description: `${dataset.name} удалён безвозвратно`,
+        status: 'success',
+        duration: 3000,
+      });
+      await fetchDatasets();
+    } catch (e) {
+      const message = e.response?.data?.detail || e.message || 'Не удалось удалить датасет';
+      toast({
+        title: 'Ошибка удаления',
+        description: message,
+        status: 'error',
+        duration: 5000,
+      });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const filteredDatasets = useMemo(() => {
     if (!searchQuery.trim()) return datasets;
     const query = searchQuery.toLowerCase();
@@ -130,68 +157,50 @@ function DatasetsPage() {
     );
   }, [datasets, searchQuery]);
 
-  const body = () => {
-    if (isLoading && datasets.length === 0) return <LoadingState label="Загружаем датасеты" />;
-    if (error) return <ErrorAlert description={error} onClose={() => setError(null)} />;
-    if (datasets.length === 0) return <EmptyState title="Нет датасетов" description="Загрузите CSV файл, чтобы начать обучение" />;
+  const renderDatasets = () => {
+    if (isLoading && datasets.length === 0) {
+      return (
+        <GlowingCard intensity="subtle">
+          <LoadingState label="Загружаем датасеты" />
+        </GlowingCard>
+      );
+    }
+
+    if (error) {
+      return (
+        <GlowingCard intensity="subtle">
+          <ErrorAlert description={error} onClose={() => setError(null)} />
+        </GlowingCard>
+      );
+    }
+
+    if (datasets.length === 0) {
+      return (
+        <GlowingCard intensity="subtle">
+          <EmptyState title="Нет датасетов" description="Загрузите CSV файл, чтобы начать обучение" />
+        </GlowingCard>
+      );
+    }
 
     if (filteredDatasets.length === 0) {
-      return <EmptyState title="Ничего не найдено" description={`По запросу "${searchQuery}" датасеты не найдены`} />;
+      return (
+        <GlowingCard intensity="subtle">
+          <EmptyState title="Ничего не найдено" description={`По запросу "${searchQuery}" датасеты не найдены`} />
+        </GlowingCard>
+      );
     }
 
     return (
-      <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={5} w="full">
+      <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={{ base: 4, md: 6 }} w="full">
         {filteredDatasets.map((ds) => (
-          <Card key={ds.id} p={0} h="100%" borderRadius={borderRadius.xl} overflow="hidden">
-            <Flex direction="column" h="100%">
-              <Box
-                px={spacing[4]}
-                py={spacing[3]}
-                borderBottom={`1px solid ${colors.border.default}`}
-                bg={colors.background.jet30}
-              >
-                <HStack justify="space-between" align="center" spacing={3}>
-                  <Stack spacing={1} maxW="75%">
-                    <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.08em" color="text.muted">
-                      Датасет
-                    </Text>
-                    <Text fontWeight={600} fontSize="md" noOfLines={1}>
-                      {ds.name || "Без названия"}
-                    </Text>
-                  </Stack>
-                  <Badge variant="subtle" colorScheme="brand" borderRadius="full" px={3} py={1} fontSize="xs">
-                    v{ds.version}
-                  </Badge>
-                </HStack>
-              </Box>
-
-              <Stack spacing={2} px={spacing[4]} py={spacing[3]} flex="1">
-                <Text fontSize="xs" color="text.muted">
-                  ID: {ds.id}
-                </Text>
-                <Text fontSize="xs" color="text.muted">
-                  Загружен: {new Date(ds.created_at).toLocaleString()}
-                </Text>
-              </Stack>
-
-              <Flex
-                px={spacing[4]}
-                py={spacing[3]}
-                borderTop={`1px solid ${colors.border.subtle}`}
-                justify="flex-end"
-                align="center"
-                gap={2}
-              >
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleDownload(ds)}
-                >
-                  Скачать
-                </Button>
-              </Flex>
-            </Flex>
-          </Card>
+          <DatasetCard
+            key={ds.id}
+            dataset={ds}
+            onDownload={handleDownload}
+            onDelete={handleDelete}
+            isDownloading={downloadingId === ds.id}
+            isDeleting={deletingId === ds.id}
+          />
         ))}
       </SimpleGrid>
     );
@@ -227,38 +236,33 @@ function DatasetsPage() {
         }
       />
 
-      {isAdminUI && <TTLCleanupCard isAdmin />}
-
-      {/* Поиск датасетов */}
-      {datasets.length > 0 && (
-        <Flex
-          direction={{ base: "column", md: "row" }}
-          justify="space-between"
-          align={{ base: "stretch", md: "center" }}
-          gap={4}
-        >
-          <Box flex="1" maxW="600px">
-            <GlowingInput
-              placeholder="Поиск по названию, версии или ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              showSubmitButton={false}
-              leftIcon={SearchIcon}
-            />
-          </Box>
-        </Flex>
+      {isAdminUI && (
+        <GlowingCard intensity="subtle">
+          <TTLCleanupCard isAdmin />
+        </GlowingCard>
       )}
 
-      <Card p={{ base: 4, md: 5 }} borderRadius={borderRadius.xl}>
-        <Stack spacing={2} fontSize="sm" color="text.muted">
-          <Text fontWeight={600}>Требования к CSV</Text>
-          <Text>• Расширение .csv; минимум 2 колонки</Text>
-          <Text>• Заголовок обязателен, не пустой файл</Text>
-          <Text>• Допустимая доля пустых значений ограничена (MAX_EMPTY_RATIO)</Text>
-          <Text>• Лимит размера (MAX_CSV_UPLOAD_BYTES), при превышении будет ошибка 413</Text>
+      <DatasetSearchBar
+        value={searchQuery}
+        onChange={setSearchQuery}
+        onClear={() => setSearchQuery("")}
+        totalCount={datasets.length}
+        filteredCount={filteredDatasets.length}
+        placeholder="Поиск по названию, версии или ID..."
+      />
+
+      <GlowingCard intensity="subtle">
+        <Stack spacing={3} fontSize="sm" color="text.muted">
+          <Text fontWeight={600} fontSize="md" color="text.primary">
+            Требования к CSV
+          </Text>
+          <Text>• Файл в формате .csv, минимум две колонки с заголовками</Text>
+          <Text>• Заголовок обязателен, пустые строки и столбцы будут отброшены</Text>
+          <Text>• Доля пустых значений ограничена настройкой MAX_EMPTY_RATIO</Text>
+          <Text>• Размер файла не должен превышать MAX_CSV_UPLOAD_BYTES (ошибка 413)</Text>
         </Stack>
-      </Card>
-      {body()}
+      </GlowingCard>
+      {renderDatasets()}
     </Stack>
   );
 }

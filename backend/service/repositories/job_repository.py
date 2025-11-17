@@ -25,6 +25,7 @@ class JobRepository(BaseRepository):
             type=job.type,
             status=job.status,
             is_payment_taken=job.is_payment_taken,
+            payload=job.payload,
         )
 
         session.add(new_job)
@@ -80,6 +81,7 @@ class JobRepository(BaseRepository):
             is_payment_taken=job.is_payment_taken,
             created_at=job.created_at,
             updated_at=job.updated_at,
+            payload=job.payload,
         )
 
         await session.merge(updating_job)
