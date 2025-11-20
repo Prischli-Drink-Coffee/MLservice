@@ -1,18 +1,60 @@
 import { extendTheme } from "@chakra-ui/react";
-import { colors, typography, borderRadius, shadows } from "./theme/tokens";
+import { colors, typography, borderRadius, shadows, spacing, transitions, gradients } from "./theme/tokens";
+
+const brandPalette = {
+  50: "#eef6ff",
+  100: "#d9eaff",
+  200: "#b6d4ff",
+  300: "#8fbcff",
+  400: "#5f99ff",
+  500: colors.brand.primary,
+  600: "#1f5de6",
+  700: "#184ab8",
+  800: "#153e96",
+  900: "#122f70",
+};
+
+const legacyColors = {
+  menu_gray: "#CCC3C2",
+  main_dark: "#333",
+  light_dark: "#666",
+  main_yellow: "#FFBF00",
+  main_red: "#FF0F00",
+  menu_white: "#F8F8F8",
+  date_gray: "#A9A9A9",
+};
+
+const chakraSpace = spacing.scale.reduce((acc, value, index) => {
+  acc[index] = value;
+  return acc;
+}, {});
 
 const theme = extendTheme({
   config: {
     initialColorMode: "dark",
     useSystemColorMode: false,
   },
+  space: chakraSpace,
   fonts: {
     body: typography.fontFamily.primary,
     heading: typography.fontFamily.primary,
   },
   radii: {
-    card: borderRadius.md,
+    none: 0,
+    sm: borderRadius.sm,
+    md: borderRadius.md,
+    lg: borderRadius.lg,
     xl: borderRadius.xl,
+    "2xl": borderRadius["2xl"],
+    card: borderRadius.md,
+  },
+  sizes: {
+    container: {
+      md: "48rem",
+      lg: "62rem",
+      xl: "75rem",
+      "2xl": "88rem",
+    },
   },
   shadows: {
     elevated: shadows.elevated,
@@ -25,103 +67,138 @@ const theme = extendTheme({
       body: {
         bg: colors.background.darkPrimary,
         color: colors.text.primary,
+        fontFamily: typography.fontFamily.primary,
+      },
+      "*, *::before, *::after": {
+        borderColor: colors.border.default,
+      },
+      "::selection": {
+        backgroundColor: `${colors.brand.primary}55`,
+        color: colors.text.primaryInverted,
+      },
+      "@keyframes gradientOrbit": {
+        "0%": { transform: "rotate(0deg)" },
+        "100%": { transform: "rotate(360deg)" },
+      },
+      "@keyframes glowPulse": {
+        "0%": { opacity: 0.4 },
+        "50%": { opacity: 0.9 },
+        "100%": { opacity: 0.4 },
+      },
+      "@keyframes shimmerTrail": {
+        "0%": { transform: "translateX(-20%)" },
+        "100%": { transform: "translateX(120%)" },
       },
     }),
   },
-  //варианты для различных компонентов
   components: {
     Tooltip: {
       baseStyle: {
-        background: "rgba(0, 0, 0, 0.5);",
-        padding: "5px",
-        fontSize: "14px !important",
+        background: colors.blur.dark,
+        color: colors.text.primary,
+        borderRadius: borderRadius.sm,
+        px: spacing.sm,
+        py: spacing[4],
+        fontSize: "12px",
       },
     },
     Button: {
+      baseStyle: {
+        fontWeight: 500,
+        borderRadius: borderRadius.sm,
+        transition: transitions.smooth,
+        position: "relative",
+        overflow: "hidden",
+        letterSpacing: "0.02em",
+      },
       variants: {
-        menu_yellow: {
-          border: "2px solid",
-          borderColor: "main_yellow",
-          borderRadius: "0",
-          background: "transparent",
-          // width: '100%',
+        primary: {
+          bgGradient: gradients.prism,
+          color: colors.text.primary,
+          boxShadow: "0 18px 45px rgba(47, 116, 255, 0.35)",
+          border: "1px solid",
+          borderColor: "rgba(255,255,255,0.08)",
+          _before: {
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            background: gradients.midnightMesh,
+            opacity: 0.35,
+            transition: "opacity 0.3s ease",
+            pointerEvents: "none",
+          },
+          _after: {
+            content: '""',
+            position: "absolute",
+            inset: "-150%",
+            background: "conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.8) 15%, transparent 30%)",
+            animation: "gradientOrbit 18s linear infinite",
+            opacity: 0.25,
+            pointerEvents: "none",
+          },
           _hover: {
-            backgroundColor: "main_yellow",
+            transform: "translateY(-1px) scale(1.01)",
+            boxShadow: "0 25px 60px rgba(139, 92, 246, 0.45)",
+            _before: { opacity: 0.6 },
+          },
+          _active: { transform: "scale(0.99)", boxShadow: "0 10px 25px rgba(47, 116, 255, 0.4)" },
+          _disabled: {
+            bg: colors.background.buttonDisabled,
+            color: colors.text.quaternary,
+            boxShadow: "none",
+            opacity: 0.6,
           },
         },
-        menu_red: {
-          border: "2px solid",
-          borderColor: "main_red",
-          borderRadius: "0",
-          background: "transparent",
+        secondary: {
+          color: colors.text.primary,
+          border: "1px solid",
+          borderColor: colors.border.medium,
+          background: "rgba(5,5,5,0.35)",
+          _before: {
+            content: '""',
+            position: "absolute",
+            inset: "1px",
+            borderRadius: borderRadius.sm,
+            background: gradients.dusk,
+            opacity: 0.6,
+            transition: "opacity 0.3s ease",
+            pointerEvents: "none",
+          },
           _hover: {
-            backgroundColor: "main_red",
+            borderColor: "rgba(255,255,255,0.35)",
+            boxShadow: shadows.glowSubtle,
+            _before: { opacity: 0.9 },
+          },
+          _active: {
+            boxShadow: "0 8px 20px rgba(0,0,0,0.45)",
+            borderColor: "rgba(255,255,255,0.25)",
+          },
+          _disabled: {
+            color: colors.text.quaternary,
+            borderColor: colors.border.light,
+            opacity: 0.5,
           },
         },
-        subtle: (props) => ({
-          bg: props.colorMode === "light" ? "gray.100" : "gray.700",
-          _hover: { bg: props.colorMode === "light" ? "gray.200" : "gray.600" },
-        }),
       },
     },
     Link: {
-      variants: {
-        light_gray: {
-          fontColor: "light_dark",
-          fontSize: ["12px", "13px", "14px"],
-        },
-      },
-    },
-    NavLink: {
-      variants: {
-        light_gray: {
-          fontColor: "light_dark",
-          fontSize: ["12px", "13px", "14px"],
-        },
-      },
-    },
-    Text: {
-      variants: {
-        light_gray: {
-          fontColor: "light_dark",
-          fontSize: ["12px", "13px", "14px"],
-        },
-      },
-    },
-    HStack: {
-      variants: {
-        menu_yellow_hover: {
-          height: "100%",
-          _hover: {
-            borderBottom: "2px solid #FFBF00",
-          },
-        },
+      baseStyle: {
+        color: colors.text.secondary,
+        transition: transitions.default,
+        _hover: { color: colors.text.primary },
       },
     },
   },
   colors: {
-    // Legacy colors (kept for backward compatibility)
-    menu_gray: "#CCC3C2",
-    main_dark: "#333",
-    light_dark: "#666",
-    main_yellow: "#FFBF00",
-    main_red: "#FF0F00",
-    menu_white: "#F8F8F8",
-    date_gray: "#A9A9A9",
-
-    // Design system brand colors
-    brand: {
-      50: "#eef6ff",
-      100: "#d9eaff",
-      200: "#b6d4ff",
-      300: "#8fbcff",
-      400: "#5f99ff",
-      500: colors.brand.primary,
-      600: "#1f5de6",
-      700: "#184ab8",
-      800: "#153e96",
-      900: "#122f70",
-    },
+    ...legacyColors,
+    brand: brandPalette,
+    text: colors.text,
+    background: colors.background,
+    blur: colors.blur,
+    border: colors.border,
+    success: colors.success,
+    error: colors.error,
+    warning: colors.warning,
   },
   semanticTokens: {
     colors: {

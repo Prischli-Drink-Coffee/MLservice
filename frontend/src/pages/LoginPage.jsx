@@ -9,6 +9,7 @@ import { AuthFormCard, AuthInput, PasswordInput } from "../components/auth";
 import { Title, Body } from "../components/common/Typography";
 import PrimaryButton from "../components/common/PrimaryButton";
 import { tokens } from "../theme/tokens";
+import extractErrorInfo from "../utils/errorHandler";
 
 const MotionBox = motion(Box);
 
@@ -17,7 +18,7 @@ const nameProject = "MLservice";
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { setAuthenticated } = useAuth();
+  const { refreshSession, setAuthenticated } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,11 +37,15 @@ function LoginPage() {
     setIsLoading(true);
     try {
       await login({ email, password });
-      setAuthenticated(true);
+      try {
+        await refreshSession();
+      } catch {
+        setAuthenticated(true);
+      }
       navigate(from, { replace: true });
     } catch (err) {
-      const message = err.response?.data?.detail || err.message;
-      setError(message);
+      const { userMessage } = extractErrorInfo(err, { fallbackMessage: "Не удалось выполнить вход" });
+      setError(userMessage);
     } finally {
       setIsLoading(false);
     }

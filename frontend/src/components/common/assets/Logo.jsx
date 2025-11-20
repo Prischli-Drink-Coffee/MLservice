@@ -1,26 +1,18 @@
-import { Image, useColorModeValue } from "@chakra-ui/react";
+import { Image } from "@chakra-ui/react";
 import logo from "./logo.svg";
 import transparentLogo from "./transparent_logo.svg";
 
 const nameProject = "MLservice";
 
-function Logo({ boxSize = 6, ...rest }) {
-  const filter = useColorModeValue("none", "invert(1) hue-rotate(180deg)");
+const VARIANT_SOURCES = {
+  solid: logo,
+  transparent: transparentLogo,
+};
 
-  const candidateTransparent = logo;
-  let src = transparentLogo;
-  src = candidateTransparent;
+function Logo({ boxSize = 6, variant = "solid", ...rest }) {
+  const src = VARIANT_SOURCES[variant] ?? VARIANT_SOURCES.solid;
 
-  return (
-    <Image
-      src={src}
-      alt={`${nameProject} logo`}
-      title={nameProject}
-      boxSize={boxSize}
-      style={{ filter }}
-      {...rest}
-    />
-  );
+  return <Image src={src} alt={`${nameProject} logo`} title={nameProject} boxSize={boxSize} {...rest} />;
 }
 
 export default Logo;

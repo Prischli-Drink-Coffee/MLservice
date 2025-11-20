@@ -1,6 +1,9 @@
 import { Text, VStack } from "@chakra-ui/react";
 
-function EmptyState({ title = "Nothing here yet", description }) {
+const DEFAULT_TITLE = "Здесь пока пусто";
+const DEFAULT_DESCRIPTION = "Попробуйте изменить фильтры или загрузить данные.";
+
+function EmptyState({ title = DEFAULT_TITLE, description = DEFAULT_DESCRIPTION }) {
   return (
     <VStack
       spacing={2}

@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { Box, VStack } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { tokens } from "../../theme/tokens";
+import useInteractiveGlow from "../../hooks/useInteractiveGlow";
 
 const MotionBox = motion(Box);
 
@@ -10,18 +11,9 @@ const MotionBox = motion(Box);
  * С эффектом свечения на границе, отслеживающим курсор
  */
 const AuthFormCard = ({ children, maxW = "480px", ...rest }) => {
-  const [gradientPos, setGradientPos] = useState({ x: 50, y: 50 });
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setGradientPos({ x, y });
-  };
-
-  const gradientCss = useMemo(() => {
-    return `radial-gradient(circle 600px at ${gradientPos.x}% ${gradientPos.y}%, ${tokens.colors.brand.primary}40, transparent 40%)`;
-  }, [gradientPos]);
+  const { glowRef, glowStyle, onGlowMouseMove, onGlowMouseLeave } = useInteractiveGlow();
+  const gradientCss = `radial-gradient(circle 600px at var(--glow-x, 50%) var(--glow-y, 50%), ${tokens.colors.brand.primary}40, transparent 40%)`;
+  const { style: motionStyle, ...motionProps } = rest;
 
   return (
     <MotionBox
@@ -31,8 +23,11 @@ const AuthFormCard = ({ children, maxW = "480px", ...rest }) => {
       maxW={maxW}
       mx="auto"
       position="relative"
-      onMouseMove={handleMouseMove}
-      {...rest}
+      ref={glowRef}
+      style={{ ...glowStyle, ...motionStyle }}
+      onMouseMove={onGlowMouseMove}
+      onMouseLeave={onGlowMouseLeave}
+      {...motionProps}
     >
       {/* Gradient border with mouse tracking */}
       <Box

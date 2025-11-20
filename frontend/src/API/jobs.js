@@ -13,7 +13,7 @@ export async function startJob({ datasetId, fileId, mode = "TRAINING", type = "T
   return res.data;
 }
 
-export async function fetchJobResult(jobId) {
-  const res = await client.get(`/api/jobs/v1/result/${jobId}`);
+export async function fetchJobResult(jobId, { signal } = {}) {
+  const res = await client.get(`/api/jobs/v1/result/${jobId}`, { signal });
   return res.data;
 }

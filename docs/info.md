@@ -3,7 +3,7 @@
 **Версия**: 0.1.2
 **Дата последнего обновления**: Ноябрь 2025
 **Статус**: Production-ready (ML Pipeline v1)
-**Главное обновление**: Redis-кеш профилей и хранение JWT-сессий
+**Главное обновление**: Redis-кеш профилей и хранение JWT-сессий + готов дизайн новой страницы профиля (docs/profile_page_*.md)
 
 ---
 
@@ -224,6 +224,7 @@ frontend/src/
 │   ├── InfoPage.jsx    # About us page
 │   ├── LoginPage.jsx   # Authentication
 │   ├── SignUpPage.jsx  # Registration
+│   ├── ProfilePage.jsx  # (Soon) профиль пользователя, квоты, покупка запросов (см. docs/profile_page_*.md)
 │   └── NotFoundPage.jsx # 404 handler
 │
 ├── components/         # Reusable components
@@ -1670,6 +1671,13 @@ npm test  # Jest + React Testing Library
 - ✅ Provisioning конфигурации в `infra/monitoring/` (datasource + dashboard)
 - ✅ Обновлённые документы: prometheus_integration_plan.md, prometheus_implementation_summary.md, prometheus_integration_guide.md
 
+#### 🆕 In design (Profile page & self-service quotas)
+
+- ✏️ Подготовлены документы `profile_page_implementation_summary.md`, `profile_page_integration_plan.md`, `profile_page_migration_guide.md`
+- 🎯 Цель: единая страница профиля с редактированием данных, визуализацией квот и CTA на покупку дополнительных запросов
+- 💳 Платёжная интеграция пока в статусе "coming soon" — в UI появится предупреждение и контакт для ручного расширения лимитов
+- 🧭 Следующий шаг: реализовать API (`GET/PATCH /api/profile/me`, `GET /api/billing/quotas/preview`) и страницу React `/profile`
+
 #### 📋 Post-MVP (Q1 2026)
 
 - [ ] Centralized logging (ELK stack)
@@ -1714,6 +1722,7 @@ npm test  # Jest + React Testing Library
 
 - **Этот файл**: `docs/info.md` - Полная документация проекта
 - **README**: `README.md` - Быстрый старт
+- **Profile page docs**: `docs/profile_page_implementation_summary.md`, `docs/profile_page_integration_plan.md`, `docs/profile_page_migration_guide.md`
 
 ### API Документация
 

@@ -14,6 +14,10 @@ from service.presentation.handlers.exceptions_handlers import setup_exception_ha
 from service.presentation.routers.auth_api.auth_api import auth_router
 from service.presentation.routers.files_api.files_api import files_router
 from service.presentation.routers.jobs_api.jobs_api import jobs_router
+from service.presentation.routers.profile_api.profile_api import (
+    billing_router,
+    profile_router,
+)
 from service.settings import LOGGING, config
 from service.utils.app_lifespan import lifespan
 
@@ -45,6 +49,8 @@ def create_app() -> FastAPI:
     app.include_router(auth_router, tags=["Auth-API"])
     app.include_router(jobs_router, tags=["Jobs-API"])
     app.include_router(files_router, tags=["Files-API"])
+    app.include_router(profile_router, tags=["Profile-API"])
+    app.include_router(billing_router, tags=["Billing-API"])
     # Роутер статистики удалён как легаси (см. backend_audit.md #21)
     from service.presentation.routers.ml_api.ml_api import ml_router
 

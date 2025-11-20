@@ -1,40 +1,30 @@
-import React, { useMemo, useState } from "react";
-import { Box, Divider, HStack, VStack } from "@chakra-ui/react";
+import React from "react";
+import { Box, Divider, HStack, VStack, usePrefersReducedMotion } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { Subtitle, Footnote } from "../common/Typography";
 import MLStats from "./MLStats";
 import StatusBadge from "../common/StatusBadge";
-import { colors } from "../../theme/tokens";
+import { colors, gradients } from "../../theme/tokens";
+import useInteractiveGlow from "../../hooks/useInteractiveGlow";
 
 const MotionBox = motion(Box);
 
 /**
  * PlatformInfoCard - Widget displaying platform features and health status
- * @param {boolean} isAuthenticated - User authentication status
  * @param {object} health - Health check data with 'ok' boolean
  */
-function PlatformInfoCard({ isAuthenticated, health }) {
-  const [gradientPos, setGradientPos] = useState({ x: 50, y: 50 });
+function PlatformInfoCard({ health, isAuthenticated = false }) {
+  const { glowRef, glowStyle, onGlowMouseMove, onGlowMouseLeave } = useInteractiveGlow();
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   const accent = "#2f74ff";
   const glowSecondary = "#8b5cf6";
   const glowTertiary = "#1dd1a1";
 
-  const gradientCss = useMemo(
-    () =>
-      `radial-gradient(circle at ${gradientPos.x}% ${gradientPos.y}%,
-          ${accent} 0%,
-          ${glowSecondary} 45%,
-          ${glowTertiary} 80%)`,
-    [accent, glowSecondary, glowTertiary, gradientPos.x, gradientPos.y],
-  );
-
-  const handleMouseMove = (event) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    setGradientPos({ x, y });
-  };
+  const gradientCss = `radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%),
+        ${accent} 0%,
+        ${glowSecondary} 45%,
+        ${glowTertiary} 80%)`;
 
   return (
     <MotionBox
@@ -46,7 +36,10 @@ function PlatformInfoCard({ isAuthenticated, health }) {
     >
       <MotionBox
         role="presentation"
-        onMouseMove={handleMouseMove}
+        ref={glowRef}
+        style={glowStyle}
+        onMouseMove={onGlowMouseMove}
+        onMouseLeave={onGlowMouseLeave}
         initial={{ boxShadow: "0 0 18px rgba(47, 116, 255, 0.25)" }}
         whileHover={{ boxShadow: "0 0 28px rgba(139, 92, 246, 0.65)" }}
         transition={{ duration: 0.45 }}
@@ -70,7 +63,36 @@ function PlatformInfoCard({ isAuthenticated, health }) {
           transition: "background 0.3s ease",
         }}
       >
-        <Box bg={colors.blur.dark} borderRadius="2xl" p={{ base: 4, md: 5 }} h="full">
+        <Box
+          position="relative"
+          overflow="hidden"
+          borderRadius="2xl"
+          border="1px solid rgba(255,255,255,0.08)"
+          bg={`linear-gradient(140deg, rgba(5,7,13,0.92), rgba(7,9,18,0.8)), ${gradients.midnightMesh}`}
+          boxShadow="0 40px 80px rgba(0,0,0,0.55)"
+          p={{ base: 4, md: 5 }}
+          h="full"
+          _before={{
+            content: '""',
+            position: "absolute",
+            inset: "-30%",
+            background: gradients.horizon,
+            opacity: 0.25,
+            filter: "blur(90px)",
+            animation: prefersReducedMotion ? "none" : "gradientOrbit 30s linear infinite",
+          }}
+          _after={{
+            content: '""',
+            position: "absolute",
+            inset: "1px",
+            borderRadius: "calc(32px - 6px)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            background: "linear-gradient(125deg, rgba(255,255,255,0.06), transparent 55%)",
+            opacity: 0.65,
+            pointerEvents: "none",
+          }}
+        >
+          <Box position="relative" zIndex={1}>
           <VStack align="stretch" spacing={4} h="full">
             {/* Title */}
             <Subtitle variant="medium" fontSize={{ base: "18px", md: "22px" }}>
@@ -86,15 +108,26 @@ function PlatformInfoCard({ isAuthenticated, health }) {
               </Footnote>
               <StatusBadge ok={health?.ok} />
             </HStack>
+            {!isAuthenticated && (
+              <Footnote variant="small" color={colors.text.tertiary} fontSize="11px">
+                Авторизуйтесь, чтобы включить мониторинг и видеть актуальные обновления.
+              </Footnote>
+            )}
+            {health?.error && (
+              <Footnote variant="small" color={colors.text.tertiary} fontSize="11px">
+                {health.error}
+              </Footnote>
+            )}
 
             {/* ML Statistics */}
             <Divider borderColor={colors.border.default} opacity={0.5} />
             <VStack align="stretch" spacing={2}>
               <Box w="full" maxW={{ base: "full", lg: "900px" }}>
-                <MLStats />
+                <MLStats isAuthenticated={isAuthenticated} />
               </Box>
             </VStack>
           </VStack>
+          </Box>
         </Box>
       </MotionBox>
     </MotionBox>

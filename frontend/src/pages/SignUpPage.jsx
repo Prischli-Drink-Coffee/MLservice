@@ -8,6 +8,7 @@ import { AuthFormCard, AuthInput, PasswordInput, PasswordStrength } from "../com
 import { Title, Body } from "../components/common/Typography";
 import PrimaryButton from "../components/common/PrimaryButton";
 import { tokens } from "../theme/tokens";
+import extractErrorInfo from "../utils/errorHandler";
 
 const MotionBox = motion(Box);
 
@@ -44,35 +45,6 @@ function SignUpPage() {
   const passwordsMismatch = password && confirmPassword && password !== confirmPassword;
   const passwordStrongEnough = hasMinLen && hasLetter && hasDigit;
 
-  const formatErrorMessage = (error) => {
-    if (!error) {
-      return "Не удалось завершить регистрацию";
-    }
-
-    const detail = error.response?.data?.detail;
-    if (typeof detail === "string" && detail.trim()) {
-      return detail;
-    }
-
-    if (Array.isArray(detail)) {
-      const detailMessages = detail
-        .map((entry) =>
-          typeof entry === "string" ? entry : entry?.msg || entry?.message || JSON.stringify(entry),
-        )
-        .filter(Boolean);
-      if (detailMessages.length) {
-        return detailMessages.join("; ");
-      }
-    }
-
-    const message = error.response?.data?.message;
-    if (typeof message === "string" && message.trim()) {
-      return message;
-    }
-
-    return error.message || "Не удалось завершить регистрацию";
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError(null);
@@ -86,7 +58,8 @@ function SignUpPage() {
       await registerUser({ email, password, first_name: firstName || null, phone: phone || null });
       navigate("/login", { replace: true });
     } catch (err) {
-      setError(formatErrorMessage(err));
+      const { userMessage } = extractErrorInfo(err, { fallbackMessage: "Не удалось завершить регистрацию" });
+      setError(userMessage);
     } finally {
       setIsLoading(false);
     }

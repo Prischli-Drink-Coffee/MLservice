@@ -9,6 +9,11 @@ const PUBLIC_ENDPOINTS = ["/api/health"];
 
 export const registerUnauthorizedHandler = (handler) => {
   unauthorizedHandler = handler;
+  return () => {
+    if (unauthorizedHandler === handler) {
+      unauthorizedHandler = null;
+    }
+  };
 };
 
 const client = axios.create({

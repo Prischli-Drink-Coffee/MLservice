@@ -1,49 +1,31 @@
 import React from "react";
-import { Box, SimpleGrid, Stack, Icon } from "@chakra-ui/react";
+import { Box, SimpleGrid, Stack, Icon, usePrefersReducedMotion } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import { Subtitle, Body, Footnote } from "../common/Typography";
-import { colors, borderRadius } from "../../theme/tokens";
+import { colors, borderRadius, spacing, gradients } from "../../theme/tokens";
 import { CheckCircleIcon, TimeIcon, LockIcon, RepeatIcon } from "@chakra-ui/icons";
+import { BENEFITS_CONTENT } from "../../constants";
 
 const MotionBox = motion(Box);
 
-{/* advantages */}
-const titleAdvantages = "Ключевые преимущества";
-const subtitleAdvantages = "Почему выбирают наш сервис?";
-const descriptionAdvantages =
-  "Наш сервис предлагает уникальные возможности для эффективного управления вашими ML-моделями и ресурсами.";
+const iconMap = {
+  CheckCircleIcon,
+  TimeIcon,
+  RepeatIcon,
+  LockIcon,
+};
 
-{/* benefits */}
-const benefits = [
-  {
-    icon: CheckCircleIcon,
-    title: "Простота использования",
-    description: "Интуитивно понятный интерфейс",
-    color: colors.brand.primary,
-  },
-  {
-    icon: TimeIcon,
-    title: "Скорость",
-    description: "Работа с классическими моделями на GPU через технологию RAPIDS",
-    color: colors.brand.secondary,
-  },
-  {
-    icon: RepeatIcon,
-    title: "Повторяемость",
-    description: "Легкость воспроизведения результатов",
-    color: "#f59e0b",
-  },
-  {
-    icon: LockIcon,
-    title: "Безопасность",
-    description: "JWT-аутентификация, изолированные окружения, SSL/TSL шифрование.",
-    color: colors.brand.tertiary,
-  },
-];
+const resolveIcon = (iconKey) => iconMap[iconKey] || CheckCircleIcon;
 
+const resolveColor = (colorKey) => {
+  if (!colorKey) return colors.brand.primary;
+  if (colorKey.startsWith("#")) return colorKey;
+  const parts = colorKey.split(".");
+  return parts.reduce((acc, part) => (acc ? acc[part] : undefined), colors) || colorKey;
+};
 
-
-{/* code */}
+//
+// code
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -67,9 +49,38 @@ const itemVariants = {
 };
 
 function BenefitsSection() {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
-    <Box w="full">
-      <Stack spacing={{ base: 8, md: 10 }} align="center">
+    <Box
+      w="full"
+      position="relative"
+      borderRadius={{ base: borderRadius.lg, md: borderRadius["2xl"] }}
+      overflow="hidden"
+      px={{ base: spacing.md, md: spacing.xl }}
+      py={{ base: spacing.xl, md: spacing["3xl"] }}
+      bg={`linear-gradient(145deg, rgba(4,6,12,0.92), rgba(7,9,18,0.75)), ${gradients.midnightMesh}`}
+      border="1px solid rgba(255,255,255,0.06)"
+      boxShadow="0 35px 80px rgba(3,4,8,0.65)"
+      _before={{
+        content: '""',
+        position: "absolute",
+        inset: "-30%",
+        background: gradients.aurora,
+        opacity: 0.35,
+        filter: "blur(70px)",
+        animation: prefersReducedMotion ? "none" : "glowPulse 16s ease-in-out infinite",
+      }}
+      _after={{
+        content: '""',
+        position: "absolute",
+        inset: 0,
+        backgroundImage: "linear-gradient(120deg, rgba(255,255,255,0.05) 0%, transparent 45%)",
+        opacity: 0.5,
+        pointerEvents: "none",
+      }}
+    >
+      <Stack spacing={{ base: 8, md: 10 }} align="center" position="relative" zIndex={1}>
         {/* Section Header */}
         <Stack spacing={3} align="center" textAlign="center" maxW="800px">
           <Footnote
@@ -79,13 +90,13 @@ function BenefitsSection() {
             letterSpacing="wider"
             fontWeight={600}
           >
-            {titleAdvantages}
+            {BENEFITS_CONTENT.title}
           </Footnote>
           <Subtitle variant="large" fontSize={{ base: "26px", md: "32px" }}>
-            {subtitleAdvantages}
+            {BENEFITS_CONTENT.subtitle}
           </Subtitle>
           <Body variant="medium" color={colors.text.tertiary} maxW="650px">
-            {descriptionAdvantages}
+            {BENEFITS_CONTENT.description}
           </Body>
         </Stack>
 
@@ -98,7 +109,10 @@ function BenefitsSection() {
           viewport={{ once: true, amount: 0.2 }}
         >
           <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={{ base: 4, md: 5 }} w="full">
-            {benefits.map((benefit, index) => (
+            {BENEFITS_CONTENT.items.map((benefit, index) => {
+              const IconComponent = resolveIcon(benefit.icon);
+              const benefitColor = resolveColor(benefit.color);
+              return (
               <MotionBox
                 key={index}
                 variants={itemVariants}
@@ -108,45 +122,67 @@ function BenefitsSection() {
                 }}
               >
                 <Box
-                  bg={colors.blur.dark}
-                  borderRadius={borderRadius.lg}
+                  bg="rgba(6,8,15,0.9)"
+                  borderRadius={borderRadius.xl}
                   p={{ base: 5, md: 6 }}
-                  border="1px solid"
-                  borderColor={colors.border.default}
+                  border="1px solid rgba(255,255,255,0.08)"
                   h="full"
                   position="relative"
                   overflow="hidden"
-                  transition="all 0.3s"
+                  transition="all 0.35s ease"
+                  backdropFilter="blur(24px)"
                   _hover={{
-                    borderColor: benefit.color,
-                    boxShadow: `0 0 25px ${benefit.color}40`,
+                    borderColor: benefitColor,
+                    boxShadow: `0 25px 55px ${benefitColor}2a`,
+                    transform: "translateY(-6px)",
                   }}
                   _before={{
                     content: '""',
                     position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: "3px",
-                    bg: `linear-gradient(90deg, ${benefit.color}, transparent)`,
-                    opacity: 0,
-                    transition: "opacity 0.3s",
+                    inset: "-35%",
+                    background: gradients.prism,
+                    opacity: 0.25,
+                    filter: "blur(60px)",
+                    animation: prefersReducedMotion ? "none" : "gradientOrbit 22s linear infinite",
                   }}
-                  sx={{
-                    "&:hover::before": {
-                      opacity: 1,
-                    },
+                  _after={{
+                    content: '""',
+                    position: "absolute",
+                    inset: "1px",
+                    borderRadius: `calc(${borderRadius.xl} - 10px)`,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "linear-gradient(145deg, rgba(255,255,255,0.08), transparent 60%)",
+                    opacity: 0.7,
+                    mixBlendMode: "screen",
+                    pointerEvents: "none",
+                    animation: prefersReducedMotion ? "none" : "shimmerTrail 9s ease-in-out infinite",
                   }}
                 >
                   <Stack spacing={3}>
                     {/* Icon */}
                     <Box
-                      bg={`${benefit.color}15`}
-                      borderRadius={borderRadius.md}
+                      bg="rgba(255,255,255,0.04)"
+                      borderRadius={borderRadius.lg}
                       p={3}
                       w="fit-content"
+                      position="relative"
+                      overflow="hidden"
+                      _before={{
+                        content: '""',
+                        position: "absolute",
+                        inset: 0,
+                        background: `linear-gradient(135deg, ${benefitColor} 0%, transparent 65%)`,
+                        opacity: 0.65,
+                      }}
+                      _after={{
+                        content: '""',
+                        position: "absolute",
+                        inset: "4px",
+                        borderRadius: `calc(${borderRadius.lg} - 6px)`,
+                        border: "1px solid rgba(255,255,255,0.08)",
+                      }}
                     >
-                      <Icon as={benefit.icon} boxSize={6} color={benefit.color} />
+                      <Icon as={IconComponent} boxSize={6} color={benefitColor} position="relative" />
                     </Box>
 
                     {/* Title */}
@@ -166,7 +202,8 @@ function BenefitsSection() {
                   </Stack>
                 </Box>
               </MotionBox>
-            ))}
+              );
+            })}
           </SimpleGrid>
         </MotionBox>
       </Stack>

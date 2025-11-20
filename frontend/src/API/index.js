@@ -6,3 +6,4 @@ export * from "./artifacts";
 export * from "./metrics";
 export * from "./files";
 export * from "./jobs";
+export * from "./profile";

@@ -72,13 +72,3 @@ async def login(
 
     return user_jwt
 
-
-@auth_router.post(path="/debug_login", summary="Debug login (dev only)")
-async def debug_login(request: Request):
-    """Temporary endpoint to return raw request body for debugging malformed JSON issues."""
-    body = await request.body()
-    try:
-        text = body.decode("utf-8")
-    except Exception:
-        text = str(body)
-    return {"raw_body": text}

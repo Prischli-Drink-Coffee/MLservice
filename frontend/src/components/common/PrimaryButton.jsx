@@ -1,59 +1,38 @@
 import React from "react";
 import { Button as ChakraButton } from "@chakra-ui/react";
-import { colors, borderRadius, dimensions, transitions } from "../../theme/tokens";
+import { dimensions } from "../../theme/tokens";
 
-/**
- * PrimaryButton - Main CTA button with design system tokens
- * @param {object} props - Component props
- * @param {React.ReactNode} props.children - Button text/content
- * @param {boolean} props.disabled - Disabled state
- * @param {boolean} props.isLoading - Loading state
- * @param {string} props.size - Button size: 'sm', 'md', 'lg'
- * @param {function} props.onClick - Click handler
- * @param {object} props.rest - Additional Chakra Button props
- */
-function PrimaryButton({ children, disabled, isLoading, size = "md", onClick, ...rest }) {
-  const sizeMap = {
-    sm: { h: "40px", px: 4, fontSize: "14px" },
-    md: { h: dimensions.button.heightMobile, px: 6, fontSize: "14px" },
-    lg: {
-      h: { base: dimensions.button.heightMobile, md: dimensions.button.heightDesktop },
-      px: 8,
-      fontSize: { base: "14px", md: "18px" },
-    },
-  };
+const sizeMap = {
+  sm: { h: "40px", px: 4, fontSize: "14px" },
+  md: { h: dimensions.button.heightMobile, px: 6, fontSize: "14px" },
+  lg: {
+    h: { base: dimensions.button.heightMobile, md: dimensions.button.heightDesktop },
+    px: 8,
+    fontSize: { base: "14px", md: "18px" },
+  },
+};
+
+const PrimaryButton = React.forwardRef(function PrimaryButton(
+  { children, size = "md", disabled, isDisabled, type = "button", ...rest },
+  ref,
+) {
+  const sizeStyles = sizeMap[size] || sizeMap.md;
+  const finalIsDisabled = isDisabled ?? disabled ?? rest.isDisabled;
 
   return (
     <ChakraButton
-      bg={disabled ? colors.background.buttonDisabled : colors.background.buttonActive}
-      color={colors.text.primaryInverted}
-      borderRadius={borderRadius.sm}
-      fontWeight={500}
-      transition={transitions.smooth}
-      _hover={
-        !disabled && !isLoading
-          ? {
-              transform: "translateY(-1px)",
-              boxShadow: "0 4px 12px rgba(255, 255, 255, 0.15)",
-            }
-          : {}
-      }
-      _active={
-        !disabled && !isLoading
-          ? {
-              transform: "translateY(0)",
-            }
-          : {}
-      }
-      isDisabled={disabled}
-      isLoading={isLoading}
-      onClick={onClick}
-      {...sizeMap[size]}
+      ref={ref}
+      variant="primary"
+      type={type}
+      isDisabled={finalIsDisabled}
+      {...sizeStyles}
       {...rest}
     >
       {children}
     </ChakraButton>
   );
-}
+});
+
+PrimaryButton.displayName = "PrimaryButton";
 
 export default PrimaryButton;

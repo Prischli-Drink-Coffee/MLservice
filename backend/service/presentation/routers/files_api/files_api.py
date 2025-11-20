@@ -20,12 +20,6 @@ logger = logging.getLogger(__name__)
 files_router = APIRouter(prefix="/api/service")
 
 
-@files_router.get("/ping", deprecated=True)
-async def ping_handler():
-    logger.info("Ping")
-    return "Pong"
-
-
 @files_router.get(
     "/files/v1/modes",
     summary="(Beta) Get available service modes",
@@ -108,61 +102,3 @@ async def delete_handler(
         user_id=profile.user_id,
         file_id=file_id,
     )
-
-
-class ModifyResponse(BaseModel):
-    job_id: str
-
-
-@files_router.post("/jobs/v1/start", deprecated=True)
-async def start_processing_job(template_id: str) -> str:
-    # Simulate starting a long-running job
-    return "some-job-id"
-
-
-@files_router.post("/modify/lips", deprecated=True)
-async def modify_lips_handler(
-    template_id: str,
-) -> ModifyResponse:
-    return {
-        "job_id": "some-job-id",
-    }
-
-
-class GetJobResponse(BaseModel):
-    is_done: bool
-    file_ids: List[str]
-
-
-@files_router.get("/jobs/{job_id}", deprecated=True)
-async def get_job_result_handler(
-    job_id: str,
-) -> GetJobResponse:
-    return {
-        "is_done": False,
-        "file_ids": [],
-    }
-
-
-class TemplatesLipsResponseItem(BaseModel):
-    name: str
-    label: str
-
-
-TemplatesLipsResponse = List[TemplatesLipsResponseItem]
-
-
-@files_router.get("/templates/lips", deprecated=True)
-async def tempaltes_lips_handler() -> TemplatesLipsResponse:
-    return [
-        {"name": "paris", "label": "Парижские"},
-    ]
-
-
-class RemainingTokensResponse(BaseModel):
-    qty: int
-
-
-@files_router.get("/user/remaining_tokens", deprecated=True)
-async def remaining_tokens_handler() -> RemainingTokensResponse:
-    return {"qty": 5}

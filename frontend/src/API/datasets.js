@@ -1,16 +1,17 @@
 import client from "./client";
 
-export async function listDatasets({ limit = 20 } = {}) {
-  const res = await client.get("/api/ml/v1/datasets", { params: { limit } });
+export async function listDatasets({ limit = 20, signal } = {}) {
+  const res = await client.get("/api/ml/v1/datasets", { params: { limit }, signal });
   return res.data;
 }
 
-export async function uploadDataset(file, { mode = "TRAINING" } = {}) {
+export async function uploadDataset(file, { mode = "TRAINING", signal } = {}) {
   const form = new FormData();
   form.append("file", file);
   const res = await client.post(`/api/ml/v1/datasets/upload`, form, {
     params: { mode },
     headers: { "Content-Type": "multipart/form-data" },
+    signal,
   });
   return res.data;
 }

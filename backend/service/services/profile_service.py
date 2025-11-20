@@ -4,7 +4,7 @@ from uuid import UUID
 
 from argon2 import PasswordHasher
 
-from service.models.profile_models import UserProfileLogic
+from service.models.profile_models import ProfileQuotaSnapshot, UserProfileLogic
 from service.repositories.profile_repository import ProfileRepository
 from service.settings import ProfileConf
 
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
 
 PROFILE_BY_ID_NAMESPACE = "profile:id"
 PROFILE_BY_EMAIL_NAMESPACE = "profile:email"
+PROFILE_MUTABLE_FIELDS = {"first_name", "company", "timezone", "phone", "avatar_url"}
 
 
 class ProfileService:
@@ -109,6 +110,25 @@ class ProfileService:
 
         return user_profile
 
+    def _build_quota_snapshot(self, profile: UserProfileLogic) -> ProfileQuotaSnapshot:
+        quota_limit = max(self.config.base_available_launches, profile.available_launches)
+        available = profile.available_launches
+        used = max(quota_limit - available, 0)
+
+        return ProfileQuotaSnapshot(
+            limit=quota_limit,
+            used=used,
+            available=available,
+            resets_at=None,
+        )
+
+    async def get_profile_overview(
+        self, user_id: UUID
+    ) -> tuple[UserProfileLogic, ProfileQuotaSnapshot]:
+        profile = await self.fetch_user_profile(user_id)
+        quota = self._build_quota_snapshot(profile)
+        return profile, quota
+
     async def fetch_user_profile_by_email(self, email: str) -> UserProfileLogic | None:
         logger.info(f"Fetching profile for email: {email}")
 
@@ -184,3 +204,24 @@ class ProfileService:
             f"Incremented available launches for user: {user_id}. New count: {updated_profile.available_launches}"
         )
         return updated_profile.available_launches
+
+    async def update_profile_details(
+        self, user_id: UUID, updates: dict[str, str | None]
+    ) -> UserProfileLogic:
+        logger.info("Updating profile for user_id=%s with fields=%s", user_id, list(updates.keys()))
+
+        fields_to_apply = {k: v for k, v in updates.items() if k in PROFILE_MUTABLE_FIELDS}
+        if not fields_to_apply:
+            return await self.fetch_user_profile(user_id)
+
+        profile = await self.fetch_user_profile(user_id)
+        previous_email = profile.email
+
+        for field_name, value in fields_to_apply.items():
+            setattr(profile, field_name, value)
+
+        updated_profile = await self.repository.update_user_profile(profile)
+        await self._refresh_profile_cache(updated_profile, previous_email)
+
+        logger.info("Profile updated for user_id=%s", user_id)
+        return updated_profile

@@ -1,20 +1,26 @@
 import React from "react";
 import { Badge } from "@chakra-ui/react";
 
-export default function StatusBadge({ ok, ...rest }) {
+const LABELS = {
+  healthy: "работает стабильно",
+  unhealthy: "обнаружена ошибка",
+  unknown: "статус неизвестен",
+};
+
+export default function StatusBadge({ ok, title, ...rest }) {
   if (ok == null)
     return (
-      <Badge colorScheme="gray" {...rest}>
-        unknown
+      <Badge colorScheme="gray" title={title ?? LABELS.unknown} {...rest}>
+        {LABELS.unknown}
       </Badge>
     );
-  return ok ? (
-    <Badge colorScheme="green" {...rest}>
-      healthy
-    </Badge>
-  ) : (
-    <Badge colorScheme="red" {...rest}>
-      unhealthy
+
+  const label = ok ? LABELS.healthy : LABELS.unhealthy;
+  const colorScheme = ok ? "green" : "red";
+
+  return (
+    <Badge colorScheme={colorScheme} title={title ?? label} {...rest}>
+      {label}
     </Badge>
   );
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Flex } from "@chakra-ui/react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { colors } from "../../theme/tokens";
 
 const MotionBox = motion(Box);
@@ -10,8 +10,25 @@ const MotionBox = motion(Box);
  * @param {string} variant - Style variant: "electric", "gradient", "dots"
  */
 function SectionDivider({ variant = "electric" }) {
-  // Random direction for lightning (true = left to right, false = right to left)
-  const getRandomDirection = () => Math.random() > 0.5;
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return (
+      <Box position="relative" w="full" h="64px" my={{ base: 8, md: 12 }}>
+        <Box
+          position="absolute"
+          top="50%"
+          left="0"
+          right="0"
+          h="4px"
+          borderRadius="full"
+          bg={`linear-gradient(90deg, ${colors.brand.primary}, ${colors.brand.secondary}, ${colors.brand.tertiary})`}
+          opacity={0.65}
+          style={{ transform: "translateY(-50%)" }}
+        />
+      </Box>
+    );
+  }
 
   if (variant === "electric") {
     return (
@@ -175,6 +192,9 @@ function SectionDivider({ variant = "electric" }) {
   }
 
   if (variant === "lightning") {
+    const travelLeftToRight = ["-120%", "120%"];
+    const travelRightToLeft = ["120%", "-120%"];
+
     return (
       <Box
         position="relative"
@@ -219,7 +239,7 @@ function SectionDivider({ variant = "electric" }) {
         <MotionBox
           position="absolute"
           top="50%"
-          w="400px"
+          w="40%"
           h="5px"
           borderRadius="full"
           bg={`linear-gradient(90deg,
@@ -231,10 +251,7 @@ function SectionDivider({ variant = "electric" }) {
             ${colors.brand.primary} 90%,
             ${colors.brand.primary}00 100%)`}
           animate={{
-            x: [
-              getRandomDirection() ? -400 : window.innerWidth + 400,
-              getRandomDirection() ? window.innerWidth + 400 : -400,
-            ],
+            x: travelLeftToRight,
             opacity: [0, 1, 1, 0],
           }}
           transition={{
@@ -251,7 +268,7 @@ function SectionDivider({ variant = "electric" }) {
         <MotionBox
           position="absolute"
           top="calc(50% + 20px)"
-          w="250px"
+          w="30%"
           h="3px"
           borderRadius="full"
           bg={`linear-gradient(90deg,
@@ -261,10 +278,7 @@ function SectionDivider({ variant = "electric" }) {
             ${colors.brand.primary} 80%,
             transparent 100%)`}
           animate={{
-            x: [
-              getRandomDirection() ? -250 : window.innerWidth + 250,
-              getRandomDirection() ? window.innerWidth + 250 : -250,
-            ],
+            x: travelRightToLeft,
             opacity: [0, 0.8, 0.8, 0],
           }}
           transition={{
@@ -282,7 +296,7 @@ function SectionDivider({ variant = "electric" }) {
         <MotionBox
           position="absolute"
           top="calc(50% - 20px)"
-          w="300px"
+          w="32%"
           h="3px"
           borderRadius="full"
           bg={`linear-gradient(90deg,
@@ -292,10 +306,7 @@ function SectionDivider({ variant = "electric" }) {
             ${colors.brand.tertiary} 80%,
             transparent 100%)`}
           animate={{
-            x: [
-              getRandomDirection() ? -300 : window.innerWidth + 300,
-              getRandomDirection() ? window.innerWidth + 300 : -300,
-            ],
+            x: travelLeftToRight,
             opacity: [0, 0.7, 0.7, 0],
           }}
           transition={{
@@ -312,13 +323,13 @@ function SectionDivider({ variant = "electric" }) {
         {/* Zigzag Lightning Path - Creates spline effect with random directions */}
         {[...Array(10)].map((_, i) => {
           const yOffset = i % 2 === 0 ? -15 : 15;
-          const direction = getRandomDirection();
+          const directionSequence = i % 2 === 0 ? travelLeftToRight : travelRightToLeft;
           return (
             <MotionBox
               key={`zigzag-${i}`}
               position="absolute"
               top={`calc(50% + ${yOffset}px)`}
-              w="80px"
+              w="12%"
               h="3px"
               borderRadius="full"
               bg={`linear-gradient(90deg,
@@ -326,10 +337,7 @@ function SectionDivider({ variant = "electric" }) {
                 ${colors.brand.primary} 50%,
                 ${i % 2 === 0 ? colors.brand.tertiary : colors.brand.secondary} 100%)`}
               animate={{
-                x: [
-                  direction ? -80 : window.innerWidth + 80,
-                  direction ? window.innerWidth + 80 : -80,
-                ],
+                x: directionSequence,
                 opacity: [0, 0.8, 0.8, 0],
               }}
               transition={{

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 /**
  * Simple localStorage-backed state hook.
@@ -6,16 +6,32 @@ import { useState, useEffect } from "react";
  * @param {any} defaultValue
  */
 export default function useLocalStorage(key, defaultValue) {
-  const [value, setValue] = useState(() => {
+  const defaultRef = useRef(defaultValue);
+  const isBrowser = typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+
+  const readStoredValue = useCallback(() => {
+    if (!isBrowser) {
+      return typeof defaultRef.current === "function" ? defaultRef.current() : defaultRef.current;
+    }
+
     try {
       const stored = window.localStorage.getItem(key);
-      return stored ? JSON.parse(stored) : defaultValue;
+      if (stored === null) {
+        return typeof defaultRef.current === "function" ? defaultRef.current() : defaultRef.current;
+      }
+      return JSON.parse(stored);
     } catch {
-      return defaultValue;
+      return typeof defaultRef.current === "function" ? defaultRef.current() : defaultRef.current;
     }
-  });
+  }, [isBrowser, key]);
+
+  const [value, setValue] = useState(readStoredValue);
 
   useEffect(() => {
+    if (!isBrowser) {
+      return undefined;
+    }
+
     try {
       if (value === undefined) {
         window.localStorage.removeItem(key);
@@ -25,7 +41,18 @@ export default function useLocalStorage(key, defaultValue) {
     } catch {
       // no-op
     }
-  }, [key, value]);
+
+    return undefined;
+  }, [isBrowser, key, value]);
+
+  useEffect(() => {
+    if (!isBrowser) {
+      return undefined;
+    }
+
+    setValue(readStoredValue());
+    return undefined;
+  }, [isBrowser, key, readStoredValue]);
 
   return [value, setValue];
 }

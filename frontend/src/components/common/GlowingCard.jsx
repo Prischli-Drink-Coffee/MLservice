@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React from "react";
 import { Box } from "@chakra-ui/react";
-import { colors, borderRadius } from "../../theme/tokens";
+import { keyframes } from "@emotion/react";
+import { colors, borderRadius, gradients } from "../../theme/tokens";
+import useInteractiveGlow from "../../hooks/useInteractiveGlow";
 
 /**
  * GlowingCard - Card with animated gradient border and glow effect
@@ -9,9 +11,19 @@ import { colors, borderRadius } from "../../theme/tokens";
  * @param {string} props.intensity - Glow intensity: 'subtle' | 'medium' | 'strong'
  * @param {object} props.rest - Additional Box props
  */
-export default function GlowingCard({ children, intensity = "medium", ...rest }) {
-  const [gradientPos, setGradientPos] = useState({ x: 50, y: 50 });
+const borderPulse = keyframes`
+  0% { opacity: 0.25; transform: scale(0.98); }
+  45% { opacity: 0.65; transform: scale(1); }
+  100% { opacity: 0.25; transform: scale(0.98); }
+`;
 
+const sparkleDrift = keyframes`
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 200%; }
+`;
+
+export default function GlowingCard({ children, intensity = "medium", ...rest }) {
+  const { glowRef, glowStyle, onGlowMouseMove, onGlowMouseLeave } = useInteractiveGlow();
   const accent = colors.brand.primary;
   const glowSecondary = colors.brand.secondary;
   const glowTertiary = colors.brand.tertiary;
@@ -33,27 +45,18 @@ export default function GlowingCard({ children, intensity = "medium", ...rest })
       borderWidth: "7px",
     },
   };
-
-  const gradientCss = useMemo(
-    () =>
-      `radial-gradient(circle at ${gradientPos.x}% ${gradientPos.y}%,
-          ${accent} 0%,
-          ${glowSecondary} 45%,
-          ${glowTertiary} 80%)`,
-    [accent, glowSecondary, glowTertiary, gradientPos.x, gradientPos.y],
-  );
-
-  const handleMouseMove = (event) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * 100;
-    const y = ((event.clientY - rect.top) / rect.height) * 100;
-    setGradientPos({ x, y });
-  };
+  const gradientCss = `radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%),
+    ${accent} 0%,
+    ${glowSecondary} 35%,
+    ${glowTertiary} 65%)`;
 
   return (
     <Box
+      ref={glowRef}
+      style={glowStyle}
       role="presentation"
-      onMouseMove={handleMouseMove}
+      onMouseMove={onGlowMouseMove}
+      onMouseLeave={onGlowMouseLeave}
       bg="transparent"
       borderRadius={borderRadius.md}
       position="relative"
@@ -68,23 +71,46 @@ export default function GlowingCard({ children, intensity = "medium", ...rest })
         borderRadius: "inherit",
         padding: intensityMap[intensity].borderWidth,
         background: gradientCss,
-        backgroundSize: "200% 200%",
+        backgroundSize: "220% 220%",
         WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
         WebkitMaskComposite: "xor",
         maskComposite: "exclude",
         pointerEvents: "none",
         transition: "background 0.3s ease",
+        animation: `${borderPulse} ${intensity === "strong" ? 8 : 12}s ease-in-out infinite`,
+      }}
+      _after={{
+        content: '""',
+        position: "absolute",
+        inset: 1,
+        borderRadius: "inherit",
+        background: `${gradients.midnightMesh}, radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08), transparent 55%)`,
+        mixBlendMode: "screen",
+        opacity: 0.55,
+        pointerEvents: "none",
+        animation: `${sparkleDrift} 18s linear infinite`,
       }}
       {...rest}
     >
       <Box
         position="relative"
-        bg={colors.blur.dark}
-        backdropFilter="blur(25px)"
+        bg={`linear-gradient(145deg, rgba(5,5,10,0.85), rgba(5,5,5,0.35)), ${gradients.dusk}`}
+        backdropFilter="blur(25px) saturate(180%)"
+        border="1px solid rgba(255,255,255,0.05)"
         borderRadius={borderRadius.md}
         p={{ base: 5, md: 6 }}
         h="full"
       >
+        <Box
+          position="absolute"
+          inset={0}
+          borderRadius="inherit"
+          pointerEvents="none"
+          bg="linear-gradient(90deg, rgba(255,255,255,0.08), transparent)"
+          opacity={0.35}
+          transform="translateY(-20%)"
+          filter="blur(35px)"
+        />
         {children}
       </Box>
     </Box>

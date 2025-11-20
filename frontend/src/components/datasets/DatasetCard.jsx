@@ -1,7 +1,8 @@
 import React from "react";
-import { Box, HStack, VStack, Text, Badge, Stack, Button, Wrap, WrapItem, Icon } from "@chakra-ui/react";
+import { Box, HStack, VStack, Text, Badge, Stack, Button, Wrap, WrapItem, Icon, SimpleGrid, Divider } from "@chakra-ui/react";
 import { ArrowDownIcon, DeleteIcon, InfoIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
+import PrimaryButton from "../common/PrimaryButton";
 import { tokens, colors } from "../../theme/tokens";
 
 const MotionBox = motion(Box);
@@ -33,13 +34,29 @@ const formatNumber = (value) => {
   return new Intl.NumberFormat("ru-RU").format(value);
 };
 
+const hexToRgba = (hex, alpha) => {
+  if (!hex || typeof hex !== "string" || !hex.startsWith("#")) return `rgba(255,255,255,${alpha})`;
+  let cleanHex = hex.replace("#", "");
+  if (cleanHex.length === 3) {
+    cleanHex = cleanHex
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+  const int = parseInt(cleanHex, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 const DatasetCard = ({
   dataset,
   onDownload,
   onDelete,
   isDownloading = false,
   isDeleting = false,
-  accentColor = tokens.colors.brand.primary,
+  accentColor: accentColorProp = tokens.colors.brand.primary,
 }) => {
   const version = dataset.version || dataset.meta?.version;
   const tags = dataset.meta?.tags || dataset.tags || [];
@@ -47,80 +64,120 @@ const DatasetCard = ({
   const rawColumns = dataset.columns ?? dataset.meta?.columns;
   const columns = Array.isArray(rawColumns) ? rawColumns.length : rawColumns;
   const sizeLabel = formatBytes(dataset.file_size_bytes ?? dataset.size_bytes ?? dataset.meta?.size_bytes);
+  const datasetType = dataset.meta?.type || dataset.type || "CSV";
+  const accentColor = accentColorProp;
+  const accentTint = hexToRgba(accentColor, 0.14);
+  const accentBorder = hexToRgba(accentColor, 0.45);
+  const statItems = [
+    { label: "Загружен", value: formatDate(dataset.created_at || dataset.meta?.created_at) },
+    { label: "Размер", value: sizeLabel || "—" },
+    { label: "Строк / Колонок", value: `${formatNumber(records) || "—"} / ${formatNumber(columns) || "—"}` },
+  ];
+  const actionsDisabled = isDeleting || isDownloading;
 
   return (
     <MotionBox
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4, scale: 1.01 }}
-      transition={{ duration: 0.25 }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ duration: 0.35 }}
       position="relative"
-      borderRadius={tokens.borderRadius.lg}
-      bg={tokens.colors.blur.dark}
-      backdropFilter="blur(20px)"
+      borderRadius={tokens.borderRadius.xl}
+      bg="rgba(5,5,10,0.85)"
+      backdropFilter="blur(25px)"
       border="1px solid"
-      borderColor={tokens.colors.border.subtle}
-      p={6}
+      borderColor={accentBorder}
+      p={{ base: 5, md: 6 }}
       overflow="hidden"
+      boxShadow="0 20px 45px rgba(0,0,0,0.35)"
     >
-      <Box position="absolute" insetX={0} top={0} h="3px" bg={accentColor} opacity={0.75} />
+      <Box position="absolute" insetX={-10} top={-10} h="120px" bg={accentTint} filter="blur(50px)" opacity={0.55} />
+      <Box
+        position="absolute"
+        inset={0}
+        bg={`linear-gradient(135deg, ${hexToRgba(accentColor, 0.35)}, rgba(5,5,10,0.95))`}
+        opacity={0.65}
+      />
+      <Box position="absolute" insetX={0} top={0} h="4px" bg={accentColor} opacity={0.85} />
 
-      <VStack align="stretch" spacing={5}>
-        <HStack justify="space-between" align="flex-start" spacing={4}>
+      <VStack align="stretch" spacing={6} position="relative">
+        <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} spacing={4} flexWrap="wrap">
           <VStack align="flex-start" spacing={1} flex={1} minW={0}>
-            <Text fontSize={tokens.typography.footnote.small} letterSpacing="0.15em" textTransform="uppercase" color={colors.text.tertiary}>
-              Датасет
-            </Text>
+            <HStack spacing={3}>
+              <Badge bg={accentTint} color={colors.text.primary} borderRadius={tokens.borderRadius.full} px={3} py={1} fontSize="xs">
+                {datasetType}
+              </Badge>
+              <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.2em" color={colors.text.tertiary}>
+                Датасет
+              </Text>
+            </HStack>
             <Text fontSize="xl" fontWeight={600} color={colors.text.primary} noOfLines={2} lineHeight="1.2">
               {dataset.name || dataset.meta?.name || "Без названия"}
             </Text>
-            <Text fontSize="xs" color={colors.text.tertiary} fontFamily="mono" letterSpacing="-0.01em">
+            <Text fontSize="xs" color={colors.text.tertiary} fontFamily="mono" letterSpacing="0.05em">
               ID: {dataset.id}
             </Text>
           </VStack>
           <Stack spacing={2} align="flex-end">
             {version && (
-              <Badge colorScheme="purple" borderRadius={tokens.borderRadius.sm} px={3} py={1} fontSize="xs">
+              <Badge
+                bg={hexToRgba(accentColor, 0.2)}
+                color={colors.text.primary}
+                borderRadius={tokens.borderRadius.full}
+                px={4}
+                py={1}
+                fontSize="xs"
+              >
                 v{version}
               </Badge>
             )}
             {dataset.status && (
-              <Badge colorScheme="green" variant="outline" borderRadius={tokens.borderRadius.sm} px={3} py={1} fontSize="xs">
+              <Badge
+                variant="outline"
+                borderColor={hexToRgba(accentColor, 0.4)}
+                color={colors.text.primary}
+                borderRadius={tokens.borderRadius.full}
+                px={4}
+                py={1}
+                fontSize="xs"
+              >
                 {dataset.status}
               </Badge>
             )}
           </Stack>
         </HStack>
 
-        <Stack direction={{ base: "column", sm: "row" }} spacing={4} divider={<Box w={{ base: "full", sm: "1px" }} h={{ base: "1px", sm: "32px" }} bg={tokens.colors.border.subtle} alignSelf="center" />}
-        >
-          <VStack align="flex-start" spacing={1} flex={1}>
-            <Text fontSize="xs" textTransform="uppercase" color={colors.text.tertiary}>
-              Загружен
-            </Text>
-            <Text fontWeight={500} color={colors.text.primary}>{formatDate(dataset.created_at || dataset.meta?.created_at)}</Text>
-          </VStack>
-          <VStack align="flex-start" spacing={1} flex={1}>
-            <Text fontSize="xs" textTransform="uppercase" color={colors.text.tertiary}>
-              Размер
-            </Text>
-            <Text fontWeight={500} color={colors.text.primary}>{sizeLabel || "—"}</Text>
-          </VStack>
-          <VStack align="flex-start" spacing={1} flex={1}>
-            <Text fontSize="xs" textTransform="uppercase" color={colors.text.tertiary}>
-              Строк / Колонок
-            </Text>
-            <Text fontWeight={500} color={colors.text.primary}>
-              {formatNumber(records) || "—"} / {formatNumber(columns) || "—"}
-            </Text>
-          </VStack>
-        </Stack>
+        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+          {statItems.map((item) => (
+            <Box
+              key={item.label}
+              p={4}
+              borderRadius={tokens.borderRadius.lg}
+              bg="rgba(255,255,255,0.02)"
+              border="1px solid rgba(255,255,255,0.05)"
+            >
+              <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.2em" color={colors.text.tertiary}>
+                {item.label}
+              </Text>
+              <Text mt={1} fontWeight={600} color={colors.text.primary}>
+                {item.value}
+              </Text>
+            </Box>
+          ))}
+        </SimpleGrid>
 
         {tags.length > 0 && (
           <Wrap spacing={2}>
             {tags.slice(0, 4).map((tag) => (
               <WrapItem key={tag}>
-                <Badge bg={`${accentColor}20`} color={accentColor} borderRadius={tokens.borderRadius.sm} fontSize="xs" px={3} py={1}>
+                <Badge
+                  bg={accentTint}
+                  color={colors.text.primary}
+                  borderRadius={tokens.borderRadius.full}
+                  fontSize="xs"
+                  px={3}
+                  py={1}
+                >
                   {tag}
                 </Badge>
               </WrapItem>
@@ -135,32 +192,34 @@ const DatasetCard = ({
           </Wrap>
         )}
 
-        <HStack justify="space-between" align={{ base: "flex-start", sm: "center" }} flexWrap="wrap" gap={3}>
-          <HStack spacing={2} color={colors.text.tertiary} fontSize="xs">
+        <Divider borderColor="rgba(255,255,255,0.08)" />
+
+        <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} flexWrap="wrap" gap={3}>
+          <HStack spacing={3} color={colors.text.tertiary} fontSize="sm">
             <Icon as={InfoIcon} w={4} h={4} />
-            <Text>Ссылка откроется в новой вкладке</Text>
+            <Text>Ссылка откроется в новой вкладке. Действия можно отменить до 15 секунд.</Text>
           </HStack>
-          <HStack spacing={2}>
+          <HStack spacing={3}>
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               colorScheme="red"
               rightIcon={<DeleteIcon />}
               onClick={() => onDelete?.(dataset)}
               isLoading={isDeleting}
+              isDisabled={isDownloading}
             >
               Удалить
             </Button>
-            <Button
+            <PrimaryButton
               size="sm"
-              colorScheme="brand"
               rightIcon={<ArrowDownIcon />}
               onClick={() => onDownload?.(dataset)}
               isLoading={isDownloading}
-              isDisabled={isDeleting}
+              isDisabled={actionsDisabled}
             >
               Скачать
-            </Button>
+            </PrimaryButton>
           </HStack>
         </HStack>
       </VStack>

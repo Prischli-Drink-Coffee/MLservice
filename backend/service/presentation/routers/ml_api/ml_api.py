@@ -30,6 +30,7 @@ from service.presentation.routers.ml_api.schemas import (
 from service.repositories.file_repository import FileRepository
 from service.repositories.training_repository import TrainingRepository
 from service.services.file_saver_service import FileSaverService
+from service.settings import config
 
 logger = logging.getLogger(__name__)
 ml_router = APIRouter(prefix="/api/ml/v1")
@@ -880,6 +881,9 @@ async def cleanup_expired_datasets(
     """
     import os
     from datetime import datetime, timedelta, timezone
+
+    if str(profile.user_id).lower() not in config.admin_user_ids_set:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
     try:
         ttl_days = int(os.getenv("DATASET_TTL_DAYS", "30"))

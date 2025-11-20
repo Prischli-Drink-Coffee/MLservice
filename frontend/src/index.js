@@ -9,10 +9,12 @@ import "./xy-theme.css";
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
-  <ChakraProvider theme={theme}>
-    <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </ChakraProvider>,
+  <React.StrictMode>
+    <ChakraProvider theme={theme}>
+      <ColorModeScript initialColorMode={theme.config.initialColorMode} />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </ChakraProvider>
+  </React.StrictMode>,
 );

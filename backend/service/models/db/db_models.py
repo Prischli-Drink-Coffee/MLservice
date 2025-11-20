@@ -27,6 +27,9 @@ class User(Base):
     password_hash: Mapped[str] = mapped_column(String(255), comment="Hashed user password")
     phone: Mapped[int | None] = mapped_column(BigInteger, comment="User phone number")
     first_name: Mapped[str | None] = mapped_column(String(50), comment="User first name")
+    company: Mapped[str | None] = mapped_column(String(255), comment="User company name")
+    timezone: Mapped[str | None] = mapped_column(String(50), comment="Preferred timezone name")
+    avatar_url: Mapped[str | None] = mapped_column(String(1000), comment="Public avatar URL")
     available_launches: Mapped[int] = mapped_column(comment="Number of available launches")
 
     user_launches: Mapped[list["UserLaunch"]] = relationship(

@@ -13,6 +13,7 @@ const DatasetsPage = lazy(() => import("./pages/DatasetsPage"));
 const TrainingRunsPage = lazy(() => import("./pages/TrainingRunsPage"));
 const ArtifactsPage = lazy(() => import("./pages/ArtifactsPage"));
 const MetricsPage = lazy(() => import("./pages/MetricsPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 
 const router = createBrowserRouter([
   {
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
       { path: "artifacts", element: <ArtifactsPage /> },
       { path: "metrics", element: <MetricsPage /> },
       { path: "info", element: <InfoPage /> },
+      { path: "profile", element: <ProfilePage /> },
     ],
   },
   { path: "*", element: <NotFoundPage /> },

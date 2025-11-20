@@ -88,6 +88,9 @@ class ProfileRepository(BaseRepository):
             "email": payload["email"],
             "password_hash": payload["password_hash"],
             "first_name": payload.get("first_name"),
+            "company": payload.get("company"),
+            "timezone": payload.get("timezone"),
+            "avatar_url": payload.get("avatar_url"),
             "available_launches": payload["available_launches"],
             "phone": phone_value,
         }

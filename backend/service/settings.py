@@ -1,7 +1,7 @@
 import os
 
 import dotenv
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_FILE = dotenv.find_dotenv()
@@ -175,6 +175,8 @@ class Config(BaseSettings):
     redis: RedisConfig = Field(default_factory=RedisConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
 
+    admin_user_ids: list[str] | str = Field(default_factory=list)
+
     # Storage backend selection
     storage_backend: str = "local"  # "local" or "minio"
 
@@ -196,6 +198,21 @@ class Config(BaseSettings):
         env_file=ENV_FILE,
         env_file_encoding="utf-8",
     )
+
+    @field_validator("admin_user_ids", mode="before")
+    @classmethod
+    def _split_admin_ids(cls, value):  # noqa: D401 - simple converter
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [item.strip().lower() for item in value.split(",") if item.strip()]
+        if isinstance(value, (list, tuple, set)):
+            return [str(item).strip().lower() for item in value if str(item).strip()]
+        return value
+
+    @property
+    def admin_user_ids_set(self) -> set[str]:
+        return {item.lower() for item in self.admin_user_ids}
 
 
 def _get_config() -> Config:

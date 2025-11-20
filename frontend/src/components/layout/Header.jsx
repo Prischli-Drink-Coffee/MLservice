@@ -1,19 +1,5 @@
-import {
-  Box,
-  Button,
-  Flex,
-  HStack,
-  IconButton,
-  Link,
-  Text,
-  useColorMode,
-  useColorModeValue,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
-} from "@chakra-ui/react";
-import { MoonIcon, SunIcon, HamburgerIcon } from "@chakra-ui/icons";
+import { Box, Button, Flex, HStack, IconButton, Link, Text, Menu, MenuButton, MenuItem, MenuList } from "@chakra-ui/react";
+import { HamburgerIcon } from "@chakra-ui/icons";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import Logo from "../common/assets/Logo";
@@ -29,16 +15,15 @@ const navItems = [
   { label: "Артефакты", to: "/artifacts" },
   { label: "Метрики", to: "/metrics" },
   { label: "О нас", to: "/info" },
+  { label: "Профиль", to: "/profile" },
 ];
 
 function Header() {
-  const { colorMode, toggleColorMode } = useColorMode();
   const { isAuthenticated, logout } = useAuth();
-
-  const linkColor = useColorModeValue("gray.700", "text.muted");
-  const linkActiveColor = useColorModeValue("brand.600", "accent");
-  const headerBg = useColorModeValue("white", "surface");
-  const headerBorder = useColorModeValue("rgba(0,0,0,0.08)", "borderSubtle");
+  const linkColor = "text.secondary";
+  const linkActiveColor = "brand.400";
+  const headerBg = "background.darkPrimary75";
+  const headerBorder = "border.subtle";
 
   return (
     <Box
@@ -54,7 +39,7 @@ function Header() {
     >
       <Flex align="center" justify="space-between">
         <HStack spacing={3} as={NavLink} to="/" _hover={{ textDecoration: "none" }}>
-          <Logo boxSize={6} />
+          <Logo boxSize={6} variant="transparent" />
           <Text
             fontWeight="bold"
             fontSize="xl"
@@ -101,14 +86,6 @@ function Header() {
                 </Button>
               </>
             )}
-            <IconButton
-              size="sm"
-              aria-label="Toggle color mode"
-              onClick={toggleColorMode}
-              icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
-              variant="ghost"
-              color={linkColor}
-            />
             {isAuthenticated && (
               <Button size="sm" colorScheme="red" variant="solid" onClick={logout}>
                 Выход
@@ -141,9 +118,6 @@ function Header() {
                   </MenuItem>
                 </>
               )}
-              <MenuItem onClick={toggleColorMode}>
-                {colorMode === "light" ? "Dark mode" : "Light mode"}
-              </MenuItem>
               {isAuthenticated && (
                 <MenuItem onClick={logout} color="red.500">
                   Выход

@@ -24,6 +24,8 @@ export const colors = {
     buttonDisabled: "rgba(255, 255, 255, 0.5)",
     chineseBlack10: "rgba(16, 16, 16, 0.1)",
     chineseBlack50: "rgba(16, 16, 16, 0.5)",
+    jet30: "rgba(53, 53, 53, 0.3)",
+    jet40: "rgba(53, 53, 53, 0.4)",
     jet50: "rgba(53, 53, 53, 0.5)",
   },
 
@@ -31,6 +33,7 @@ export const colors = {
   blur: {
     dark: "rgba(21, 21, 21, 0.75)",
     mid: "rgba(53, 53, 53, 0.75)",
+    medium: "rgba(30, 30, 30, 0.7)",
     light: "rgba(21, 21, 21, 0.5)",
     accent: "rgba(80, 80, 80, 0.75)",
   },
@@ -55,6 +58,9 @@ export const colors = {
   error: "#ef4444", // red
   warning: "#f59e0b", // orange
 };
+
+colors.blur.medium = colors.blur.medium ?? colors.blur.mid;
+colors.blur.mid = colors.blur.mid ?? colors.blur.medium;
 
 export const typography = {
   fontFamily: {
@@ -124,24 +130,63 @@ export const typography = {
   },
 };
 
-export const spacing = {
-  xs: "4px",
-  sm: "8px",
-  md: "12px",
-  lg: "16px",
-  xl: "20px",
-  "2xl": "24px",
-  "3xl": "32px",
-  "4xl": "40px",
-  "5xl": "48px",
-  "6xl": "64px",
+const spacingScale = [
+  "0px", // 0
+  "2px", // 1
+  "4px", // 2
+  "6px", // 3
+  "8px", // 4
+  "12px", // 5
+  "16px", // 6
+  "20px", // 7
+  "24px", // 8
+  "28px", // 9
+  "32px", // 10
+  "36px", // 11
+  "40px", // 12
+  "48px", // 13
+  "56px", // 14
+  "64px", // 15
+  "72px", // 16
+  "80px", // 17
+  "96px", // 18
+  "112px", // 19
+  "128px", // 20
+  "160px", // 21
+];
+
+const spacingAliases = {
+  none: spacingScale[0],
+  "3xs": spacingScale[1],
+  "2xs": spacingScale[2],
+  xs: spacingScale[3],
+  sm: spacingScale[4],
+  md: spacingScale[6],
+  lg: spacingScale[8],
+  xl: spacingScale[10],
+  "2xl": spacingScale[12],
+  "3xl": spacingScale[13],
+  "4xl": spacingScale[14],
+  "5xl": spacingScale[15],
+  "6xl": spacingScale[16],
+  "7xl": spacingScale[17],
+  "8xl": spacingScale[18],
+  "9xl": spacingScale[19],
+  "10xl": spacingScale[20],
+  "11xl": spacingScale[21],
 };
+
+export const spacing = Object.assign([...spacingScale], {
+  scale: spacingScale,
+  ...spacingAliases,
+});
 
 export const borderRadius = {
   sm: "10px",
   md: "15px",
   lg: "20px",
   xl: "25px",
+  "2xl": "30px",
   full: "9999px",
 };
 
@@ -170,6 +215,15 @@ export const transitions = {
   default: "0.2s ease",
   smooth: "0.3s ease-in-out",
   slow: "0.5s ease",
+};
+
+export const gradients = {
+  aurora: "linear-gradient(135deg, rgba(47, 116, 255, 0.9) 0%, rgba(12, 67, 53, 0.85) 45%, rgba(38, 13, 97, 0.95) 100%)",
+  prism: "linear-gradient(120deg, #2f74ff 0%, #8b5cf6 55%, #158f6eff 100%)",
+  dusk: "linear-gradient(160deg, rgba(47, 116, 255, 0.15) 0%, rgba(139, 92, 246, 0.25) 65%, rgba(29, 209, 161, 0.15) 100%)",
+  midnightMesh:
+    "radial-gradient(circle at 20% 20%, rgba(47, 116, 255, 0.25), transparent 35%), radial-gradient(circle at 80% 30%, rgba(139, 92, 246, 0.25), transparent 35%), radial-gradient(circle at 50% 80%, rgba(29, 209, 161, 0.3), transparent 40%)",
+  horizon: "linear-gradient(180deg, rgba(5,5,5,0) 0%, rgba(5,5,5,0.85) 80%)",
 };
 
 export const breakpoints = {
@@ -202,4 +256,5 @@ export const tokens = {
   transitions,
   breakpoints,
   dimensions,
+  gradients,
 };

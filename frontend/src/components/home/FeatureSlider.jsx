@@ -1,66 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Badge,
-  Box,
-  Button,
-  Flex,
-  HStack,
-  Stack,
-} from "@chakra-ui/react";
+import { Badge, Box, Button, Flex, HStack, Stack, usePrefersReducedMotion } from "@chakra-ui/react";
 import { motion } from "framer-motion";
-import { colors, borderRadius } from "../../theme/tokens";
+import { colors, borderRadius, gradients } from "../../theme/tokens";
 import { Subtitle, Body } from "../common/Typography";
 import PrimaryButton from "../common/PrimaryButton";
+import { FEATURE_SLIDES } from "../../constants";
 
 const MotionBox = motion(Box);
-
-const slides = [
-  {
-    id: 1,
-    title: "Загрузка и верификация данных",
-    description:
-      "Интуитивный загрузчик позволяет быстро подтянуть CSV/изображения и автоматически валидирует схемы, размеры и ограничения качества перед добавлением в проекты.",
-    badge: "Данные",
-    gradient:
-      "radial-gradient(circle at 20% 20%, rgba(47,116,255,0.45), rgba(139,92,246,0.25) 40%, rgba(6,11,21,0.8) 80%)",
-  },
-  {
-    id: 2,
-    title: "Тренировка моделей в пару кликов",
-    description:
-      "Запускайте пайплайны с адаптивными конфигурациями, мониторьте метрики обучения и мгновенно сравнивайте эксперименты в едином интерфейсе.",
-    badge: "Training",
-    gradient:
-      "radial-gradient(circle at 80% 30%, rgba(20,184,166,0.35), rgba(47,116,255,0.2) 45%, rgba(6,11,21,0.85) 75%)",
-  },
-  {
-    id: 3,
-    title: "Хранение артефактов и метрик",
-    description:
-      "Версионирование моделей, графов и метрик с поддержкой MinIO и локального хранилища. Доступ по подписанным URL и интеграция с Prometheus/Graphite.",
-    badge: "Артефакты",
-    gradient:
-      "radial-gradient(circle at 50% 60%, rgba(244,114,182,0.35), rgba(47,116,255,0.2) 40%, rgba(6,11,21,0.85) 85%)",
-  },
-  {
-    id: 4,
-    title: "Мониторинг и алертинг",
-    description:
-      "Собирайте метрики latency/batch/rate, стройте дашборды в Grafana, и получайте уведомления о деградации качества моделей или таймаутах обучения.",
-    badge: "Мониторинг",
-    gradient:
-      "radial-gradient(circle at 30% 30%, rgba(139,92,246,0.35), rgba(20,184,166,0.2) 45%, rgba(6,11,21,0.75) 75%)",
-  },
-  {
-    id: 5,
-    title: "Безопасность и контроль доступа",
-    description:
-      "JWT/HttpOnly куки, RBAC и Redis-сессии защищают данные, а интеграция с Prometheus и Redis позволяет держать SLA без перегрузок.",
-    badge: "Security",
-    gradient:
-      "radial-gradient(circle at 70% 20%, rgba(236,72,153,0.35), rgba(139,92,246,0.2) 45%, rgba(6,11,21,0.75) 75%)",
-  },
-];
 
 const SLIDE_TRANSITION = { duration: 0.85, ease: "easeInOut" };
 
@@ -87,7 +33,7 @@ function featureTransforms(offset) {
     };
   }
 
-  if (offset === slides.length - 1) {
+  if (offset === FEATURE_SLIDES.length - 1) {
     return {
       x: "-50%",
       scale: 0.84,
@@ -113,13 +59,15 @@ export default function FeatureSlider() {
   const [isPaused, setPaused] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const motionEnabled = !prefersReducedMotion;
 
   // Минимальное расстояние свайпа (в пикселях)
   const minSwipeDistance = 50;
 
   const goTo = useCallback((nextIndex) => {
     setIndex((prev) => {
-      const length = slides.length;
+      const length = FEATURE_SLIDES.length;
       return (
         (((typeof nextIndex === "number" ? nextIndex : prev + nextIndex) % length) + length) %
         length
@@ -155,23 +103,29 @@ export default function FeatureSlider() {
   };
 
   useEffect(() => {
-    if (isPaused || slides.length <= 1) return undefined;
+    if (!motionEnabled || isPaused || FEATURE_SLIDES.length <= 1) return undefined;
     const id = setInterval(() => goTo(1), 3500);
     return () => clearInterval(id);
-  }, [goTo, isPaused]);
+  }, [goTo, isPaused, motionEnabled]);
 
   const indicators = useMemo(
     () =>
-      slides.map((slide, slideIdx) => (
-        <MotionBox key={slide.id} whileHover={{ scale: 1.3 }} whileTap={{ scale: 0.9 }}>
+      FEATURE_SLIDES.map((slide, slideIdx) => (
+        <MotionBox
+          key={slide.id}
+          whileHover={motionEnabled ? { scale: 1.3 } : undefined}
+          whileTap={motionEnabled ? { scale: 0.9 } : undefined}
+        >
           <Button
             size="xs"
             minW="auto"
             w={slideIdx === index ? "24px" : "8px"}
             h="8px"
             borderRadius="full"
-            bg={slideIdx === index ? colors.brand.primary : colors.background.jet50}
-            _hover={{ bg: colors.brand.primary, filter: "brightness(1.1)" }}
+            bg={slideIdx === index ? gradients.aurora : "rgba(255,255,255,0.12)"}
+            border="1px solid rgba(255,255,255,0.12)"
+            boxShadow={slideIdx === index ? "0 0 12px rgba(47,116,255,0.6)" : undefined}
+            _hover={{ bg: gradients.prism, filter: "brightness(1.1)" }}
             onClick={() => goTo(slideIdx)}
             aria-label={`Перейти к слайду ${slideIdx + 1}`}
             transition="all 0.4s ease"
@@ -179,23 +133,49 @@ export default function FeatureSlider() {
           />
         </MotionBox>
       )),
-    [goTo, index],
+    [goTo, index, motionEnabled],
   );
 
   return (
-    <Stack spacing={{ base: 6, md: 10 }} align="center" w="full">
-      <Box textAlign="center" w="full">
+    <Stack spacing={{ base: 6, md: 10 }} align="center" w="full" position="relative">
+      <Box
+        position="absolute"
+        inset={{ base: "10% -5%", md: "12% -10%" }}
+        background={gradients.horizon}
+        opacity={0.15}
+        filter="blur(120px)"
+        pointerEvents="none"
+      />
+      <Box textAlign="center" w="full" position="relative" zIndex={1}>
         <Badge
-          bg={colors.blur.accent}
+          bg="transparent"
           color={colors.text.primary}
-          borderRadius={borderRadius.lg}
-          px={3}
-          py={1}
+          borderRadius={borderRadius.full}
+          px={4}
+          py={1.5}
           mb={3}
           fontSize="11px"
           fontWeight={500}
           textTransform="uppercase"
           letterSpacing="wider"
+          border="1px solid rgba(255,255,255,0.12)"
+          position="relative"
+          overflow="hidden"
+          _before={{
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            background: gradients.aurora,
+            opacity: 0.6,
+            filter: "blur(6px)",
+          }}
+          _after={{
+            content: '""',
+            position: "absolute",
+            inset: "3px",
+            borderRadius: borderRadius.full,
+            border: "1px solid rgba(255,255,255,0.2)",
+          }}
         >
           Возможности платформы
         </Badge>
@@ -232,6 +212,28 @@ export default function FeatureSlider() {
           h={{ base: "480px", md: "550px" }}
           perspective="1600px"
           overflow="visible"
+          borderRadius={{ base: borderRadius.xl, md: borderRadius["2xl"] }}
+          border="1px solid rgba(255,255,255,0.08)"
+          bg={`linear-gradient(150deg, rgba(4,6,12,0.92), rgba(7,9,18,0.85)), ${gradients.midnightMesh}`}
+          boxShadow="0 45px 90px rgba(0,0,0,0.55)"
+          _before={{
+            content: '""',
+            position: "absolute",
+            inset: "-35%",
+            background: gradients.prism,
+            opacity: 0.25,
+            filter: "blur(80px)",
+            pointerEvents: "none",
+          }}
+          _after={{
+            content: '""',
+            position: "absolute",
+            inset: 0,
+            borderRadius: "inherit",
+            background: "linear-gradient(130deg, rgba(255,255,255,0.08), transparent 55%)",
+            opacity: 0.6,
+            pointerEvents: "none",
+          }}
         >
           <Flex
             justify="center"
@@ -240,10 +242,20 @@ export default function FeatureSlider() {
             h="full"
             position="relative"
             overflow="visible"
+            zIndex={1}
           >
-            {slides.map((slide, slideIdx) => {
-              const offset = (slideIdx - index + slides.length) % slides.length;
-              const animateProps = featureTransforms(offset);
+            {FEATURE_SLIDES.map((slide, slideIdx) => {
+              const offset = (slideIdx - index + FEATURE_SLIDES.length) % FEATURE_SLIDES.length;
+              const animateProps = motionEnabled
+                ? featureTransforms(offset)
+                : {
+                    x: "0%",
+                    scale: 1,
+                    rotateY: 0,
+                    opacity: offset === 0 ? 1 : 0,
+                    filter: "blur(0px)",
+                    zIndex: offset === 0 ? 3 : 1,
+                  };
 
               return (
                 <MotionBox
@@ -259,13 +271,13 @@ export default function FeatureSlider() {
                   overflow="hidden"
                   boxShadow={
                     offset === 0
-                      ? "0 0 45px rgba(47,116,255,0.45), 0 0 80px rgba(139,92,246,0.35)"
-                      : "0 0 20px rgba(15,23,42,0.45)"
+                      ? "0 30px 70px rgba(10,14,25,0.8), 0 0 55px rgba(47,116,255,0.45)"
+                      : "0 20px 40px rgba(5,7,13,0.65)"
                   }
-                  bg={colors.blur.dark}
+                  bg="rgba(5,7,13,0.9)"
                   animate={animateProps}
-                  transition={SLIDE_TRANSITION}
-                  backgroundImage={slide.gradient}
+                  transition={motionEnabled ? SLIDE_TRANSITION : { duration: 0 }}
+                  backgroundImage={`${slide.gradient}, radial-gradient(circle at top, rgba(255,255,255,0.08), transparent 55%)`}
                   backgroundSize="cover"
                   backgroundPosition="center"
                   role="group"
@@ -283,7 +295,7 @@ export default function FeatureSlider() {
                           WebkitMaskComposite: "xor",
                           maskComposite: "exclude",
                           pointerEvents: "none",
-                          animation: "rotate-gradient 8s linear infinite",
+                          animation: motionEnabled ? "rotate-gradient 8s linear infinite" : "none",
                         }
                       : {
                           content: '""',
@@ -303,8 +315,8 @@ export default function FeatureSlider() {
                   <Box
                     position="absolute"
                     inset={0}
-                    bg={colors.blur.dark}
-                    backdropFilter="blur(12px)"
+                    bg="rgba(3,4,8,0.75)"
+                    backdropFilter="blur(16px)"
                   />
                   <Stack
                     spacing={3}
@@ -315,16 +327,17 @@ export default function FeatureSlider() {
                   >
                     <Stack spacing={2}>
                       <Badge
-                        bg={colors.background.jet50}
+                        bg="rgba(255,255,255,0.08)"
                         color={colors.text.primary}
                         alignSelf="flex-start"
-                        borderRadius={borderRadius.md}
-                        px={2}
-                        py={0.5}
+                        borderRadius={borderRadius.full}
+                        px={3}
+                        py={1}
                         fontSize="10px"
-                        fontWeight={500}
+                        fontWeight={600}
                         textTransform="uppercase"
-                        letterSpacing="wide"
+                        letterSpacing="0.15em"
+                        border="1px solid rgba(255,255,255,0.2)"
                       >
                         {slide.badge}
                       </Badge>
@@ -340,6 +353,7 @@ export default function FeatureSlider() {
                         color={colors.text.tertiary}
                         fontSize={{ base: "12px", md: "14px" }}
                         lineHeight="1.5"
+                        maxW="520px"
                       >
                         {slide.description}
                       </Body>
@@ -347,12 +361,18 @@ export default function FeatureSlider() {
 
                     {offset === 0 && (
                       <HStack spacing={2}>
-                        <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <MotionBox
+                          whileHover={motionEnabled ? { scale: 1.05 } : undefined}
+                          whileTap={motionEnabled ? { scale: 0.95 } : undefined}
+                        >
                           <PrimaryButton size="xs" fontSize="11px">
                             Подробнее
                           </PrimaryButton>
                         </MotionBox>
-                        <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                        <MotionBox
+                          whileHover={motionEnabled ? { scale: 1.05 } : undefined}
+                          whileTap={motionEnabled ? { scale: 0.95 } : undefined}
+                        >
                           <Button
                             variant="ghost"
                             size="xs"
