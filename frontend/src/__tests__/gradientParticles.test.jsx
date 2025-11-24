@@ -1,4 +1,4 @@
-import { createGradientParticles } from "../features/info/components/GradientParticles";
+import { createGradientParticles } from "@features/info/components/GradientParticles";
 
 describe("createGradientParticles", () => {
   it("returns deterministic particle data", () => {

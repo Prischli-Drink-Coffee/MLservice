@@ -1,1 +1,1 @@
-export { default } from "./components/layout/ProtectedLayout";
+export { default } from "./ui/layout/ProtectedLayout";

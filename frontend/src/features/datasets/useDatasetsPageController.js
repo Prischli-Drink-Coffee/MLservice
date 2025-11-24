@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@chakra-ui/react";
-import { deleteDataset, getFileDownloadUrl, listDatasets, uploadDataset } from "../../API";
-import extractErrorInfo, { showErrorToast } from "../../utils/errorHandler";
-import { useAuth } from "../../context/AuthContext";
-import isAbortError from "../../utils/isAbortError";
+import { deleteDataset, getFileDownloadUrl, listDatasets, uploadDataset } from "@api";
+import extractErrorInfo, { showErrorToast } from "@utils/errorHandler";
+import { useAuth } from "@context/AuthContext";
+import isAbortError from "@utils/isAbortError";
 
 const defaultOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
 const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || defaultOrigin || "";

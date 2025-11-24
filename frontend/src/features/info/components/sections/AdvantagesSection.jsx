@@ -1,12 +1,12 @@
 import React from "react";
 import { Box, Container, SimpleGrid, Text, VStack } from "@chakra-ui/react";
-import { Body, Title, Footnote } from "../../../../components/common/Typography";
-import { borderRadius, colors, spacing } from "../../../../theme/tokens";
+import { Body, Title, Footnote } from "@ui/atoms/Typography";
+import { borderRadius, colors, spacing } from "@theme/tokens";
 import { MotionBox, MotionVStack } from "../motionPrimitives";
 
 function AdvantagesSection({ advantages, title }) {
   return (
-    <Box position="relative" zIndex={1} py={{ base: 16, md: 20 }} pb={{ base: 20, md: 28 }}>
+    <Box position="relative" zIndex={1} py={{ base: 16, md: 20 }}>
       <Container maxW="full" px={{ base: 4, md: 6, lg: 8 }}>
         <MotionVStack
           initial={{ opacity: 0, y: 30 }}
@@ -22,8 +22,6 @@ function AdvantagesSection({ advantages, title }) {
           </VStack>
 
           <SimpleGrid
-            paddingRight={12}
-            paddingLeft={12}
             columns={{ base: 1, md: 2, lg: 3 }}
             spacing={{ base: 8, md: 10, lg: 8 }}
             w="full"
@@ -53,7 +51,13 @@ function AdvantagesSection({ advantages, title }) {
                     boxShadow: `0 0 30px ${colors.brand.primary}20`,
                   }}
                 >
-                  <VStack spacing={spacing.lg} align="flex-start" h="full" padding={12}>
+                  <VStack
+                    spacing={spacing.lg}
+                    align="flex-start"
+                    h="full"
+                    px={{ base: 4, md: 12 }}
+                    py={{ base: 6, md: 8 }}
+                  >
                     <Text fontSize="28px" lineHeight="1">
                       {feature.title.split(" ")[0]}
                     </Text>

@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@ui/*": ["ui/*"],
+      "@features/*": ["features/*"],
+      "@pages/*": ["pages/*"],
+      "@utils/*": ["utils/*"],
+      "@theme/*": ["theme/*"],
+      "@context/*": ["context/*"],
+      "@api/*": ["API/*"],
+      "@api": ["API"],
+      "@hooks/*": ["hooks/*"],
+      "@hooks": ["hooks"],
+      "@constants": ["constants"],
+      "@constants/*": ["constants/*"]
+    }
+  }
+}

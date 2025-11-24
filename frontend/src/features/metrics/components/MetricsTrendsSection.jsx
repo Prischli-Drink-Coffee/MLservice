@@ -10,7 +10,7 @@ import {
   Legend,
   CartesianGrid,
 } from "recharts";
-import Card from "../../../components/common/Card";
+import Card from "@ui/molecules/Card";
 
 function ChartSkeleton() {
   return (

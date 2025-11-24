@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchProfile, updateProfile } from "../API";
-import extractErrorInfo from "../utils/errorHandler";
-import isAbortError from "../utils/isAbortError";
+import { fetchProfile, updateProfile } from "@api";
+import extractErrorInfo from "@utils/errorHandler";
+import isAbortError from "@utils/isAbortError";
 
 export default function useProfile(autoLoad = true) {
   const [data, setData] = useState(null);

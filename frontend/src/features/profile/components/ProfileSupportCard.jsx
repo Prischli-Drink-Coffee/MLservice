@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, Stack, Text, usePrefersReducedMotion } from "@chakra-ui/react";
-import GlowingCard from "../../../components/common/GlowingCard";
-import PrimaryButton from "../../../components/common/PrimaryButton";
-import { colors, borderRadius, spacing, gradients } from "../../../theme/tokens";
+import GlowingCard from "@ui/molecules/GlowingCard";
+import PrimaryButton from "@ui/atoms/PrimaryButton";
+import { colors, borderRadius, spacing, gradients } from "@theme/tokens";
 
 function ProfileSupportCard({ email }) {
   const prefersReducedMotion = usePrefersReducedMotion();

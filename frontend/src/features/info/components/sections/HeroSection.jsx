@@ -1,13 +1,14 @@
 import React from "react";
 import { Badge, Box, Container } from "@chakra-ui/react";
-import { Body, Title } from "../../../../components/common/Typography";
-import { borderRadius, colors, spacing } from "../../../../theme/tokens";
+import { Body, Title } from "@ui/atoms/Typography";
+import { borderRadius, colors, spacing } from "@theme/tokens";
 import { MotionBox, MotionVStack } from "../motionPrimitives";
+import FeatureBadge from "@ui/atoms/FeatureBadge";
 
 function HeroSection({ description }) {
   return (
-    <Box position="relative" zIndex={1} pt={{ base: 20, md: 28 }} pb={{ base: 16, md: 20 }}>
-      <Container maxW="full" px={{ base: 4, md: 6, lg: 8 }} paddingTop={20}>
+    <Box position="relative" zIndex={1} pt={{ base: 10, md: 18 }} pb={{ base: 16, md: 20 }}>
+      <Container maxW="full" px={{ base: 4, md: 6, lg: 8 }}>
         <MotionVStack
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -21,27 +22,18 @@ function HeroSection({ description }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <Badge
-              bg={colors.blur.accent}
-              color={colors.brand.primary}
-              px={4}
-              py={2}
-              borderRadius={borderRadius.lg}
-              fontSize="13px"
-              fontWeight={500}
-              border="1px solid"
-              borderColor={colors.border.default}
-            >
+            <FeatureBadge>
               О нашей команде
-            </Badge>
+            </FeatureBadge>
           </MotionBox>
 
           <Title
             variant="large"
             fontSize={{ base: "36px", md: "48px", lg: "56px" }}
             lineHeight="1.2"
-            maxW="900px"
-            paddingTop={4}
+            maxW={{ base: "full", md: "900px" }}
+            paddingTop={2}
+            px={{ base: 4, md: 0 }}
           >
             Мы студенты
             <br />

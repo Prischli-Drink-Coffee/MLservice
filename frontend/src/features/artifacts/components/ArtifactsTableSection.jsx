@@ -1,9 +1,11 @@
 import PropTypes from "prop-types";
 import { IconButton, Stack, Table, Tbody, Td, Text, Th, Thead, Tr } from "@chakra-ui/react";
 import { FiDownload, FiTrash2 } from "react-icons/fi";
-import GlowingCard from "../../../components/common/GlowingCard";
-import Card from "../../../components/common/Card";
-import { EmptyState, ErrorAlert, LoadingState } from "../../../components";
+import GlowingCard from "@ui/molecules/GlowingCard";
+import Card from "@ui/molecules/Card";
+import EmptyState from "@ui/molecules/EmptyState";
+import ErrorAlert from "@ui/molecules/ErrorAlert";
+import LoadingState from "@ui/molecules/LoadingState";
 
 function renderMetrics(metrics) {
   if (!metrics) {

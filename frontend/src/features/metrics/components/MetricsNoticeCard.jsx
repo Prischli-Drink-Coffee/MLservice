@@ -1,6 +1,6 @@
 import React from "react";
 import { SkeletonText, Text } from "@chakra-ui/react";
-import Card from "../../../components/common/Card";
+import Card from "@ui/molecules/Card";
 
 function MetricsNoticeCard({ children = null, isSkeleton = false }) {
   return (

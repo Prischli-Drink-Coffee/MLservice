@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { Box, Container } from "@chakra-ui/react";
-import SectionDivider from "../../../components/common/SectionDivider";
+import SectionDivider from "@ui/atoms/SectionDivider";
 
 function HomeDivider({ variant, containerProps }) {
   return (

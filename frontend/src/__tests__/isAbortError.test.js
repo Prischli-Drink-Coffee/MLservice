@@ -1,4 +1,4 @@
-import isAbortError from "../utils/isAbortError";
+import isAbortError from "@utils/isAbortError";
 
 describe("isAbortError", () => {
   it("detects DOM AbortError", () => {

@@ -1,6 +1,6 @@
 import React from "react";
 import { Alert, AlertDescription, AlertIcon, AlertTitle, Stack } from "@chakra-ui/react";
-import { colors, borderRadius } from "../../../theme/tokens";
+import { colors, borderRadius } from "@theme/tokens";
 
 function QuotaWarningAlert({ remaining }) {
   if (remaining == null) {

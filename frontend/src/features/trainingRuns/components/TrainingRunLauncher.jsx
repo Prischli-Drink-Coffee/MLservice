@@ -13,8 +13,8 @@ import {
   Text,
   Tooltip,
 } from "@chakra-ui/react";
-import GlowingCard from "../../../components/common/GlowingCard";
-import { ErrorAlert } from "../../../components";
+import GlowingCard from "@ui/molecules/GlowingCard";
+import ErrorAlert from "@ui/molecules/ErrorAlert";
 import JobStatusPanel from "./JobStatusPanel";
 import StatTile from "./StatTile";
 import { formatDateTime } from "../utils";

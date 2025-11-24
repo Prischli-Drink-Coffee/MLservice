@@ -91,6 +91,9 @@ async def update_profile(
     return _build_profile_response(overview)
 
 
+contact_email = "payments@forge-incellcorp.ai"
+
+
 @billing_router.get("/quotas/preview", response_model=list[QuotaPlanResponse])
 async def quotas_preview() -> list[QuotaPlanResponse]:
     plans = [
@@ -101,7 +104,7 @@ async def quotas_preview() -> list[QuotaPlanResponse]:
             currency="USD",
             status="coming_soon",
             description="Базовый пакет для тестов",
-            contact_email="payments@mlservice.ai",
+            contact_email=contact_email,
         ),
         QuotaPlanResponse(
             id="growth",
@@ -110,7 +113,7 @@ async def quotas_preview() -> list[QuotaPlanResponse]:
             currency="USD",
             status="coming_soon",
             description="Подходит для команд и пилотов",
-            contact_email="payments@mlservice.ai",
+            contact_email=contact_email,
         ),
         QuotaPlanResponse(
             id="scale",
@@ -119,7 +122,7 @@ async def quotas_preview() -> list[QuotaPlanResponse]:
             currency="USD",
             status="coming_soon",
             description="Корпоративный пакет по запросу",
-            contact_email="payments@mlservice.ai",
+            contact_email=contact_email,
         ),
     ]
 

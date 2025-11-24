@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { Container, SimpleGrid } from "@chakra-ui/react";
-import HeroSection from "../../../components/home/HeroSection";
-import PlatformInfoCard from "../../../components/home/PlatformInfoCard";
+import HeroSection from "@features/home/components/HeroSection";
+import PlatformInfoCard from "@features/home/components/PlatformInfoCard";
 
 function HomeHeroSection({ isAuthenticated, health, gridProps, containerProps }) {
   return (

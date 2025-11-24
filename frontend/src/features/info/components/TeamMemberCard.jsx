@@ -1,11 +1,11 @@
 import React from "react";
-import { Avatar, Badge, Box, HStack, Icon, VStack } from "@chakra-ui/react";
-import { FiGithub, FiLinkedin, FiMail, FiMapPin } from "react-icons/fi";
-import { Body, Footnote, Title } from "../../../components/common/Typography";
-import { borderRadius, colors, spacing } from "../../../theme/tokens";
-import { MotionBox, MotionVStack } from "./motionPrimitives";
+import { Avatar, Badge, Box, HStack, Icon, VStack, Tooltip, useToast } from "@chakra-ui/react";
+import { FiGithub, FiLinkedin, FiMail, FiMapPin, FiClipboard } from "react-icons/fi";
+import { Body, Footnote, Title } from "@ui/atoms/Typography";
+import { borderRadius, colors, spacing } from "@theme/tokens";
+import { MotionBox } from "./motionPrimitives";
 
-function SocialIcon({ icon, href, ...motionProps }) {
+function SocialIcon({ icon, href, label, ...motionProps }) {
   if (!href) {
     return null;
   }
@@ -16,6 +16,8 @@ function SocialIcon({ icon, href, ...motionProps }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label={label}
+      title={label}
       whileHover={{ scale: 1.2, rotate: 5 }}
       whileTap={{ scale: 0.95 }}
       {...motionProps}
@@ -33,6 +35,7 @@ function SocialIcon({ icon, href, ...motionProps }) {
 }
 
 function TeamMemberCard({ member, index }) {
+  const toast = useToast();
   return (
     <MotionBox
       initial={{ opacity: 0, y: 30 }}
@@ -47,11 +50,11 @@ function TeamMemberCard({ member, index }) {
         border="1px solid"
         borderColor={colors.border.default}
         borderRadius={borderRadius["2xl"]}
-        p={{ base: spacing.xl, md: spacing["2xl"], lg: spacing["3xl"] }}
+        p={{ base: spacing.lg, md: spacing["2xl"] }}
         position="relative"
         overflow="hidden"
-        h="full"
-        minH={{ base: "400px", md: "420px" }}
+        h="auto"
+        minH={{ base: "auto", md: "420px" }}
         backdropFilter="blur(20px)"
         transition="all 0.3s ease"
         _hover={{
@@ -75,87 +78,134 @@ function TeamMemberCard({ member, index }) {
           spacing={spacing.lg}
           align="center"
           w="full"
-          paddingLeft={12}
-          paddingRight={12}
-          mt={12}
+          px={{ base: 4, md: 6 }}
+          mt={4}
+          h="full"
+          justify="space-between"
         >
-          <MotionBox whileHover={{ scale: 1.1, rotate: 5 }} transition={{ duration: 0.3 }}>
-            <Avatar
-              name={member.name}
-              size="xl"
-              bg={`linear-gradient(135deg, ${colors.brand.primary}, ${colors.brand.secondary})`}
-              color={colors.text.primary}
-              border="3px solid"
-              borderColor={colors.border.default}
-              boxShadow={`0 0 30px ${colors.brand.primary}40`}
-            />
-          </MotionBox>
+          <VStack spacing={spacing.lg} align="center">
+            <MotionBox whileHover={{ scale: 1.1, rotate: 5 }} transition={{ duration: 0.3 }}>
+              <Avatar
+                name={member.name}
+                boxSize={{ base: "70px", md: "96px" }}
+                bg={`linear-gradient(135deg, ${colors.brand.primary}, ${colors.brand.secondary})`}
+                color={colors.text.primary}
+                border="3px solid"
+                borderColor={colors.border.default}
+                boxShadow={`0 0 30px ${colors.brand.primary}40`}
+              />
+            </MotionBox>
 
-          <VStack spacing={spacing.sm} align="center">
-            <Title variant="small" fontSize="20px" textAlign="center">
-              {member.name}
-            </Title>
-            <Badge
-              bg={colors.blur.accent}
-              color={colors.brand.primary}
-              px={3}
-              py={1}
-              borderRadius={borderRadius.lg}
-              fontSize="12px"
-              fontWeight={500}
-              border="1px solid"
-              borderColor={colors.border.default}
+            <VStack spacing={spacing.sm} align="center">
+              <Title variant="small" fontSize="20px" textAlign="center">
+                {member.name}
+              </Title>
+              <Badge
+                bg={colors.blur.accent}
+                color={colors.brand.primary}
+                px={3}
+                py={1}
+                borderRadius={borderRadius.lg}
+                fontSize="12px"
+                fontWeight={500}
+                border="1px solid"
+                borderColor={colors.border.default}
+              >
+                {member.role}
+              </Badge>
+            </VStack>
+
+            <Body
+              variant="medium"
+              color={colors.text.secondary}
+              textAlign="center"
+              fontSize={{ base: "13px", md: "14px" }}
+              lineHeight="1.7"
+              noOfLines={4}
             >
-              {member.role}
-            </Badge>
+              {member.description}
+            </Body>
+
+            {member.location && (
+              <HStack spacing={2} color={colors.text.tertiary}>
+                <Icon as={FiMapPin} boxSize={4} />
+                <Footnote variant="small" fontSize="12px">
+                  {member.location}
+                </Footnote>
+              </HStack>
+            )}
+
+            {member.work && (
+              <Box
+                bg={colors.blur.light}
+                px={3}
+                py={2}
+                borderRadius={borderRadius.md}
+                border="1px solid"
+                borderColor={colors.border.default}
+                w="full"
+              >
+                <Footnote
+                  variant="small"
+                  color={colors.text.tertiary}
+                  textAlign="center"
+                  fontSize="12px"
+                >
+                  {member.work}
+                </Footnote>
+              </Box>
+            )}
           </VStack>
 
-          <Body
-            variant="medium"
-            color={colors.text.secondary}
-            textAlign="center"
-            fontSize={{ base: "13px", md: "14px" }}
-            lineHeight="1.7"
-            noOfLines={4}
-          >
-            {member.description}
-          </Body>
+          { (member.github || member.linkedin || member.email) && (
+            <HStack spacing={{ base: 2, md: 3 }} pt={2} flexWrap="wrap" justify="center">
+              {member.github && (
+                <Tooltip label="GitHub" aria-label="GitHub tooltip">
+                  <Box>
+                    <SocialIcon icon={FiGithub} href={member.github} label="GitHub" />
+                  </Box>
+                </Tooltip>
+              )}
 
-          {member.location && (
-            <HStack spacing={2} color={colors.text.tertiary}>
-              <Icon as={FiMapPin} boxSize={4} />
-              <Footnote variant="small" fontSize="12px">
-                {member.location}
-              </Footnote>
+              {member.linkedin && (
+                <Tooltip label="LinkedIn" aria-label="LinkedIn tooltip">
+                  <Box>
+                    <SocialIcon icon={FiLinkedin} href={member.linkedin} label="LinkedIn" whileHover={{ rotate: -5 }} />
+                  </Box>
+                </Tooltip>
+              )}
+
+              {member.email && (
+                <>
+                  <Tooltip label="Написать email" aria-label="Email tooltip">
+                    <Box>
+                      <SocialIcon icon={FiMail} href={`mailto:${member.email}`} label="Email" />
+                    </Box>
+                  </Tooltip>
+
+                  <Tooltip label="Копировать email" aria-label="Copy email tooltip">
+                    <MotionBox
+                      as="button"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(member.email);
+                          toast({ title: "Email скопирован", status: "success", duration: 2000 });
+                        } catch (err) {
+                          toast({ title: "Не удалось скопировать", status: "error", duration: 2000 });
+                        }
+                      }}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      aria-label="Copy email"
+                      style={{ background: "transparent", border: "none" }}
+                    >
+                      <Icon as={FiClipboard} boxSize={5} color={colors.text.secondary} />
+                    </MotionBox>
+                  </Tooltip>
+                </>
+              )}
             </HStack>
           )}
-
-          {member.work && (
-            <Box
-              bg={colors.blur.light}
-              px={3}
-              py={2}
-              borderRadius={borderRadius.md}
-              border="1px solid"
-              borderColor={colors.border.default}
-              w="full"
-            >
-              <Footnote
-                variant="small"
-                color={colors.text.tertiary}
-                textAlign="center"
-                fontSize="12px"
-              >
-                {member.work}
-              </Footnote>
-            </Box>
-          )}
-
-          <HStack spacing={3} pt={2}>
-            <SocialIcon icon={FiGithub} href={member.github} />
-            <SocialIcon icon={FiLinkedin} href={member.linkedin} whileHover={{ rotate: -5 }} />
-            <SocialIcon icon={FiMail} href={member.email && `mailto:${member.email}`} />
-          </HStack>
         </VStack>
       </Box>
     </MotionBox>

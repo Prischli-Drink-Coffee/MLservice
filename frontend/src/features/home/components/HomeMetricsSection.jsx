@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import { Box, Container } from "@chakra-ui/react";
-import GlowingCard from "../../../components/common/GlowingCard";
-import AuthenticatedMetricsDistributions from "../../../components/home/AuthenticatedMetricsDistributions";
+import GlowingCard from "@ui/molecules/GlowingCard";
+import AuthenticatedMetricsDistributions from "@features/home/components/AuthenticatedMetricsDistributions";
 
 function HomeMetricsSection({ isAuthenticated, sectionProps, containerProps }) {
   if (!isAuthenticated) return null;

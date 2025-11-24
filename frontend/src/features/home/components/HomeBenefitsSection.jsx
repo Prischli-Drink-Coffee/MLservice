@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { Box, Container } from "@chakra-ui/react";
-import BenefitsSection from "../../../components/home/BenefitsSection";
+import BenefitsSection from "@features/home/components/BenefitsSection";
 
 function HomeBenefitsSection({ sectionProps, containerProps }) {
   return (

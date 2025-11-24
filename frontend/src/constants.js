@@ -1,5 +1,9 @@
-export const PROJECT_NAME = "MLservice";
-export const SUPPORT_EMAIL = "payments@mlservice.ai";
+export const PROJECT_NAME = "Forge";
+export const PROJECT_VERSION = "1.0.0";
+export const COMPANY_NAME = "InCellCorp";
+export const PROJECT_AUTHOR = "InCellCorp Team";
+export const CURRENT_YEAR = new Date().getFullYear();
+export const SUPPORT_EMAIL = "payments@forge-incellcorp.ai";
 export const ORG_GITHUB_URL = "https://github.com/Prischli-Drink-Coffee";
 export const ORG_VK_URL = "https://vk.com/digtatordigtatorov";
 

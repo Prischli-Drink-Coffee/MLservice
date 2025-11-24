@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ChakraProvider } from "@chakra-ui/react";
-import ProfileOverviewCard from "../components/profile/ProfileOverviewCard";
-import QuotaUsageCard from "../components/profile/QuotaUsageCard";
+import ProfileOverviewCard from "@features/profile/components/ProfileOverviewCard";
+import QuotaUsageCard from "@features/profile/components/QuotaUsageCard";
 
 const renderWithChakra = (ui) => render(<ChakraProvider>{ui}</ChakraProvider>);
 

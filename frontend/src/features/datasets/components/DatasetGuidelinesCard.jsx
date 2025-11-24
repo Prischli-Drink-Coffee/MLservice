@@ -1,8 +1,8 @@
 import { Badge, Box, HStack, Icon, SimpleGrid, Stack, Text, VStack } from "@chakra-ui/react";
 import { InfoOutlineIcon, CheckCircleIcon } from "@chakra-ui/icons";
 import PropTypes from "prop-types";
-import GlowingCard from "../../../components/common/GlowingCard";
-import { tokens, colors } from "../../../theme/tokens";
+import GlowingCard from "@ui/molecules/GlowingCard";
+import { tokens, colors } from "@theme/tokens";
 
 function DatasetGuidelinesCard({ guidelines }) {
   const items = guidelines?.length ? guidelines : [

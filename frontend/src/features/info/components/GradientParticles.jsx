@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Box } from "@chakra-ui/react";
 import { useReducedMotion } from "framer-motion";
-import { colors } from "../../../theme/tokens";
+import { colors } from "@theme/tokens";
 import { MotionBox } from "./motionPrimitives";
 
 const COLOR_PALETTES = [
@@ -52,7 +52,25 @@ export function createGradientParticles(count = 20) {
 function GradientParticles() {
   const shouldReduce = useReducedMotion();
 
-  const particles = useMemo(() => createGradientParticles(), []);
+  // adapt particle count to viewport width to reduce work on small screens
+  const [count, setCount] = React.useState(() => {
+    if (typeof window === "undefined") return 12;
+    const w = window.innerWidth;
+    if (w < 768) return 8;
+    if (w < 1280) return 14;
+    return 20;
+  });
+
+  React.useEffect(() => {
+    const onResize = () => {
+      const w = window.innerWidth;
+      setCount(w < 768 ? 8 : w < 1280 ? 14 : 20);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const particles = useMemo(() => createGradientParticles(count), [count]);
 
   if (shouldReduce) return null;
 
@@ -76,15 +94,15 @@ function GradientParticles() {
           w={`${particle.size}px`}
           h={`${particle.size}px`}
           borderRadius="full"
-          bg={`radial-gradient(circle, ${particle.colors[0]}40 0%, ${particle.colors[1]}20 40%, transparent 70%)`}
+          bg={`radial-gradient(circle, ${particle.colors[0]}30 0%, ${particle.colors[1]}18 40%, transparent 70%)`}
           initial={{
             scale: 0,
             opacity: 0,
             filter: "blur(40px)",
           }}
           animate={{
-            scale: [0, 1.5, 1, 1.5, 0],
-            opacity: [0, 0.6, 0.4, 0.6, 0],
+            scale: [0, 1.4, 1, 1.4, 0],
+            opacity: [0, 0.5, 0.35, 0.5, 0],
             x: particle.xShift,
             y: particle.yShift,
           }}

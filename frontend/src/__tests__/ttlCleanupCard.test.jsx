@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { ChakraProvider } from "@chakra-ui/react";
-import TTLCleanupCard from "../components/common/TTLCleanupCard";
+import TTLCleanupCard from "@ui/organisms/TTLCleanupCard";
 
 const renderWithChakra = (ui) => render(<ChakraProvider>{ui}</ChakraProvider>);
 

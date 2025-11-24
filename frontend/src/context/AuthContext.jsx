@@ -1,9 +1,9 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import Cookies from "js-cookie";
 import useLocalStorage from "../hooks/useLocalStorage";
-import { fetchProfile, logoutLocal } from "../API";
-import extractErrorInfo from "../utils/errorHandler";
-import { registerUnauthorizedHandler } from "../API/client";
+import { fetchProfile, logoutLocal } from "@api";
+import extractErrorInfo from "@utils/errorHandler";
+import { registerUnauthorizedHandler } from "@api/client";
 
 const AuthContext = createContext({
   isAuthenticated: false,

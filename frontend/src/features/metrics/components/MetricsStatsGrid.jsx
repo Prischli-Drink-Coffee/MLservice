@@ -1,6 +1,6 @@
 import React from "react";
 import { SimpleGrid, Skeleton, Spinner, Stack, Text } from "@chakra-ui/react";
-import Card from "../../../components/common/Card";
+import Card from "@ui/molecules/Card";
 
 function StatCard({ label, value, suffix = "", isLoading }) {
   const displayValue = value ?? "—";

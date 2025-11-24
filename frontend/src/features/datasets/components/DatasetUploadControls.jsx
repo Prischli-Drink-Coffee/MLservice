@@ -2,8 +2,8 @@ import React, { useRef } from "react";
 import { AttachmentIcon, RepeatIcon } from "@chakra-ui/icons";
 import { Button, HStack, Stack, Text, VStack } from "@chakra-ui/react";
 import PropTypes from "prop-types";
-import PrimaryButton from "../../../components/common/PrimaryButton";
-import { tokens, colors } from "../../../theme/tokens";
+import PrimaryButton from "@ui/atoms/PrimaryButton";
+import { tokens, colors } from "@theme/tokens";
 
 const filePropType = typeof File !== "undefined" ? PropTypes.instanceOf(File) : PropTypes.any;
 

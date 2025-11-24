@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import client from "../API/client";
-import extractErrorInfo from "../utils/errorHandler";
+import client from "@api/client";
+import extractErrorInfo from "@utils/errorHandler";
 
 const DEFAULT_STATUS = { ok: null, details: null, error: null };
 const isAbortError = (error) => error?.code === "ERR_CANCELED" || error?.name === "CanceledError" || error?.name === "AbortError";

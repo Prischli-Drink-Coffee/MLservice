@@ -2,10 +2,10 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
-import ProtectedLayout from "../components/layout/ProtectedLayout";
-import { useAuth } from "../context/AuthContext";
+import ProtectedLayout from "@ui/layout/ProtectedLayout";
+import { useAuth } from "@context/AuthContext";
 
-jest.mock("../context/AuthContext", () => ({
+jest.mock("@context/AuthContext", () => ({
   useAuth: jest.fn(),
 }));
 

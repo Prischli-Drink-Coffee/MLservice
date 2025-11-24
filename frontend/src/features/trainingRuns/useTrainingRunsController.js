@@ -1,8 +1,8 @@
 import { useToast } from "@chakra-ui/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { listDatasets, listTrainingRuns, startJob, fetchJobResult } from "../../API";
-import extractErrorInfo from "../../utils/errorHandler";
-import isAbortError from "../../utils/isAbortError";
+import { listDatasets, listTrainingRuns, startJob, fetchJobResult } from "@api";
+import extractErrorInfo from "@utils/errorHandler";
+import isAbortError from "@utils/isAbortError";
 import { formatDateTime } from "./utils";
 
 const getNow = () => (typeof performance !== "undefined" ? performance.now() : Date.now());

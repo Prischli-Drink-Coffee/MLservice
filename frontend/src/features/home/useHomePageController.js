@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import { colors } from "../../theme/tokens";
+import { colors } from "@theme/tokens";
 import useHealth from "../../hooks/useHealth";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@context/AuthContext";
 
 const HERO_GAP = { base: 6, md: 8, lg: 12 };
 const SECTION_PADDING = { base: 4, md: 6, lg: 8 };

@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { Box, Container } from "@chakra-ui/react";
-import FeatureSlider from "../../../components/home/FeatureSlider";
+import FeatureSlider from "@features/home/components/FeatureSlider";
 
 function HomeFeatureSliderSection({ sectionProps, containerProps }) {
   return (

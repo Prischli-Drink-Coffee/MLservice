@@ -1,6 +1,6 @@
 import React from "react";
 import { Badge, Box, Container, Flex, VStack } from "@chakra-ui/react";
-import { borderRadius, colors, shadows, spacing } from "../../../../theme/tokens";
+import { borderRadius, colors, shadows, spacing } from "@theme/tokens";
 import { MotionBox } from "../motionPrimitives";
 
 function TechStackSection({ techStack }) {
@@ -12,12 +12,10 @@ function TechStackSection({ techStack }) {
       transition={{ duration: 0.8 }}
       w="full"
       mt={{ base: spacing["6xl"], md: spacing["8xl"] }}
-      paddingRight={12}
-      paddingLeft={12}
-      paddingBottom={12}
-      paddingTop={12}
+      px={{ base: 4, md: 12 }}
+      py={{ base: 8, md: 12 }}
     >
-      <Container maxW="full" px={{ base: 0 }}>
+  <Container maxW="full" px={{ base: 4, md: 6, lg: 8 }}>
         <Box
           bg={`linear-gradient(135deg, ${colors.blur.medium} 0%, ${colors.blur.light} 100%)`}
           border="1px solid"
@@ -34,11 +32,8 @@ function TechStackSection({ techStack }) {
               justify="center"
               align="center"
               maxW="800px"
-              pt={2}
-              pb={2}
+              py={6}
               margin="0 auto"
-              paddingBottom={12}
-              paddingTop={12}
             >
               {techStack.map((tech, i) => (
                 <MotionBox
@@ -53,8 +48,8 @@ function TechStackSection({ techStack }) {
                   <Badge
                     bg={colors.blur.accent}
                     color={colors.text.primary}
-                    px={4}
-                    py={2}
+                    px={{ base: 3, md: 4 }}
+                    py={{ base: 1, md: 2 }}
                     borderRadius={borderRadius.lg}
                     fontSize="13px"
                     fontWeight={500}

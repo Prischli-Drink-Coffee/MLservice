@@ -1,6 +1,6 @@
 import React from "react";
 import { Stack, Table, Tbody, Td, Text, Th, Thead, Tr } from "@chakra-ui/react";
-import Card from "../../../components/common/Card";
+import Card from "@ui/molecules/Card";
 
 function MetricTexts({ metrics }) {
   if (!metrics) {

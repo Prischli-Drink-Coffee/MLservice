@@ -1,14 +1,14 @@
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
-import { AuthProvider, useAuth } from "../context/AuthContext";
-import { fetchProfile } from "../API";
+import { AuthProvider, useAuth } from "@context/AuthContext";
+import { fetchProfile } from "@api";
 
-jest.mock("../API", () => ({
+jest.mock("@api", () => ({
   fetchProfile: jest.fn(),
   logoutLocal: jest.fn(),
 }));
 
-jest.mock("../API/client", () => ({
+jest.mock("@api/client", () => ({
   registerUnauthorizedHandler: jest.fn(),
 }));
 

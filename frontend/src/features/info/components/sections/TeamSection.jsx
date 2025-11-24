@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Container, SimpleGrid, VStack } from "@chakra-ui/react";
-import { Body, Title } from "../../../../components/common/Typography";
-import { colors, spacing } from "../../../../theme/tokens";
+import { Body, Title } from "@ui/atoms/Typography";
+import { colors, spacing } from "@theme/tokens";
 import TeamMemberCard from "../TeamMemberCard";
 import { MotionVStack } from "../motionPrimitives";
 
@@ -30,7 +30,14 @@ function TeamSection({ members }) {
             </Body>
           </VStack>
 
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={{ base: 8, md: 10, lg: 8 }} w="full" pt={{ base: 4, md: 6 }}>
+          <SimpleGrid
+            columns={{ base: 1, md: 2, lg: 4 }}
+            spacing={{ base: 8, md: 10, lg: 8 }}
+            w="full"
+            maxW={{ base: "full", md: "100%" }}
+            pt={{ base: 4, md: 6 }}
+            mx="auto"
+          >
             {members.map((member, index) => (
               <TeamMemberCard key={`${member.name}-${index}`} member={member} index={index} />
             ))}

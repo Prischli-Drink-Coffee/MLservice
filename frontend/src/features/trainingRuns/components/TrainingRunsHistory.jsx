@@ -10,8 +10,10 @@ import {
   Stack,
   Box,
 } from "@chakra-ui/react";
-import DatasetSearchBar from "../../../components/datasets/DatasetSearchBar";
-import { EmptyState, ErrorAlert, LoadingState } from "../../../components";
+import DatasetSearchBar from "@features/datasets/components/DatasetSearchBar";
+import EmptyState from "@ui/molecules/EmptyState";
+import ErrorAlert from "@ui/molecules/ErrorAlert";
+import LoadingState from "@ui/molecules/LoadingState";
 import RunMetrics from "./RunMetrics";
 import { formatDateTime } from "../utils";
 

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useToast } from "@chakra-ui/react";
-import { deleteArtifact, getArtifactDownloadUrl, listArtifacts } from "../../API";
-import { showErrorToast } from "../../utils/errorHandler";
-import isAbortError from "../../utils/isAbortError";
+import { deleteArtifact, getArtifactDownloadUrl, listArtifacts } from "@api";
+import { showErrorToast } from "@utils/errorHandler";
+import isAbortError from "@utils/isAbortError";
 
 const defaultOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
 const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || defaultOrigin || "";

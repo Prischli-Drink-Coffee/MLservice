@@ -343,11 +343,15 @@ class TrainingRepository(BaseRepository):
         if dataset_id is not None:
             stmt = stmt.where(TrainingRun.dataset_id == dataset_id)
         if target_column is not None and target_column.strip() != "":
-            from sqlalchemy import literal
+            from sqlalchemy import literal, or_
 
+            trimmed = target_column.strip()
             stmt = stmt.join(UserLaunch, TrainingRun.launch_id == UserLaunch.id)
             stmt = stmt.where(
-                UserLaunch.payload["target_column"].astext == literal(target_column.strip())
+                or_(
+                    UserLaunch.payload["target_column"].astext == literal(trimmed),
+                    TrainingRun.metrics["target_column"].astext == literal(trimmed),
+                )
             )
 
         stmt = stmt.limit(limit)

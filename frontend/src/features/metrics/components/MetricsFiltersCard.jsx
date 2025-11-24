@@ -10,7 +10,7 @@ import {
   Stack,
   Text,
 } from "@chakra-ui/react";
-import Card from "../../../components/common/Card";
+import Card from "@ui/molecules/Card";
 
 function MetricsFiltersCard({
   datasets,
@@ -54,13 +54,14 @@ function MetricsFiltersCard({
               Целевой столбец
             </Text>
             <Select
-              placeholder="Нет доступных колонок"
+              placeholder="Все столбцы"
               value={targetColumn}
               onChange={(e) => onTargetChange(e.target.value)}
-              isDisabled={datasetsLoading || !targetOptions.length}
+              isDisabled={datasetsLoading}
               bg="whiteAlpha.100"
               borderColor="whiteAlpha.300"
             >
+              <option value="">Все столбцы</option>
               {targetOptions.map((col) => (
                 <option key={col} value={col}>
                   {col}
@@ -73,7 +74,7 @@ function MetricsFiltersCard({
               onClick={onRefresh}
               colorScheme="brand"
               w="full"
-              isDisabled={!selectedDatasetId || !targetColumn}
+              isDisabled={!selectedDatasetId}
               isLoading={metricsLoading}
             >
               Обновить метрики

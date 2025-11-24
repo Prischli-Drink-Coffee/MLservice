@@ -6,10 +6,12 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 COPY . .
+RUN chmod +x docker-entrypoint.sh
 
 FROM base AS dev
 
 ENV NODE_ENV=development
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["npm", "start"]
 
 FROM base AS builder

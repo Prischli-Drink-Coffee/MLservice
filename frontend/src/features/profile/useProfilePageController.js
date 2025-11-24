@@ -2,8 +2,8 @@ import { useCallback, useMemo, useState } from "react";
 import { useToast } from "@chakra-ui/react";
 import useProfile from "../../hooks/useProfile";
 import useQuotaPlans from "../../hooks/useQuotaPlans";
-import { showErrorToast } from "../../utils/errorHandler";
-import { SUPPORT_EMAIL } from "../../constants";
+import { showErrorToast } from "@utils/errorHandler";
+import { SUPPORT_EMAIL } from "@constants";
 
 const isPaymentsUiEnabled = String(process.env.REACT_APP_ENABLE_PROFILE_PAYMENTS_UI || "true")
   .toLowerCase()

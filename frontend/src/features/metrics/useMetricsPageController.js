@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getMetricsSummary, listDatasets } from "../../API";
-import extractErrorInfo from "../../utils/errorHandler";
+import { getMetricsSummary, listDatasets } from "@api";
+import extractErrorInfo from "@utils/errorHandler";
 
 const DEFAULT_LIMIT = 50;
 
@@ -55,11 +55,16 @@ export default function useMetricsPageController() {
       setTargetColumn("");
       return;
     }
-    setTargetColumn((prev) => (prev && targetOptions.includes(prev) ? prev : targetOptions[targetOptions.length - 1]));
+    setTargetColumn((prev) => {
+      if (prev && targetOptions.includes(prev)) {
+        return prev;
+      }
+      return "";
+    });
   }, [targetOptions]);
 
   const loadMetrics = useCallback(async () => {
-    if (!selectedDatasetId || !targetColumn) {
+    if (!selectedDatasetId) {
       setMetricsData(null);
       return;
     }
@@ -69,7 +74,7 @@ export default function useMetricsPageController() {
       const response = await getMetricsSummary({
         limit: DEFAULT_LIMIT,
         datasetId: selectedDatasetId,
-        targetColumn,
+        targetColumn: targetColumn || undefined,
       });
       setMetricsData(response);
     } catch (error) {
@@ -83,7 +88,7 @@ export default function useMetricsPageController() {
   }, [selectedDatasetId, targetColumn]);
 
   useEffect(() => {
-    if (!selectedDatasetId || !targetColumn) return;
+    if (!selectedDatasetId) return;
     loadMetrics().catch(() => {});
   }, [selectedDatasetId, targetColumn, loadMetrics]);
 

@@ -304,6 +304,8 @@ class TrainingService:
                         "n_samples": int(df.shape[0]),
                     }
 
+                metrics["target_column"] = target_col
+
                 model_rel_path = f"models/model_{uuid.uuid4().hex}.joblib"
                 model_abs_path = os.path.join(self._storage_root, model_rel_path)
                 os.makedirs(os.path.dirname(model_abs_path), exist_ok=True)
@@ -365,6 +367,8 @@ class TrainingService:
                     continue
         if target_idx is None:
             target_idx = len(header) - 1
+
+        target_name = header[target_idx]
 
         # Collect rows
         rows: list[list[str]] = []
@@ -459,6 +463,8 @@ class TrainingService:
         }
         with open(model_abs_path, "wb") as fh:
             pickle.dump(dummy_model, fh)
+
+        metrics["target_column"] = target_name
         metrics["model_url"] = f"/storage/{model_rel_path}"
         return metrics
 

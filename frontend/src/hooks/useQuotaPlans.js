@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getQuotaPlans } from "../API";
-import extractErrorInfo from "../utils/errorHandler";
-import isAbortError from "../utils/isAbortError";
+import { getQuotaPlans } from "@api";
+import extractErrorInfo from "@utils/errorHandler";
+import isAbortError from "@utils/isAbortError";
 
 export default function useQuotaPlans(autoLoad = false) {
   const [plans, setPlans] = useState([]);

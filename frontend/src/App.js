@@ -1,19 +1,19 @@
 import React, { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Center, Spinner } from "@chakra-ui/react";
-import ProtectedLayout from "./components/layout/ProtectedLayout";
-import PublicLayout from "./components/layout/PublicLayout";
+import ProtectedLayout from "./ui/layout/ProtectedLayout";
+import PublicLayout from "./ui/layout/PublicLayout";
 
-const LoginPage = lazy(() => import("./pages/LoginPage"));
-const SignUpPage = lazy(() => import("./pages/SignUpPage"));
-const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
-const InfoPage = lazy(() => import("./pages/InfoPage"));
-const HomePage = lazy(() => import("./pages/HomePage"));
-const DatasetsPage = lazy(() => import("./pages/DatasetsPage"));
-const TrainingRunsPage = lazy(() => import("./pages/TrainingRunsPage"));
-const ArtifactsPage = lazy(() => import("./pages/ArtifactsPage"));
-const MetricsPage = lazy(() => import("./pages/MetricsPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const LoginPage = lazy(() => import("@pages/login"));
+const SignUpPage = lazy(() => import("@pages/signup"));
+const NotFoundPage = lazy(() => import("@pages/notFound"));
+const InfoPage = lazy(() => import("@pages/info"));
+const HomePage = lazy(() => import("@pages/home"));
+const DatasetsPage = lazy(() => import("@pages/datasets"));
+const TrainingRunsPage = lazy(() => import("@pages/training"));
+const ArtifactsPage = lazy(() => import("@pages/artifacts"));
+const MetricsPage = lazy(() => import("@pages/metrics"));
+const ProfilePage = lazy(() => import("@pages/profile"));
 
 const router = createBrowserRouter([
   {
