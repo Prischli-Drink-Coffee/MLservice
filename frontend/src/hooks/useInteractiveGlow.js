@@ -18,12 +18,15 @@ export function useInteractiveGlow({ disabled = false, initial = DEFAULT_POSITIO
   const nodeRef = useRef(null);
   const frameRef = useRef(null);
 
-  const setGlowPosition = useCallback((x = initial.x, y = initial.y) => {
-    const node = nodeRef.current;
-    if (!node) return;
-    node.style.setProperty("--glow-x", `${clampPercent(x)}%`);
-    node.style.setProperty("--glow-y", `${clampPercent(y)}%`);
-  }, [initial.x, initial.y]);
+  const setGlowPosition = useCallback(
+    (x = initial.x, y = initial.y) => {
+      const node = nodeRef.current;
+      if (!node) return;
+      node.style.setProperty("--glow-x", `${clampPercent(x)}%`);
+      node.style.setProperty("--glow-y", `${clampPercent(y)}%`);
+    },
+    [initial.x, initial.y],
+  );
 
   const resetGlowPosition = useCallback(() => {
     setGlowPosition(initial.x, initial.y);

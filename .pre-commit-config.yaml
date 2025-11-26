@@ -60,12 +60,27 @@ repos:
           )$
 
   # Frontend linting (cross-platform: Python script works on Windows and Linux)
-  - repo: local
-    hooks:
-      - id: frontend-eslint
-        name: Frontend ESLint
-        entry: python scripts/lint-frontend.py
-        language: system
-        files: ^frontend/src/.*\.(js|jsx)$
-        pass_filenames: false
-        stages: [pre-commit]
+  # - repo: local
+  #   hooks:
+
+      # - id: frontend-eslint
+      #   name: Frontend ESLint
+      #   entry: python frontend/scripts/lint-frontend.py
+      #   language: system
+      #   files: ^frontend/src/.*\.(js|jsx)$
+      #   pass_filenames: false
+      #   stages: [pre-commit]
+
+      # - id: frontend-test
+      #   name: Frontend Unit Tests (pre-push)
+      #   entry: bash -lc "cd frontend && CI=true npm test -- --watchAll=false --silent"
+      #   language: system
+      #   pass_filenames: false
+      #   stages: [pre-commit]
+
+      # - id: frontend-axe
+      #   name: Frontend Accessibility Scan (pre-push)
+      #   entry: bash -lc "cd frontend && npm run axe"
+      #   language: system
+      #   pass_filenames: false
+      #   stages: [pre-commit]

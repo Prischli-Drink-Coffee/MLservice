@@ -1,13 +1,15 @@
 import React from "react";
-import { Box, Container, Center, Spinner, Text, VStack } from "@chakra-ui/react";
+import { AnimatePresence } from "framer-motion";
+import { Box, Center, Spinner, Text, VStack } from "@chakra-ui/react";
+import { MotionBox } from "@ui/motionPrimitives";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./Footer";
 import { useAuth } from "@context/AuthContext";
-import { AnimatePresence, motion } from "framer-motion";
 import LayoutContext from "@context/LayoutContext";
+import { gradients, colors, spacing } from "@theme/tokens";
 
-const MotionContainer = motion(Container);
+const MotionContainer = MotionBox;
 
 function ProtectedLayout() {
   const { isAuthenticated, isSessionLoading } = useAuth();
@@ -27,14 +29,14 @@ function ProtectedLayout() {
       isFooterVisible,
       setFooterVisible,
     }),
-    [layoutVariant, isFooterVisible]
+    [layoutVariant, isFooterVisible],
   );
 
   if (isSessionLoading) {
     return (
-      <Center minH="100vh" bg="gray.900" color="white">
+      <Center minH="100vh" bg={colors.background.darkPrimary} color={colors.text.primary}>
         <VStack spacing={4} align="center">
-          <Spinner size="lg" thickness="4px" color="white" />
+          <Spinner size="lg" thickness="4px" color={colors.brand.primary} />
           <Text fontSize="md" opacity={0.8}>
             Проверяем вашу сессию...
           </Text>
@@ -49,29 +51,51 @@ function ProtectedLayout() {
 
   return (
     <LayoutContext.Provider value={layoutContextValue}>
-      <Box minH="100vh" display="flex" flexDirection="column">
-        <Header />
-        {layoutVariant === "full" ? (
-          <Box as="div" flex="1 0 auto" w="full" px={0} py={0}>
-            <Outlet />
-          </Box>
-        ) : (
-          <AnimatePresence mode="wait">
-            <MotionContainer
-              key={location.pathname}
-              maxW="6xl"
-              flex="1 0 auto"
-              py={6}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
+      <Box
+        minH="100vh"
+        display="flex"
+        flexDirection="column"
+        position="relative"
+        bg={colors.background.darkPrimary}
+      >
+        <Box position="absolute" inset={0} bg={gradients.midnightMesh} opacity={0.55} />
+        <Box
+          position="absolute"
+          inset={0}
+          bg="linear-gradient(180deg, rgba(5,5,5,0.95), rgba(5,5,5,0.8))"
+        />
+
+        <Box position="relative" zIndex={1}>
+          <Header />
+        </Box>
+
+        <Box as="section" flex="1 0 auto" position="relative" zIndex={1} py={{ base: 8, md: 12 }}>
+          {layoutVariant === "full" ? (
+            <Box w="full" px={{ base: spacing.md, md: spacing.lg, lg: spacing[13] }}>
               <Outlet />
-            </MotionContainer>
-          </AnimatePresence>
+            </Box>
+          ) : (
+            <AnimatePresence mode="wait">
+              <MotionContainer
+                key={location.pathname}
+                maxW="6xl"
+                px={{ base: spacing.md, md: spacing.lg, lg: spacing[13] }}
+                py={{ base: 8, md: 10 }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25 }}
+              >
+                <Outlet />
+              </MotionContainer>
+            </AnimatePresence>
+          )}
+        </Box>
+        {isFooterVisible && (
+          <Box position="relative" zIndex={1}>
+            <Footer />
+          </Box>
         )}
-        {isFooterVisible && <Footer />}
       </Box>
     </LayoutContext.Provider>
   );

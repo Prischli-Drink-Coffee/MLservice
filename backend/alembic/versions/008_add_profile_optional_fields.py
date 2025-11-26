@@ -7,8 +7,8 @@ Create Date: 2025-11-18 00:00:00.000000
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 
+from alembic import op
 
 revision: str = "008_add_profile_optional_fields"
 down_revision: Union[str, Sequence[str], None] = "007_add_job_payload"

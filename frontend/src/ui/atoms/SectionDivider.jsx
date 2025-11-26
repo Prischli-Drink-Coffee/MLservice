@@ -1,9 +1,8 @@
 import React from "react";
 import { Box, Flex } from "@chakra-ui/react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import { colors } from "@theme/tokens";
-
-const MotionBox = motion(Box);
 
 /**
  * SectionDivider - Decorative animated divider between sections

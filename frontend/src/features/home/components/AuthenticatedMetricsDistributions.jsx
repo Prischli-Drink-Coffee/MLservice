@@ -22,64 +22,9 @@ import {
 import { getMetricsSummary } from "@api/metrics";
 import { colors, borderRadius, spacing, gradients } from "@theme/tokens";
 import extractErrorInfo from "@utils/errorHandler";
+import SummaryPanel from "@ui/molecules/SummaryPanel";
 
-const MiniStatCard = ({ label, value, suffix = "" }) => {
-  const prefersReducedMotion = usePrefersReducedMotion();
-  return (
-    <Box
-      position="relative"
-      overflow="hidden"
-      borderRadius={borderRadius.xl}
-      border="1px solid rgba(255,255,255,0.08)"
-      bg={`linear-gradient(145deg, rgba(5,7,13,0.95), rgba(7,9,18,0.82)), ${gradients.midnightMesh}`}
-      px={{ base: spacing.md, md: spacing.lg }}
-      py={{ base: spacing.md, md: spacing.lg }}
-      textAlign="center"
-      minH="110px"
-      _before={{
-        content: '""',
-        position: "absolute",
-        inset: "-40%",
-        background: gradients.prism,
-        opacity: 0.25,
-        filter: "blur(80px)",
-        animation: prefersReducedMotion ? "none" : "gradientOrbit 24s linear infinite",
-      }}
-      _after={{
-        content: '""',
-        position: "absolute",
-        inset: "1px",
-        borderRadius: `calc(${borderRadius.xl} - 8px)`,
-        border: "1px solid rgba(255,255,255,0.08)",
-        background: "linear-gradient(125deg, rgba(255,255,255,0.08), transparent 55%)",
-        opacity: 0.6,
-        pointerEvents: "none",
-      }}
-    >
-      <Flex direction="column" justify="center" align="center" gap={3} position="relative" zIndex={1}>
-        <Text
-          fontSize="xs"
-          color={colors.text.secondary}
-          textTransform="uppercase"
-          letterSpacing="0.12em"
-          noOfLines={2}
-        >
-          {label}
-        </Text>
-        <HStack spacing={2} align="flex-end" justify="center">
-          <Text fontSize="2xl" fontWeight={700} color={colors.text.primary} lineHeight="1">
-            {value}
-          </Text>
-          {suffix && (
-            <Text fontSize="md" color={colors.text.secondary} fontWeight={600} pb="2px">
-              {suffix}
-            </Text>
-          )}
-        </HStack>
-      </Flex>
-    </Box>
-  );
-};
+// Используем централизованный SummaryPanel вместо локальной MiniStatCard
 
 const DistributionChart = ({ title, subtitle, bins, color }) => {
   const maxValue = Math.max(...bins.map((bin) => bin.value), 1);
@@ -120,7 +65,14 @@ const DistributionChart = ({ title, subtitle, bins, color }) => {
           <Text fontSize="lg" fontWeight={600} color={colors.text.primary}>
             {title}
           </Text>
-          <Badge bg={colors.background.jet50} color={colors.text.secondary} borderRadius="full" px={3} py={1} fontSize="xs">
+          <Badge
+            bg={colors.background.jet50}
+            color={colors.text.secondary}
+            borderRadius="full"
+            px={3}
+            py={1}
+            fontSize="xs"
+          >
             {total || 0} запусков
           </Badge>
         </HStack>
@@ -145,7 +97,12 @@ const DistributionChart = ({ title, subtitle, bins, color }) => {
             {bins.map((bin) => {
               const barHeight = (bin.value / maxValue) * 100;
               return (
-                <Tooltip key={bin.label} label={`${bin.label}: ${bin.value}`} openDelay={200} hasArrow>
+                <Tooltip
+                  key={bin.label}
+                  label={`${bin.label}: ${bin.value}`}
+                  openDelay={200}
+                  hasArrow
+                >
                   <Stack spacing={2} minW="64px" align="center" flexShrink={0}>
                     <Box
                       w="100%"
@@ -253,7 +210,11 @@ const ChartSkeleton = () => (
     <SkeletonText noOfLines={2} spacing="3" />
     <SimpleGrid columns={{ base: 6, md: 10 }} spacing={3} pt={2}>
       {Array.from({ length: 10 }).map((_, idx) => (
-        <Skeleton key={`chart-skeleton-${idx}`} height={`${60 + (idx % 3) * 10}px`} borderRadius="xl" />
+        <Skeleton
+          key={`chart-skeleton-${idx}`}
+          height={`${60 + (idx % 3) * 10}px`}
+          borderRadius="xl"
+        />
       ))}
     </SimpleGrid>
   </Stack>
@@ -449,19 +410,18 @@ export default function AuthenticatedMetricsDistributions() {
         </Stack>
       ) : metrics ? (
         <Stack spacing={6} w="full">
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4} w="full" alignItems="stretch">
-            <MiniStatCard label="Всего запусков" value={totalRuns || 0} />
-            <MiniStatCard
-              label="Средняя точность"
-              value={((aggregates.avg_accuracy ?? 0) * 100).toFixed(1)}
-              suffix="%"
-            />
-            <MiniStatCard
-              label="Средний R²"
-              value={((aggregates.avg_r2 ?? 0) * 100).toFixed(1)}
-              suffix="%"
-            />
-          </SimpleGrid>
+          <SummaryPanel
+            items={[
+              { label: "Всего запусков", value: totalRuns || 0 },
+              {
+                label: "Средняя точность",
+                value: `${((aggregates.avg_accuracy ?? 0) * 100).toFixed(1)}%`,
+              },
+              { label: "Средний R²", value: `${((aggregates.avg_r2 ?? 0) * 100).toFixed(1)}%` },
+            ]}
+            columns={{ base: 1, md: 3 }}
+            size="compact"
+          />
 
           <SimpleGrid columns={1} spacing={6} w="full" px={{ base: 0, md: 2 }}>
             <DistributionChart
@@ -506,44 +466,49 @@ export default function AuthenticatedMetricsDistributions() {
             }}
           >
             <Box position="relative" zIndex={1}>
-            <HStack justify="space-between" align="center" flexWrap="wrap" rowGap={2}>
-              <Text fontSize="lg" fontWeight={600} color={colors.text.primary}>
-                Баланс задач
-              </Text>
-              <Text fontSize="sm" color={colors.text.secondary}>
-                {totalRuns} запусков
-              </Text>
-            </HStack>
-            <Progress
-              value={totalRuns ? (classificationCount / totalRuns) * 100 : 0}
-              bg={colors.background.jet40}
-              borderRadius="full"
-              h="12px"
-              sx={{
-                "& > div": {
-                  background: `linear-gradient(90deg, ${colors.brand.primary}, ${colors.brand.secondary})`,
-                },
-              }}
-            />
-            <Flex direction={{ base: "column", md: "row" }} gap={4} justify="space-between" align="stretch">
-              <Box flex="1">
-                <Text fontSize="sm" color={colors.text.secondary} mb={1}>
-                  Классификация
+              <HStack justify="space-between" align="center" flexWrap="wrap" rowGap={2}>
+                <Text fontSize="lg" fontWeight={600} color={colors.text.primary}>
+                  Баланс задач
                 </Text>
-                <Text fontSize="2xl" fontWeight={700} color={colors.brand.primary}>
-                  {classificationCount}
+                <Text fontSize="sm" color={colors.text.secondary}>
+                  {totalRuns} запусков
                 </Text>
-              </Box>
-              <Divider orientation={{ base: "horizontal", md: "vertical" }} opacity={0.2} />
-              <Box flex="1">
-                <Text fontSize="sm" color={colors.text.secondary} mb={1}>
-                  Регрессия
-                </Text>
-                <Text fontSize="2xl" fontWeight={700} color={colors.brand.secondary}>
-                  {regressionCount}
-                </Text>
-              </Box>
-            </Flex>
+              </HStack>
+              <Progress
+                value={totalRuns ? (classificationCount / totalRuns) * 100 : 0}
+                bg={colors.background.jet40}
+                borderRadius="full"
+                h="12px"
+                sx={{
+                  "& > div": {
+                    background: `linear-gradient(90deg, ${colors.brand.primary}, ${colors.brand.secondary})`,
+                  },
+                }}
+              />
+              <Flex
+                direction={{ base: "column", md: "row" }}
+                gap={4}
+                justify="space-between"
+                align="stretch"
+              >
+                <Box flex="1">
+                  <Text fontSize="sm" color={colors.text.secondary} mb={1}>
+                    Классификация
+                  </Text>
+                  <Text fontSize="2xl" fontWeight={700} color={colors.brand.primary}>
+                    {classificationCount}
+                  </Text>
+                </Box>
+                <Divider orientation={{ base: "horizontal", md: "vertical" }} opacity={0.2} />
+                <Box flex="1">
+                  <Text fontSize="sm" color={colors.text.secondary} mb={1}>
+                    Регрессия
+                  </Text>
+                  <Text fontSize="2xl" fontWeight={700} color={colors.brand.secondary}>
+                    {regressionCount}
+                  </Text>
+                </Box>
+              </Flex>
             </Box>
           </Stack>
         </Stack>

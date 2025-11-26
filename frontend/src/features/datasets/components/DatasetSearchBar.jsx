@@ -1,10 +1,22 @@
 import React from "react";
-import { Box, HStack, VStack, Text, Badge, Button, Input, InputGroup, InputLeftElement, Stack, Divider, Tag, Icon } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  VStack,
+  Text,
+  Badge,
+  Button,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Stack,
+  Divider,
+  Tag,
+  Icon,
+} from "@chakra-ui/react";
 import { SearchIcon, CloseIcon, InfoOutlineIcon } from "@chakra-ui/icons";
-import { motion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import { tokens, colors } from "@theme/tokens";
-
-const MotionBox = motion(Box);
 
 const VARIANT_PRESETS = {
   datasets: {
@@ -83,10 +95,20 @@ const DatasetSearchBar = ({
           <HStack justify="space-between" align="flex-start" spacing={4} flexWrap="wrap">
             <VStack align="flex-start" spacing={1} maxW={{ base: "full", md: "60%" }}>
               <HStack spacing={3}>
-                <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.2em" color={colors.text.tertiary}>
+                <Text
+                  fontSize="xs"
+                  textTransform="uppercase"
+                  letterSpacing="0.2em"
+                  color={colors.text.tertiary}
+                >
                   {resolvedTitle}
                 </Text>
-                <Tag size="sm" borderRadius={tokens.borderRadius.full} bg="rgba(47,116,255,0.12)" color={colors.text.secondary}>
+                <Tag
+                  size="sm"
+                  borderRadius={tokens.borderRadius.full}
+                  bg="rgba(47,116,255,0.12)"
+                  color={colors.text.secondary}
+                >
                   <InfoOutlineIcon />
                   <Text as="span" ml={2} fontSize="xs">
                     {ribbonLabel}
@@ -102,10 +124,22 @@ const DatasetSearchBar = ({
                 {resolvedCounterLabel}
               </Text>
               <HStack spacing={2}>
-                <Badge colorScheme={resolvedBadgeColor} borderRadius={tokens.borderRadius.full} px={4} py={1} fontSize="sm">
+                <Badge
+                  colorScheme={resolvedBadgeColor}
+                  borderRadius={tokens.borderRadius.full}
+                  px={4}
+                  py={1}
+                  fontSize="sm"
+                >
                   {activeCount} / {totalCount}
                 </Badge>
-                <Badge bg="rgba(255,255,255,0.08)" borderRadius={tokens.borderRadius.full} px={3} py={1} fontSize="xs">
+                <Badge
+                  bg="rgba(255,255,255,0.08)"
+                  borderRadius={tokens.borderRadius.full}
+                  px={3}
+                  py={1}
+                  fontSize="xs"
+                >
                   {coverage}% охват
                 </Badge>
               </HStack>
@@ -166,9 +200,20 @@ const DatasetSearchBar = ({
 
           <Stack direction={{ base: "column", md: "row" }} spacing={4} align="stretch">
             <HStack spacing={3} flex={1}>
-              <Box w="10px" h="10px" borderRadius="full" bg="rgba(47,116,255,0.95)" boxShadow="0 0 20px rgba(47,116,255,0.7)" />
+              <Box
+                w="10px"
+                h="10px"
+                borderRadius="full"
+                bg="rgba(47,116,255,0.95)"
+                boxShadow="0 0 20px rgba(47,116,255,0.7)"
+              />
               <VStack align="flex-start" spacing={0}>
-                <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.2em" color={colors.text.tertiary}>
+                <Text
+                  fontSize="xs"
+                  textTransform="uppercase"
+                  letterSpacing="0.2em"
+                  color={colors.text.tertiary}
+                >
                   Доступно
                 </Text>
                 <Text fontWeight={600} color={colors.text.primary}>
@@ -176,7 +221,10 @@ const DatasetSearchBar = ({
                 </Text>
               </VStack>
             </HStack>
-            <Divider orientation={{ base: "horizontal", md: "vertical" }} borderColor="rgba(255,255,255,0.08)" />
+            <Divider
+              orientation={{ base: "horizontal", md: "vertical" }}
+              borderColor="rgba(255,255,255,0.08)"
+            />
             <HStack spacing={3} flex={1} color={colors.text.secondary}>
               <Icon as={InfoOutlineIcon} w={4} h={4} />
               <Text fontSize="sm">Поддерживается мгновенный фильтр по ID, версии и тегам.</Text>

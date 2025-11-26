@@ -24,7 +24,9 @@ export default function useMetricsPageController() {
       setSelectedDatasetId((prev) => prev || result[0]?.id || "");
       return result;
     } catch (error) {
-      const { userMessage } = extractErrorInfo(error, { fallbackMessage: "Не удалось загрузить датасеты" });
+      const { userMessage } = extractErrorInfo(error, {
+        fallbackMessage: "Не удалось загрузить датасеты",
+      });
       setDatasetsError(userMessage);
       throw error;
     } finally {
@@ -78,7 +80,9 @@ export default function useMetricsPageController() {
       });
       setMetricsData(response);
     } catch (error) {
-      const { userMessage } = extractErrorInfo(error, { fallbackMessage: "Не удалось загрузить метрики" });
+      const { userMessage } = extractErrorInfo(error, {
+        fallbackMessage: "Не удалось загрузить метрики",
+      });
       setMetricsError(userMessage);
       setMetricsData(null);
       throw error;

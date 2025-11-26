@@ -90,19 +90,39 @@ function ProfileEditDrawer({ isOpen, onClose, profile, onSubmit, isSubmitting })
           <Stack spacing={4} mt={2}>
             <FormControl>
               <FormLabel>Имя</FormLabel>
-              <Input name="first_name" value={form.first_name} onChange={handleChange} placeholder="Иван" />
+              <Input
+                name="first_name"
+                value={form.first_name}
+                onChange={handleChange}
+                placeholder="Иван"
+              />
             </FormControl>
             <FormControl>
               <FormLabel>Компания</FormLabel>
-              <Input name="company" value={form.company} onChange={handleChange} placeholder="ForgeInCellCorp" />
+              <Input
+                name="company"
+                value={form.company}
+                onChange={handleChange}
+                placeholder="ForgeInCellCorp"
+              />
             </FormControl>
             <FormControl>
               <FormLabel>Часовой пояс</FormLabel>
-              <Input name="timezone" value={form.timezone} onChange={handleChange} placeholder="Europe/Moscow" />
+              <Input
+                name="timezone"
+                value={form.timezone}
+                onChange={handleChange}
+                placeholder="Europe/Moscow"
+              />
             </FormControl>
             <FormControl>
               <FormLabel>Телефон</FormLabel>
-              <Input name="phone" value={form.phone} onChange={handleChange} placeholder="71234567890" />
+              <Input
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="71234567890"
+              />
             </FormControl>
             <FormControl>
               <FormLabel>Avatar URL</FormLabel>

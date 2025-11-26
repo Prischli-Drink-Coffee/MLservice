@@ -120,9 +120,7 @@ class DatasetDeleteResponse(BaseModel):
     file_removed: bool = Field(
         False, description="Удалён ли файл из storage (или отсутствовал изначально)"
     )
-    file_metadata_deleted: bool = Field(
-        False, description="Удалена ли запись о файле из user_file"
-    )
+    file_metadata_deleted: bool = Field(False, description="Удалена ли запись о файле из user_file")
 
 
 class DatasetUploadResponse(BaseModel):

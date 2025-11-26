@@ -70,7 +70,9 @@ export default function useDatasetsPageController() {
       if (isAbortError(err) || controller.signal.aborted) {
         return null;
       }
-      const { userMessage } = extractErrorInfo(err, { fallbackMessage: "Не удалось загрузить датасеты" });
+      const { userMessage } = extractErrorInfo(err, {
+        fallbackMessage: "Не удалось загрузить датасеты",
+      });
       setError(userMessage);
       return null;
     } finally {
@@ -101,7 +103,11 @@ export default function useDatasetsPageController() {
       if (!isMountedRef.current || controller.signal.aborted) {
         return null;
       }
-      toast({ title: "Датасет загружен", description: `Версия v${response.version}`, status: "success" });
+      toast({
+        title: "Датасет загружен",
+        description: `Версия v${response.version}`,
+        status: "success",
+      });
       setFile(null);
       await loadDatasets();
       return response;
@@ -153,7 +159,9 @@ export default function useDatasetsPageController() {
         if (isAbortError(err) || controller.signal.aborted) {
           return null;
         }
-        const info = extractErrorInfo(err, { fallbackMessage: "Не удалось получить ссылку для скачивания" });
+        const info = extractErrorInfo(err, {
+          fallbackMessage: "Не удалось получить ссылку для скачивания",
+        });
         if (info.code === DATASET_REMOVED_CODE) {
           toast({
             title: "Датасет удалён",

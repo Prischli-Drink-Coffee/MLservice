@@ -42,8 +42,14 @@ function ProfilePage() {
   return (
     <Stack spacing={6} w="full">
       <PageHeader
+        eyebrow="ACCOUNT"
         title="Профиль"
-        subtitle="Редактируйте данные аккаунта и следите за квотами"
+        subtitle="Управляйте аккаунтом, квотами и активностью команды."
+        metrics={[
+          { label: "Квоты", value: quota?.available ?? "—", caption: "доступных запусков" },
+          { label: "Активность", value: activity?.length ?? 0, caption: "последних событий" },
+          { label: "Планы", value: plans?.length ?? 0, caption: "доступно к покупке" },
+        ]}
         actions={
           <ProfileHeaderActions
             onRefresh={handleRefresh}
@@ -77,7 +83,10 @@ function ProfilePage() {
         </Stack>
       ) : (
         <GlowingCard intensity="subtle">
-          <EmptyState title="Профиль не найден" description="Обновите страницу или обратитесь в поддержку" />
+          <EmptyState
+            title="Профиль не найден"
+            description="Обновите страницу или обратитесь в поддержку"
+          />
         </GlowingCard>
       )}
 

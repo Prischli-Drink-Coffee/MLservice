@@ -1,5 +1,13 @@
 import { extendTheme } from "@chakra-ui/react";
-import { colors, typography, borderRadius, shadows, spacing, transitions, gradients } from "./theme/tokens";
+import {
+  colors,
+  typography,
+  borderRadius,
+  shadows,
+  spacing,
+  transitions,
+  gradients,
+} from "./theme/tokens";
 
 const brandPalette = {
   50: "#eef6ff",
@@ -131,7 +139,8 @@ const theme = extendTheme({
             content: '""',
             position: "absolute",
             inset: "-150%",
-            background: "conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.8) 15%, transparent 30%)",
+            background:
+              "conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.8) 15%, transparent 30%)",
             animation: "gradientOrbit 18s linear infinite",
             opacity: 0.25,
             pointerEvents: "none",

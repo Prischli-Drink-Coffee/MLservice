@@ -5,6 +5,7 @@ import GlowingCard from "@ui/molecules/GlowingCard";
 import { cleanupExpiredDatasets } from "@api";
 import extractErrorInfo from "@utils/errorHandler";
 import { tokens, colors } from "@theme/tokens";
+import SummaryPanel from "@ui/molecules/SummaryPanel";
 
 function TTLCleanupCard({ canCleanup = false }) {
   const [result, setResult] = useState(null);
@@ -18,7 +19,9 @@ function TTLCleanupCard({ canCleanup = false }) {
       const resp = await cleanupExpiredDatasets({ limit: 100 });
       setResult(resp);
     } catch (e) {
-      const { userMessage } = extractErrorInfo(e, { fallbackMessage: "Не удалось запустить очистку" });
+      const { userMessage } = extractErrorInfo(e, {
+        fallbackMessage: "Не удалось запустить очистку",
+      });
       setResult({ error: userMessage });
     } finally {
       setLoading(false);
@@ -28,9 +31,19 @@ function TTLCleanupCard({ canCleanup = false }) {
   return (
     <GlowingCard intensity="medium">
       <Stack spacing={5}>
-        <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} spacing={5} flexWrap="wrap">
+        <HStack
+          justify="space-between"
+          align={{ base: "flex-start", md: "center" }}
+          spacing={5}
+          flexWrap="wrap"
+        >
           <Stack spacing={1} maxW={{ base: "full", md: "70%" }}>
-            <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.2em" color={colors.text.tertiary}>
+            <Text
+              fontSize="xs"
+              textTransform="uppercase"
+              letterSpacing="0.2em"
+              color={colors.text.tertiary}
+            >
               TTL очистка датасетов
             </Text>
             <Text fontSize="lg" fontWeight={600} color={colors.text.primary}>
@@ -67,42 +80,35 @@ function TTLCleanupCard({ canCleanup = false }) {
           </Text>
         </HStack>
 
-        {result && (
-          result.error ? (
+        {result &&
+          (result.error ? (
             <HStack spacing={3} color="red.300">
               <Icon as={WarningTwoIcon} />
               <Text fontSize="sm">Ошибка: {result.error}</Text>
             </HStack>
           ) : (
-            <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
-              {[
-                { label: "Cutoff", value: result.cutoff ? new Date(result.cutoff).toLocaleString() : "—" },
-                { label: "Удалено", value: result.deleted ?? "0" },
-                { label: "Файлов очищено", value: result.files_removed ?? "0" },
-                { label: "Файлов не найдено", value: result.files_missing ?? "0" },
-              ].map((stat) => (
-                <Stack
-                  key={stat.label}
-                  spacing={1}
-                  p={3}
-                  borderRadius={tokens.borderRadius.lg}
-                  bg="rgba(255,255,255,0.02)"
-                  border="1px solid rgba(255,255,255,0.06)"
-                >
-                  <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.1em" color={colors.text.tertiary}>
-                    {stat.label}
-                  </Text>
-                  <HStack spacing={2} color={colors.text.primary}>
-                    <Icon as={CheckCircleIcon} w={3} h={3} color={colors.text.secondary} />
-                    <Text fontWeight={600} fontSize="sm" noOfLines={2}>
-                      {stat.value}
-                    </Text>
-                  </HStack>
-                </Stack>
-              ))}
-            </SimpleGrid>
-          )
-        )}
+            <SummaryPanel
+              items={[
+                {
+                  label: "Cutoff",
+                  value: result.cutoff ? new Date(result.cutoff).toLocaleString() : "—",
+                },
+                { label: "Удалено", value: result.deleted ?? "0", icon: CheckCircleIcon },
+                {
+                  label: "Файлов очищено",
+                  value: result.files_removed ?? "0",
+                  icon: CheckCircleIcon,
+                },
+                {
+                  label: "Файлов не найдено",
+                  value: result.files_missing ?? "0",
+                  icon: CheckCircleIcon,
+                },
+              ]}
+              columns={{ base: 2, md: 4 }}
+              size="compact"
+            />
+          ))}
       </Stack>
     </GlowingCard>
   );

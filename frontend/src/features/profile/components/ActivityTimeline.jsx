@@ -15,7 +15,12 @@ function ActivityTimeline({ items }) {
           <Text fontSize="lg" fontWeight="bold">
             Активность
           </Text>
-          <Text fontSize="xs" color={colors.text.tertiary} letterSpacing="0.2em" textTransform="uppercase">
+          <Text
+            fontSize="xs"
+            color={colors.text.tertiary}
+            letterSpacing="0.2em"
+            textTransform="uppercase"
+          >
             обновляется каждые 60 сек
           </Text>
         </HStack>
@@ -61,7 +66,9 @@ function ActivityTimeline({ items }) {
                       background: gradients.midnightMesh,
                       opacity: 0.25,
                       filter: "blur(80px)",
-                      animation: prefersReducedMotion ? "none" : "gradientOrbit 30s linear infinite",
+                      animation: prefersReducedMotion
+                        ? "none"
+                        : "gradientOrbit 30s linear infinite",
                     }}
                   >
                     <Stack spacing={1} position="relative" zIndex={1}>
@@ -70,7 +77,13 @@ function ActivityTimeline({ items }) {
                         {item.description}
                       </Text>
                     </Stack>
-                    <HStack spacing={2} color={colors.text.tertiary} fontSize="sm" position="relative" zIndex={1}>
+                    <HStack
+                      spacing={2}
+                      color={colors.text.tertiary}
+                      fontSize="sm"
+                      position="relative"
+                      zIndex={1}
+                    >
                       <Icon as={FiClock} />
                       <Text>{item.timestamp}</Text>
                     </HStack>

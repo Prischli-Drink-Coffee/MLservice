@@ -37,8 +37,19 @@ function DatasetsPage() {
   return (
     <Stack spacing={{ base: 6, md: 8 }} w="full">
       <PageHeader
+        eyebrow="DATA OPS"
         title="Датасеты"
-        subtitle="Загружайте CSV файлы для обучения моделей"
+        subtitle="Загружайте CSV-файлы, валидируйте схемы и управляйте версиями."
+        description="Платформа автоматически проверяет расширенные правила качества перед запуском обучения."
+        metrics={[
+          { label: "Всего загружено", value: datasets.length, caption: "источников" },
+          { label: "После фильтра", value: filteredDatasets.length, caption: "подборок" },
+          {
+            label: "Активные загрузки",
+            value: isUploading ? "1" : "0",
+            caption: isUploading ? "идёт загрузка" : "в ожидании",
+          },
+        ]}
         actions={
           <DatasetUploadControls
             file={file}

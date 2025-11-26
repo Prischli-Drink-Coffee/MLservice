@@ -278,11 +278,7 @@ class TrainingRepository(BaseRepository):
     async def get_dataset_by_id(
         self, user_id: UUID, dataset_id: UUID, session: AsyncSession | None = None
     ) -> Dataset | None:
-        stmt = (
-            select(Dataset)
-            .where(Dataset.user_id == user_id, Dataset.id == dataset_id)
-            .limit(1)
-        )
+        stmt = select(Dataset).where(Dataset.user_id == user_id, Dataset.id == dataset_id).limit(1)
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
 
@@ -399,11 +395,7 @@ class TrainingRepository(BaseRepository):
     async def delete_dataset(
         self, user_id: UUID, dataset_id: UUID, session: AsyncSession | None = None
     ) -> bool:
-        stmt = (
-            select(Dataset)
-            .where(Dataset.user_id == user_id, Dataset.id == dataset_id)
-            .limit(1)
-        )
+        stmt = select(Dataset).where(Dataset.user_id == user_id, Dataset.id == dataset_id).limit(1)
         res = await session.execute(stmt)
         dataset = res.scalar_one_or_none()
         if not dataset:

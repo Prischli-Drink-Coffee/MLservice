@@ -1100,7 +1100,7 @@ C:/App/ReactProject/domains/MLOps/backend/.venv/Scripts/pre-commit.exe install
 
 **Кроссплатформенность**:
 
-- Python-скрипт `scripts/lint-frontend.py` работает на Windows и Linux
+- Python-скрипт `frontend/scripts/lint-frontend.py` работает на Windows и Linux
 - Использует `subprocess` с `shell=True` для npm
 
 **Ручной запуск**:
@@ -1444,8 +1444,8 @@ MLOps/
 │   ├── redis_integration_guide.md
 │   └── precommit_setup_complete.md
 │
-├── scripts/             # Utility scripts
-│   └── lint-frontend.py # Cross-platform linting
+├── frontend/scripts/    # Frontend utility scripts
+│   └── lint-frontend.py # Cross-platform linting (run from frontend)
 │
 ├── .github/
 │   └── workflows/

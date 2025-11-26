@@ -100,7 +100,9 @@ export default function useTrainingRunsController() {
       if (isAbortError(error) || controller.signal.aborted) {
         return null;
       }
-      const { userMessage } = extractErrorInfo(error, { fallbackMessage: "Не удалось загрузить запуски" });
+      const { userMessage } = extractErrorInfo(error, {
+        fallbackMessage: "Не удалось загрузить запуски",
+      });
       setRunsError(userMessage);
       return null;
     } finally {
@@ -134,7 +136,9 @@ export default function useTrainingRunsController() {
       if (isAbortError(error) || controller.signal.aborted) {
         return null;
       }
-      const { userMessage } = extractErrorInfo(error, { fallbackMessage: "Не удалось загрузить датасеты" });
+      const { userMessage } = extractErrorInfo(error, {
+        fallbackMessage: "Не удалось загрузить датасеты",
+      });
       setDatasetsError(userMessage);
       return null;
     } finally {
@@ -230,7 +234,9 @@ export default function useTrainingRunsController() {
         if (isAbortError(error) || controller.signal.aborted) {
           return null;
         }
-        const { userMessage } = extractErrorInfo(error, { fallbackMessage: "Не удалось получить статус" });
+        const { userMessage } = extractErrorInfo(error, {
+          fallbackMessage: "Не удалось получить статус",
+        });
         setJobError(userMessage);
         toast({ title: "Ошибка статуса", description: userMessage, status: "error" });
         return null;
@@ -246,13 +252,22 @@ export default function useTrainingRunsController() {
 
   const handleStartJob = useCallback(async () => {
     if (!selectedDatasetId) {
-      toast({ title: "Выберите датасет", description: "Нельзя запустить обучение без датасета", status: "warning" });
+      toast({
+        title: "Выберите датасет",
+        description: "Нельзя запустить обучение без датасета",
+        status: "warning",
+      });
       return;
     }
     setLaunchingPreset("standard");
     setJobError(null);
     try {
-      const response = await startJob({ datasetId: selectedDatasetId, targetColumn, mode: "TRAINING", type: "TRAIN" });
+      const response = await startJob({
+        datasetId: selectedDatasetId,
+        targetColumn,
+        mode: "TRAINING",
+        type: "TRAIN",
+      });
       setJobInfo(response);
       toast({
         title: "Обучение запущено",
@@ -264,7 +279,9 @@ export default function useTrainingRunsController() {
         pollPromise.catch(() => {});
       }
     } catch (error) {
-      const { userMessage } = extractErrorInfo(error, { fallbackMessage: "Не удалось запустить обучение" });
+      const { userMessage } = extractErrorInfo(error, {
+        fallbackMessage: "Не удалось запустить обучение",
+      });
       setJobError(userMessage);
       toast({ title: "Ошибка запуска", description: userMessage, status: "error" });
     } finally {
@@ -274,7 +291,11 @@ export default function useTrainingRunsController() {
 
   const handleRefreshStatus = useCallback(async () => {
     if (!jobInfo?.job_id) {
-      toast({ title: "Нет активной задачи", description: "Сначала запустите обучение", status: "info" });
+      toast({
+        title: "Нет активной задачи",
+        description: "Сначала запустите обучение",
+        status: "info",
+      });
       return;
     }
     setJobError(null);
@@ -287,7 +308,9 @@ export default function useTrainingRunsController() {
     return runs.filter((run) => {
       const dateStr = formatDateTime(run.created_at).toLowerCase();
       const metricsStr = JSON.stringify(run.metrics || {}).toLowerCase();
-      return dateStr.includes(query) || metricsStr.includes(query) || run.id.toString().includes(query);
+      return (
+        dateStr.includes(query) || metricsStr.includes(query) || run.id.toString().includes(query)
+      );
     });
   }, [runs, searchQuery]);
 

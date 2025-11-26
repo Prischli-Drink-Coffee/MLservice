@@ -1,21 +1,22 @@
 import React from "react";
-import { Badge, Box, Container, Flex, VStack } from "@chakra-ui/react";
+import { Badge, Box, Flex, VStack } from "@chakra-ui/react";
 import { borderRadius, colors, shadows, spacing } from "@theme/tokens";
-import { MotionBox } from "../motionPrimitives";
+import { MotionBox } from "@ui/motionPrimitives";
+import Section from "@ui/atoms/Section";
 
 function TechStackSection({ techStack }) {
   return (
-    <MotionBox
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8 }}
-      w="full"
-      mt={{ base: spacing["6xl"], md: spacing["8xl"] }}
-      px={{ base: 4, md: 12 }}
-      py={{ base: 8, md: 12 }}
-    >
-  <Container maxW="full" px={{ base: 4, md: 6, lg: 8 }}>
+    <Section pt={{ base: spacing["6xl"], md: spacing["8xl"] }}>
+      <MotionBox
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        w="full"
+        mt={0}
+        px={{ base: 0 }}
+        py={{ base: 8, md: 12 }}
+      >
         <Box
           bg={`linear-gradient(135deg, ${colors.blur.medium} 0%, ${colors.blur.light} 100%)`}
           border="1px solid"
@@ -69,8 +70,8 @@ function TechStackSection({ techStack }) {
             </Flex>
           </VStack>
         </Box>
-      </Container>
-    </MotionBox>
+      </MotionBox>
+    </Section>
   );
 }
 

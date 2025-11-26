@@ -1,6 +1,12 @@
 import client from "./client";
 
-export async function startJob({ datasetId, fileId, mode = "TRAINING", type = "TRAIN", targetColumn } = {}) {
+export async function startJob({
+  datasetId,
+  fileId,
+  mode = "TRAINING",
+  type = "TRAIN",
+  targetColumn,
+} = {}) {
   const datasetIdentifier = datasetId ?? fileId;
   const payload = {
     dataset_id: datasetIdentifier,

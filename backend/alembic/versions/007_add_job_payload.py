@@ -7,8 +7,9 @@ Create Date: 2025-11-17 00:00:00.000000
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 revision: str = "007_add_job_payload"
 down_revision: Union[str, Sequence[str], None] = "006_add_dataset_storage_key"

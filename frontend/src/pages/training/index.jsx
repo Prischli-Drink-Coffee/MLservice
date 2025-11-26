@@ -35,7 +35,20 @@ function TrainingRunsPage() {
 
   return (
     <Stack spacing={6}>
-      <PageHeader title="Запуски обучения" subtitle="История запусков, запуск новых обучений" />
+      <PageHeader
+        eyebrow="TRAINING"
+        title="Запуски обучения"
+        subtitle="Конфигурируйте пайплайны, отслеживайте статусы и сравнивайте эксперименты."
+        metrics={[
+          { label: "Всего запусков", value: runs.length },
+          {
+            label: "В очереди",
+            value: launchingPreset ? "1" : "0",
+            caption: launchingPreset ? "работает пресет" : "нет активностей",
+          },
+          { label: "Доступные датасеты", value: datasets.length || "—" },
+        ]}
+      />
 
       <TrainingRunLauncher
         datasets={datasets}

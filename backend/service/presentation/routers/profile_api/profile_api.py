@@ -29,7 +29,7 @@ def get_profile_service() -> ProfileService:
 
 
 def _build_profile_response(
-    service_result: tuple[UserProfileLogic, ProfileQuotaSnapshot]
+    service_result: tuple[UserProfileLogic, ProfileQuotaSnapshot],
 ) -> ProfileResponse:
     profile, quota = service_result
     phone = profile.phone

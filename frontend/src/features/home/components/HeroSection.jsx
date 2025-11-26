@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, HStack, VStack, Badge, Wrap, WrapItem } from "@chakra-ui/react";
 import { NavLink } from "react-router-dom";
-import { motion } from "framer-motion";
+import { MotionBox, MotionVStack } from "@ui/motionPrimitives";
 import { Title, Body, Footnote } from "@ui/atoms/Typography";
 import PrimaryButton from "@ui/atoms/PrimaryButton";
 import SecondaryButton from "@ui/atoms/SecondaryButton";
@@ -9,8 +9,7 @@ import Logo from "@ui/assets/common/Logo";
 import { colors, borderRadius, gradients } from "@theme/tokens";
 import { HERO_COPY, HERO_TECH_STACK } from "@constants";
 
-const MotionBox = motion(Box);
-const MotionBadge = motion(Badge);
+const MotionBadge = (props) => <MotionBox as={Badge} {...props} />;
 
 /**
  * HeroSection - Main landing section with title, description and CTAs
@@ -70,99 +69,113 @@ function HeroSection({ isAuthenticated }) {
           transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
         <VStack align="flex-start" spacing={{ base: 6, md: 8 }} w="full" position="relative">
-        {/* Logo and Brand */}
-        <HStack spacing={3}>
-          <Logo boxSize={{ base: 8, md: 10 }} />
-          <Footnote variant="medium" color={colors.text.secondary}>
-            {HERO_COPY.brandFootnote}
-          </Footnote>
-        </HStack>
+          {/* Logo and Brand */}
+          <HStack spacing={3}>
+            <Logo boxSize={{ base: 8, md: 10 }} />
+            <Footnote variant="medium" color={colors.text.secondary}>
+              {HERO_COPY.brandFootnote}
+            </Footnote>
+          </HStack>
 
-        {/* Feature Pills */}
-        <Wrap spacing={2}>
-          {HERO_TECH_STACK.map((tech, i) => (
-            <WrapItem key={tech}>
-              <MotionBadge
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 + i * 0.1, duration: 0.4 }}
-                bg="rgba(255,255,255,0.02)"
-                color={colors.text.primary}
-                px={3}
-                py={1.5}
-                borderRadius={borderRadius.lg}
-                fontSize="11px"
-                fontWeight={500}
-                border="1px solid"
-                borderColor="rgba(255,255,255,0.15)"
-                backdropFilter="blur(9px)"
-                boxShadow="0 10px 30px rgba(0,0,0,0.35)"
-              >
-                {tech}
-              </MotionBadge>
-            </WrapItem>
-          ))}
-        </Wrap>
+          {/* Feature Pills */}
+          <Wrap spacing={2}>
+            {HERO_TECH_STACK.map((tech, i) => (
+              <WrapItem key={tech}>
+                <MotionBadge
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 + i * 0.1, duration: 0.4 }}
+                  bg="rgba(255,255,255,0.02)"
+                  color={colors.text.primary}
+                  px={3}
+                  py={1.5}
+                  borderRadius={borderRadius.lg}
+                  fontSize="11px"
+                  fontWeight={500}
+                  border="1px solid"
+                  borderColor="rgba(255,255,255,0.15)"
+                  backdropFilter="blur(9px)"
+                  boxShadow="0 10px 30px rgba(0,0,0,0.35)"
+                >
+                  {tech}
+                </MotionBadge>
+              </WrapItem>
+            ))}
+          </Wrap>
 
-        {/* Main Title */}
-        <Title variant="large" fontSize={{ base: "32px", md: "44px", lg: "52px" }} lineHeight="1.2">
-          Обработка данных
-          <br />и ML-модели
-          <br />
-          <Box as="span" color={colors.brand.primary}>
-            {HERO_COPY.titleHighlight}
-          </Box>
-        </Title>
-
-        {/* Description */}
-        <VStack align="flex-start" spacing={3} maxW={{ base: "full", md: "650px" }}>
-          <Body variant="large" fontSize={{ base: "15px", md: "17px" }}>
-            {HERO_COPY.descriptionPrimary}
-          </Body>
-          <Body
-            variant="medium"
-            color={colors.text.tertiary}
-            fontSize={{ base: "13px", md: "15px" }}
+          {/* Main Title */}
+          <Title
+            variant="large"
+            fontSize={{ base: "32px", md: "44px", lg: "52px" }}
+            lineHeight="1.2"
           >
-            {HERO_COPY.descriptionSecondary}
-          </Body>
-        </VStack>
+            Обработка данных
+            <br />и ML-модели
+            <br />
+            <Box as="span" color={colors.brand.primary}>
+              {HERO_COPY.titleHighlight}
+            </Box>
+          </Title>
 
-        {/* CTA Section */}
-        <VStack align="flex-start" spacing={4} w="full" maxW={{ base: "full", md: "500px" }} pt={3}>
-          {isAuthenticated ? (
-            <HStack spacing={3} flexWrap="wrap" w="full">
-              <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <PrimaryButton as={NavLink} to={HERO_COPY.authenticatedPrimaryCta.to} size="md">
-                  {HERO_COPY.authenticatedPrimaryCta.label}
-                </PrimaryButton>
-              </MotionBox>
-              <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <SecondaryButton as={NavLink} to={HERO_COPY.authenticatedSecondaryCta.to} size="md">
-                  {HERO_COPY.authenticatedSecondaryCta.label}
-                </SecondaryButton>
-              </MotionBox>
-            </HStack>
-          ) : (
-            <>
+          {/* Description */}
+          <VStack align="flex-start" spacing={3} maxW={{ base: "full", md: "650px" }}>
+            <Body variant="large" fontSize={{ base: "15px", md: "17px" }}>
+              {HERO_COPY.descriptionPrimary}
+            </Body>
+            <Body
+              variant="medium"
+              color={colors.text.tertiary}
+              fontSize={{ base: "13px", md: "15px" }}
+            >
+              {HERO_COPY.descriptionSecondary}
+            </Body>
+          </VStack>
+
+          {/* CTA Section */}
+          <VStack
+            align="flex-start"
+            spacing={4}
+            w="full"
+            maxW={{ base: "full", md: "500px" }}
+            pt={3}
+          >
+            {isAuthenticated ? (
               <HStack spacing={3} flexWrap="wrap" w="full">
                 <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <PrimaryButton as={NavLink} to={HERO_COPY.guestPrimaryCta.to} size="md">
-                    {HERO_COPY.guestPrimaryCta.label}
+                  <PrimaryButton as={NavLink} to={HERO_COPY.authenticatedPrimaryCta.to} size="md">
+                    {HERO_COPY.authenticatedPrimaryCta.label}
                   </PrimaryButton>
                 </MotionBox>
                 <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <SecondaryButton as={NavLink} to={HERO_COPY.guestSecondaryCta.to} size="md">
-                    {HERO_COPY.guestSecondaryCta.label}
+                  <SecondaryButton
+                    as={NavLink}
+                    to={HERO_COPY.authenticatedSecondaryCta.to}
+                    size="md"
+                  >
+                    {HERO_COPY.authenticatedSecondaryCta.label}
                   </SecondaryButton>
                 </MotionBox>
               </HStack>
-              <Footnote variant="medium" color={colors.text.tertiary} pt={1} fontSize="12px">
-                {HERO_COPY.guestFootnote}
-              </Footnote>
-            </>
-          )}
-        </VStack>
+            ) : (
+              <>
+                <HStack spacing={3} flexWrap="wrap" w="full">
+                  <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <PrimaryButton as={NavLink} to={HERO_COPY.guestPrimaryCta.to} size="md">
+                      {HERO_COPY.guestPrimaryCta.label}
+                    </PrimaryButton>
+                  </MotionBox>
+                  <MotionBox whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <SecondaryButton as={NavLink} to={HERO_COPY.guestSecondaryCta.to} size="md">
+                      {HERO_COPY.guestSecondaryCta.label}
+                    </SecondaryButton>
+                  </MotionBox>
+                </HStack>
+                <Footnote variant="medium" color={colors.text.tertiary} pt={1} fontSize="12px">
+                  {HERO_COPY.guestFootnote}
+                </Footnote>
+              </>
+            )}
+          </VStack>
         </VStack>
       </MotionBox>
     </Box>

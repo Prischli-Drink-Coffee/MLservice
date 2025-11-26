@@ -1,10 +1,8 @@
 import React from "react";
 import { Box, HStack, VStack, Text, Icon, Progress } from "@chakra-ui/react";
 import { CheckCircleIcon, WarningIcon } from "@chakra-ui/icons";
-import { motion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import { tokens } from "@theme/tokens";
-
-const MotionBox = motion(Box);
 
 /**
  * PasswordStrength - индикатор силы пароля с проверками

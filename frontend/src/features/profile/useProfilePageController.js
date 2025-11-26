@@ -5,9 +5,8 @@ import useQuotaPlans from "../../hooks/useQuotaPlans";
 import { showErrorToast } from "@utils/errorHandler";
 import { SUPPORT_EMAIL } from "@constants";
 
-const isPaymentsUiEnabled = String(process.env.REACT_APP_ENABLE_PROFILE_PAYMENTS_UI || "true")
-  .toLowerCase()
-  !== "false";
+const isPaymentsUiEnabled =
+  String(process.env.REACT_APP_ENABLE_PROFILE_PAYMENTS_UI || "true").toLowerCase() !== "false";
 
 const RELATIVE_TIME_DIVISIONS = [
   { amount: 60, unit: "second" },
@@ -58,7 +57,9 @@ const buildActivityItems = (profile, quota) => {
     events.push({
       id: `profile-created-${profile.created_at}`,
       title: "Регистрация аккаунта",
-      description: `${profile.email} подключился к платформе` + (profile.company ? ` (${profile.company})` : ""),
+      description:
+        `${profile.email} подключился к платформе` +
+        (profile.company ? ` (${profile.company})` : ""),
       timestamp: formatTimelineTimestamp(profile.created_at),
     });
   }
@@ -84,7 +85,9 @@ const buildActivityItems = (profile, quota) => {
   }
 
   if (typeof quota?.used === "number" && typeof quota?.limit === "number") {
-    const percent = quota.limit ? Math.min(100, Math.round((quota.used / quota.limit) * 100)) : null;
+    const percent = quota.limit
+      ? Math.min(100, Math.round((quota.used / quota.limit) * 100))
+      : null;
     events.push({
       id: `quota-usage-${quota.used}`,
       title: "Использование квоты",

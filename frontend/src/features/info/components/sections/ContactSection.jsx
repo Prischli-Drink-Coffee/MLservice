@@ -1,24 +1,27 @@
 import React from "react";
-import { Box, Container, HStack, Icon, Tooltip } from "@chakra-ui/react";
+import { Box, HStack, Icon, Tooltip } from "@chakra-ui/react";
 import { FiGithub, FiMail } from "react-icons/fi";
 import { Body, Title } from "@ui/atoms/Typography";
 import { borderRadius, colors, spacing } from "@theme/tokens";
 import { ORG_GITHUB_URL, ORG_VK_URL } from "@constants";
-import { MotionBox, MotionVStack } from "../motionPrimitives";
+import { MotionBox, MotionVStack } from "@ui/motionPrimitives";
+import Section from "@ui/atoms/Section";
 
 function ContactSection() {
   return (
-    <MotionVStack
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.8, delay: 0.2 }}
-      spacing={spacing.lg}
-      textAlign="center"
+    <Section
+      center
       pt={{ base: spacing["8xl"], md: spacing["10xl"], lg: spacing["10xl"] }}
       pb={{ base: spacing["6xl"], md: spacing["8xl"] }}
     >
-      <Container maxW="full" px={{ base: 4, md: 6, lg: 8 }}>
+      <MotionVStack
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        spacing={spacing.lg}
+        textAlign="center"
+      >
         <Title variant="small" fontSize={{ base: "24px", md: "28px" }}>
           Появились вопросы?
         </Title>
@@ -57,6 +60,10 @@ function ContactSection() {
                     bg: colors.brand.secondary,
                     boxShadow: `0 0 30px ${colors.brand.primary}40`,
                   }}
+                  _focusVisible={{
+                    boxShadow: `0 0 0 4px ${colors.brand.primary}33`,
+                    outline: "none",
+                  }}
                 >
                   <Icon as={FiGithub} boxSize={5} />
                   GitHub
@@ -92,6 +99,10 @@ function ContactSection() {
                     borderColor: colors.brand.primary,
                     boxShadow: `0 0 20px ${colors.brand.primary}30`,
                   }}
+                  _focusVisible={{
+                    boxShadow: `0 0 0 4px ${colors.brand.primary}33`,
+                    outline: "none",
+                  }}
                 >
                   <Icon as={FiMail} boxSize={5} />
                   Связаться
@@ -100,8 +111,8 @@ function ContactSection() {
             </MotionBox>
           )}
         </HStack>
-      </Container>
-    </MotionVStack>
+      </MotionVStack>
+    </Section>
   );
 }
 

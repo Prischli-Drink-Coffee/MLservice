@@ -2,17 +2,19 @@ import React, { useMemo, useState } from "react";
 import { Box, Link, Text, VStack, HStack, Icon } from "@chakra-ui/react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { EmailIcon, PhoneIcon } from "@chakra-ui/icons";
-import { motion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import { registerUser } from "@api";
-import { AuthFormCard, AuthInput, PasswordInput, PasswordStrength } from "@features/auth/components";
+import {
+  AuthFormCard,
+  AuthInput,
+  PasswordInput,
+  PasswordStrength,
+} from "@features/auth/components";
 import { Title, Body } from "@ui/atoms/Typography";
 import PrimaryButton from "@ui/atoms/PrimaryButton";
 import { tokens } from "@theme/tokens";
 import extractErrorInfo from "@utils/errorHandler";
 import { PROJECT_NAME } from "@constants";
-
-const MotionBox = motion(Box);
-
 
 function SignUpPage() {
   const navigate = useNavigate();
@@ -56,7 +58,9 @@ function SignUpPage() {
       await registerUser({ email, password, first_name: firstName || null, phone: phone || null });
       navigate("/login", { replace: true });
     } catch (err) {
-      const { userMessage } = extractErrorInfo(err, { fallbackMessage: "Не удалось завершить регистрацию" });
+      const { userMessage } = extractErrorInfo(err, {
+        fallbackMessage: "Не удалось завершить регистрацию",
+      });
       setError(userMessage);
     } finally {
       setIsLoading(false);

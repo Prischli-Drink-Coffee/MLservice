@@ -5,12 +5,14 @@ import GlowingCard from "@ui/molecules/GlowingCard";
 import { tokens, colors } from "@theme/tokens";
 
 function DatasetGuidelinesCard({ guidelines }) {
-  const items = guidelines?.length ? guidelines : [
-    "Максимальный размер файла — 200МБ",
-    "Первая строка должна содержать названия колонок",
-    "Используйте UTF-8 без BOM",
-    "Числовые значения разделяются точкой",
-  ];
+  const items = guidelines?.length
+    ? guidelines
+    : [
+        "Максимальный размер файла — 200МБ",
+        "Первая строка должна содержать названия колонок",
+        "Используйте UTF-8 без BOM",
+        "Числовые значения разделяются точкой",
+      ];
 
   return (
     <GlowingCard intensity="medium">
@@ -19,7 +21,12 @@ function DatasetGuidelinesCard({ guidelines }) {
           <HStack spacing={3}>
             <Icon as={InfoOutlineIcon} w={5} h={5} color={colors.text.secondary} />
             <VStack align="flex-start" spacing={0}>
-              <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.2em" color={colors.text.tertiary}>
+              <Text
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="0.2em"
+                color={colors.text.tertiary}
+              >
                 Требования к CSV
               </Text>
               <Text fontSize="lg" fontWeight={600} color={colors.text.primary}>
@@ -84,7 +91,8 @@ function DatasetGuidelinesCard({ guidelines }) {
                 Прошли аудит качества
               </Text>
               <Text fontSize="sm" color={colors.text.secondary}>
-                Сохраните консистентный формат колонок и избегайте пропусков — это ускорит генерацию профиля данных.
+                Сохраните консистентный формат колонок и избегайте пропусков — это ускорит генерацию
+                профиля данных.
               </Text>
             </VStack>
           </HStack>

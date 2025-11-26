@@ -1,13 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge, Box, Button, Flex, HStack, Stack, usePrefersReducedMotion } from "@chakra-ui/react";
-import { motion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import { colors, borderRadius, gradients } from "@theme/tokens";
 import { Subtitle, Body } from "@ui/atoms/Typography";
 import PrimaryButton from "@ui/atoms/PrimaryButton";
 import FeatureBadge from "@ui/atoms/FeatureBadge";
 import { FEATURE_SLIDES } from "@constants";
-
-const MotionBox = motion(Box);
 
 const SLIDE_TRANSITION = { duration: 0.85, ease: "easeInOut" };
 

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Link, Text, VStack, HStack, Icon } from "@chakra-ui/react";
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { EmailIcon } from "@chakra-ui/icons";
-import { motion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import { login } from "@api";
 import { useAuth } from "@context/AuthContext";
 import { AuthFormCard, AuthInput, PasswordInput } from "@features/auth/components";
@@ -12,7 +12,7 @@ import { tokens } from "@theme/tokens";
 import extractErrorInfo from "@utils/errorHandler";
 import { PROJECT_NAME } from "@constants";
 
-const MotionBox = motion(Box);
+// MotionBox provided by shared motion primitives (respects prefers-reduced-motion)
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -43,7 +43,9 @@ function LoginPage() {
       }
       navigate(from, { replace: true });
     } catch (err) {
-      const { userMessage } = extractErrorInfo(err, { fallbackMessage: "Не удалось выполнить вход" });
+      const { userMessage } = extractErrorInfo(err, {
+        fallbackMessage: "Не удалось выполнить вход",
+      });
       setError(userMessage);
     } finally {
       setIsLoading(false);

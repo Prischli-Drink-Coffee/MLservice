@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { Box, FormControl, FormErrorMessage, FormLabel, Input, Icon } from "@chakra-ui/react";
-import { motion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import { tokens } from "@theme/tokens";
-
-const MotionBox = motion(Box);
 
 /**
  * AuthInput - стилизованное поле ввода для форм авторизации

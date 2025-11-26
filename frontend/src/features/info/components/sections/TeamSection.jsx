@@ -1,50 +1,43 @@
 import React from "react";
-import { Box, Container, SimpleGrid, VStack } from "@chakra-ui/react";
-import { Body, Title } from "@ui/atoms/Typography";
+import { SimpleGrid } from "@chakra-ui/react";
+import { Body } from "@ui/atoms/Typography";
 import { colors, spacing } from "@theme/tokens";
 import TeamMemberCard from "../TeamMemberCard";
-import { MotionVStack } from "../motionPrimitives";
+import { MotionVStack } from "@ui/motionPrimitives";
+import Section from "@ui/atoms/Section";
+import SectionHeader from "@ui/atoms/SectionHeader";
 
 function TeamSection({ members }) {
   return (
-    <Box position="relative" zIndex={1} py={{ base: 16, md: 20 }}>
-      <Container maxW="full" px={{ base: 4, md: 6, lg: 8 }}>
-        <MotionVStack
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          spacing={{ base: spacing["8xl"], md: spacing["10xl"] }}
-        >
-          <VStack spacing={spacing.xl} textAlign="center" mb={{ base: 4, md: 6 }}>
-            <Title variant="medium" fontSize={{ base: "28px", md: "36px" }}>
-              Наша команда
-            </Title>
-            <Body
-              variant="medium"
-              color={colors.text.tertiary}
-              maxW="700px"
-              fontSize={{ base: "14px", md: "16px" }}
-            >
-              Вот они — бездари бигтеха слева направо:
-            </Body>
-          </VStack>
+    <Section pt={{ base: 16, md: 20 }}>
+      <MotionVStack
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        spacing={{ base: spacing["8xl"], md: spacing["10xl"] }}
+      >
+        <SectionHeader
+          title="Наша команда"
+          description="Вот они — бездари бигтеха слева направо:"
+          align="center"
+          mb={{ base: 4, md: 6 }}
+        />
 
-          <SimpleGrid
-            columns={{ base: 1, md: 2, lg: 4 }}
-            spacing={{ base: 8, md: 10, lg: 8 }}
-            w="full"
-            maxW={{ base: "full", md: "100%" }}
-            pt={{ base: 4, md: 6 }}
-            mx="auto"
-          >
-            {members.map((member, index) => (
-              <TeamMemberCard key={`${member.name}-${index}`} member={member} index={index} />
-            ))}
-          </SimpleGrid>
-        </MotionVStack>
-      </Container>
-    </Box>
+        <SimpleGrid
+          columns={{ base: 1, md: 2, lg: 4 }}
+          spacing={{ base: 8, md: 10, lg: 8 }}
+          w="full"
+          maxW={{ base: "full", md: "100%" }}
+          pt={{ base: 4, md: 6 }}
+          mx="auto"
+        >
+          {members.map((member, index) => (
+            <TeamMemberCard key={`${member.name}-${index}`} member={member} index={index} />
+          ))}
+        </SimpleGrid>
+      </MotionVStack>
+    </Section>
   );
 }
 

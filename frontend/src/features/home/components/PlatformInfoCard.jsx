@@ -1,13 +1,12 @@
 import React from "react";
 import { Box, Divider, HStack, VStack, usePrefersReducedMotion } from "@chakra-ui/react";
-import { motion } from "framer-motion";
 import { Subtitle, Footnote } from "@ui/atoms/Typography";
 import MLStats from "./MLStats";
 import StatusBadge from "@ui/atoms/StatusBadge";
 import { colors, gradients } from "@theme/tokens";
 import useInteractiveGlow from "@hooks/useInteractiveGlow";
 
-const MotionBox = motion(Box);
+import { MotionBox } from "@ui/motionPrimitives";
 
 /**
  * PlatformInfoCard - Widget displaying platform features and health status
@@ -93,40 +92,40 @@ function PlatformInfoCard({ health, isAuthenticated = false }) {
           }}
         >
           <Box position="relative" zIndex={1}>
-          <VStack align="stretch" spacing={4} h="full" padding={8}>
-            {/* Title */}
-            <Subtitle variant="medium" fontSize={{ base: "18px", md: "22px" }}>
-              Статистика ML платформы
-            </Subtitle>
+            <VStack align="stretch" spacing={4} h="full" padding={8}>
+              {/* Title */}
+              <Subtitle variant="medium" fontSize={{ base: "18px", md: "22px" }}>
+                Статистика ML платформы
+              </Subtitle>
 
-            <Divider borderColor={colors.border.default} opacity={0.5} />
+              <Divider borderColor={colors.border.default} opacity={0.5} />
 
-            {/* Health Status */}
-            <HStack justify="space-between" align="center">
-              <Footnote variant="small" color={colors.text.primary} fontSize="11px">
-                Статус сервера /api/health
-              </Footnote>
-              <StatusBadge ok={health?.ok} />
-            </HStack>
-            {!isAuthenticated && (
-              <Footnote variant="small" color={colors.text.tertiary} fontSize="11px">
-                Авторизуйтесь, чтобы включить мониторинг и видеть актуальные обновления.
-              </Footnote>
-            )}
-            {health?.error && (
-              <Footnote variant="small" color={colors.text.tertiary} fontSize="11px">
-                {health.error}
-              </Footnote>
-            )}
+              {/* Health Status */}
+              <HStack justify="space-between" align="center">
+                <Footnote variant="small" color={colors.text.primary} fontSize="11px">
+                  Статус сервера /api/health
+                </Footnote>
+                <StatusBadge ok={health?.ok} />
+              </HStack>
+              {!isAuthenticated && (
+                <Footnote variant="small" color={colors.text.tertiary} fontSize="11px">
+                  Авторизуйтесь, чтобы включить мониторинг и видеть актуальные обновления.
+                </Footnote>
+              )}
+              {health?.error && (
+                <Footnote variant="small" color={colors.text.tertiary} fontSize="11px">
+                  {health.error}
+                </Footnote>
+              )}
 
-            {/* ML Statistics */}
-            <Divider borderColor={colors.border.default} opacity={0.5} />
-            <VStack align="stretch" spacing={2}>
-              <Box w="full" maxW={{ base: "full", lg: "900px" }}>
-                <MLStats isAuthenticated={isAuthenticated} />
-              </Box>
+              {/* ML Statistics */}
+              <Divider borderColor={colors.border.default} opacity={0.5} />
+              <VStack align="stretch" spacing={2}>
+                <Box w="full" maxW={{ base: "full", lg: "900px" }}>
+                  <MLStats isAuthenticated={isAuthenticated} />
+                </Box>
+              </VStack>
             </VStack>
-          </VStack>
           </Box>
         </Box>
       </MotionBox>

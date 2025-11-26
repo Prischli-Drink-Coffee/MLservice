@@ -65,7 +65,10 @@ function ArtifactsTableSection({
   if (!artifacts.length) {
     return (
       <GlowingCard intensity="subtle">
-        <EmptyState title="Артефактов пока нет" description="Загрузите модели, чтобы увидеть историю артефактов" />
+        <EmptyState
+          title="Артефактов пока нет"
+          description="Загрузите модели, чтобы увидеть историю артефактов"
+        />
       </GlowingCard>
     );
   }

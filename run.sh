@@ -27,12 +27,14 @@ if [[ "$MODE" == "dev" ]]; then
     REDIS_CONTAINER_NAME="redis-dev"
     PROMETHEUS_CONTAINER_NAME="prometheus-dev"
     GRAFANA_CONTAINER_NAME="grafana-dev"
+    MINIO_CONTAINER_NAME="minio-dev"
 else
     COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yaml"
     echo "[mode] production"
     REDIS_CONTAINER_NAME="redis"
     PROMETHEUS_CONTAINER_NAME="prometheus"
     GRAFANA_CONTAINER_NAME="grafana"
+    MINIO_CONTAINER_NAME="minio"
 fi
 
 if docker compose version >/dev/null 2>&1; then
@@ -73,6 +75,13 @@ if [[ "$MODE" == "dev" ]]; then
     wait_for_container_health postgres 60 || true
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d redis
     wait_for_container_health "$REDIS_CONTAINER_NAME" 60 || true
+    # start minio only when configured as storage backend
+    if [[ "${STORAGE_BACKEND:-}" == "minio" ]]; then
+        echo "[info] STORAGE_BACKEND=minio -> starting minio container"
+        $COMPOSE_BIN -f "$COMPOSE_FILE" up -d minio
+        # wait for minio healthcheck
+        wait_for_container_health "$MINIO_CONTAINER_NAME" 60 || true
+    fi
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d backend
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d prometheus grafana
     FRONTEND_URL="http://localhost:${FRONTEND_PORT:-3000}"
@@ -83,6 +92,12 @@ else
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d postgres redis
     wait_for_container_health postgres 60 || true
     wait_for_container_health "$REDIS_CONTAINER_NAME" 60 || true
+    # start minio in prod mode only if configured
+    if [[ "${STORAGE_BACKEND:-}" == "minio" ]]; then
+        echo "[info] STORAGE_BACKEND=minio -> starting minio container (prod)"
+        $COMPOSE_BIN -f "$COMPOSE_FILE" up -d minio
+        wait_for_container_health "$MINIO_CONTAINER_NAME" 60 || true
+    fi
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d backend
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d prometheus grafana
     $COMPOSE_BIN -f "$COMPOSE_FILE" up -d frontend nginx

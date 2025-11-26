@@ -16,13 +16,18 @@ const STATUS_MESSAGES = {
 };
 
 const CODE_MESSAGES = {
-  DATASET_REMOVED: "Файл уже удалён. Обновите список датасетов, чтобы увидеть актуальное состояние.",
-  JOB_LIMIT_REACHED: "Лимит запусков исчерпан. Подождите перед новой попыткой или обратитесь к администратору.",
+  DATASET_REMOVED:
+    "Файл уже удалён. Обновите список датасетов, чтобы увидеть актуальное состояние.",
+  JOB_LIMIT_REACHED:
+    "Лимит запусков исчерпан. Подождите перед новой попыткой или обратитесь к администратору.",
   FILE_TOO_LARGE: STATUS_MESSAGES[413],
 };
 
 const DETAIL_PATTERNS = [
-  { test: /no available launches/i, message: "Лимит запусков исчерпан. Подождите и попробуйте снова." },
+  {
+    test: /no available launches/i,
+    message: "Лимит запусков исчерпан. Подождите и попробуйте снова.",
+  },
   { test: /invalid credentials/i, message: "Неверный логин или пароль." },
   { test: /user already exists/i, message: "Пользователь с таким email уже зарегистрирован." },
   { test: /dataset already exists/i, message: "Такой датасет уже существует." },

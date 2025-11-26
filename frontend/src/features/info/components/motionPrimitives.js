@@ -1,6 +1,2 @@
-import { motion } from "framer-motion";
-import { Box, VStack, Flex } from "@chakra-ui/react";
-
-export const MotionBox = motion(Box);
-export const MotionVStack = motion(VStack);
-export const MotionFlex = motion(Flex);
+// Deprecated local primitives — re-export shared primitives to avoid duplication
+export { MotionBox, MotionVStack, MotionFlex } from "@ui/motionPrimitives";

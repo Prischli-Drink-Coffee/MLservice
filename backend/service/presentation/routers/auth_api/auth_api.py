@@ -71,4 +71,3 @@ async def login(
     )
 
     return user_jwt
-

@@ -70,7 +70,9 @@ function ProfileOverviewCard({ profile, onEdit }) {
 
   if (!profile) return null;
 
-  const formattedDate = profile.created_at ? new Date(profile.created_at).toLocaleDateString() : "—";
+  const formattedDate = profile.created_at
+    ? new Date(profile.created_at).toLocaleDateString()
+    : "—";
 
   return (
     <GlowingCard intensity="strong">
@@ -102,7 +104,14 @@ function ProfileOverviewCard({ profile, onEdit }) {
             pointerEvents: "none",
           }}
         >
-          <HStack spacing={4} align="center" justify="space-between" flexWrap="wrap" position="relative" zIndex={1}>
+          <HStack
+            spacing={4}
+            align="center"
+            justify="space-between"
+            flexWrap="wrap"
+            position="relative"
+            zIndex={1}
+          >
             <HStack spacing={4} align="center">
               <Box position="relative">
                 <Avatar

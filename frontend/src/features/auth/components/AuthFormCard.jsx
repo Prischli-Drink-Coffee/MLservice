@@ -1,10 +1,8 @@
 import React from "react";
 import { Box, VStack } from "@chakra-ui/react";
-import { motion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import { tokens } from "@theme/tokens";
 import useInteractiveGlow from "@hooks/useInteractiveGlow";
-
-const MotionBox = motion(Box);
 
 /**
  * AuthFormCard - обёртка для форм авторизации

@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Box } from "@chakra-ui/react";
 import { useReducedMotion } from "framer-motion";
 import { colors } from "@theme/tokens";
-import { MotionBox } from "./motionPrimitives";
+import { MotionBox } from "@ui/motionPrimitives";
 
 const COLOR_PALETTES = [
   [colors.brand.primary, colors.brand.secondary],

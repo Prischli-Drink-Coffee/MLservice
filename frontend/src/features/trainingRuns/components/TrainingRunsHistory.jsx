@@ -1,15 +1,5 @@
 import React from "react";
-import {
-  Card,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-  Stack,
-  Box,
-} from "@chakra-ui/react";
+import { Card, Table, Tbody, Td, Th, Thead, Tr, Stack, Box } from "@chakra-ui/react";
 import DatasetSearchBar from "@features/datasets/components/DatasetSearchBar";
 import EmptyState from "@ui/molecules/EmptyState";
 import ErrorAlert from "@ui/molecules/ErrorAlert";
@@ -42,12 +32,20 @@ export default function TrainingRunsHistory({
 
     if (filteredRuns.length === 0 && searchQuery) {
       return (
-        <EmptyState title="Ничего не найдено" description={`По запросу "${searchQuery}" запуски не найдены`} />
+        <EmptyState
+          title="Ничего не найдено"
+          description={`По запросу "${searchQuery}" запуски не найдены`}
+        />
       );
     }
 
     if (runs.length === 0) {
-      return <EmptyState title="Запуски отсутствуют" description="Запустите обучение, чтобы увидеть статистику" />;
+      return (
+        <EmptyState
+          title="Запуски отсутствуют"
+          description="Запустите обучение, чтобы увидеть статистику"
+        />
+      );
     }
 
     return (
@@ -63,7 +61,9 @@ export default function TrainingRunsHistory({
             {filteredRuns.map((run) => (
               <Tr key={run.id}>
                 <Td>{formatDateTime(run.created_at)}</Td>
-                <Td><RunMetrics metrics={run.metrics} /></Td>
+                <Td>
+                  <RunMetrics metrics={run.metrics} />
+                </Td>
               </Tr>
             ))}
           </Tbody>

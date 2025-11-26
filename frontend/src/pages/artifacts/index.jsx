@@ -26,7 +26,20 @@ function ArtifactsPage() {
 
   return (
     <Stack spacing={6}>
-      <PageHeader title="Артефакты моделей" subtitle="Хранение экспортированных моделей" actions={null} />
+      <PageHeader
+        eyebrow="REGISTRY"
+        title="Артефакты моделей"
+        subtitle="Вёрсионированное хранилище чекпоинтов, графов и вспомогательных файлов."
+        metrics={[
+          { label: "Объектов", value: artifacts.length },
+          { label: "После фильтра", value: filteredArtifacts.length },
+          {
+            label: "Активные операции",
+            value: deletingId || downloadingId ? "1" : "0",
+            caption: deletingId ? "удаление" : downloadingId ? "скачивание" : "нет",
+          },
+        ]}
+      />
 
       <DatasetSearchBar
         value={searchQuery}

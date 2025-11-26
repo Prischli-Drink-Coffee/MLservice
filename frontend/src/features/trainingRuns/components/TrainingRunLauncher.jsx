@@ -16,7 +16,7 @@ import {
 import GlowingCard from "@ui/molecules/GlowingCard";
 import ErrorAlert from "@ui/molecules/ErrorAlert";
 import JobStatusPanel from "./JobStatusPanel";
-import StatTile from "./StatTile";
+import SummaryPanel from "@ui/molecules/SummaryPanel";
 import { formatDateTime } from "../utils";
 
 export default function TrainingRunLauncher({
@@ -46,7 +46,8 @@ export default function TrainingRunLauncher({
             Запустить новое обучение
           </Text>
           <Text fontSize="sm" color="text.tertiary">
-            Выберите актуальный датасет и запустите пайплайн. После старта статус появится ниже и в таблице запусков.
+            Выберите актуальный датасет и запустите пайплайн. После старта статус появится ниже и в
+            таблице запусков.
           </Text>
         </Stack>
 
@@ -80,14 +81,18 @@ export default function TrainingRunLauncher({
               </HStack>
             )}
             {selectedDataset && (
-              <Stack direction={{ base: "column", md: "row" }} spacing={4} mt={4}>
-                <StatTile
-                  label="Версия"
-                  value={selectedDataset.version ? `v${selectedDataset.version}` : "—"}
-                />
-                <StatTile label="Загружен" value={formatDateTime(selectedDataset.created_at)} />
-                <StatTile label="ID" value={selectedDataset.id} truncate />
-              </Stack>
+              <SummaryPanel
+                items={[
+                  {
+                    label: "Версия",
+                    value: selectedDataset.version ? `v${selectedDataset.version}` : "—",
+                  },
+                  { label: "Загружен", value: formatDateTime(selectedDataset.created_at) },
+                  { label: "ID", value: selectedDataset.id },
+                ]}
+                columns={{ base: 1, md: 3 }}
+                size="compact"
+              />
             )}
 
             {selectedDataset && (
@@ -118,11 +123,13 @@ export default function TrainingRunLauncher({
                   borderColor="whiteAlpha.300"
                   isDisabled={datasetsLoading}
                 >
-                  {(selectedDataset.columns || selectedDataset.meta?.columns || []).map((column) => (
-                    <option key={column} value={column}>
-                      {column}
-                    </option>
-                  ))}
+                  {(selectedDataset.columns || selectedDataset.meta?.columns || []).map(
+                    (column) => (
+                      <option key={column} value={column}>
+                        {column}
+                      </option>
+                    ),
+                  )}
                 </Select>
               </Box>
             )}
@@ -150,16 +157,19 @@ export default function TrainingRunLauncher({
               >
                 Обновить статус
               </Button>
-              <Button size="sm" variant="ghost" onClick={onRefreshDatasets} isLoading={datasetsLoading}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onRefreshDatasets}
+                isLoading={datasetsLoading}
+              >
                 Обновить датасеты
               </Button>
             </HStack>
             {jobError && (
               <Alert status="error" borderRadius="md">
                 <AlertIcon />
-                <Box flex="1">
-                  {jobError}
-                </Box>
+                <Box flex="1">{jobError}</Box>
                 <Button size="xs" variant="link" onClick={onDismissJobError}>
                   Скрыть
                 </Button>

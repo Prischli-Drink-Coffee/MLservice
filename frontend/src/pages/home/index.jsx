@@ -22,7 +22,7 @@ function HomePage() {
   }, [setVariant]);
 
   return (
-    <Box as="main" bg={colors.background.darkPrimary} w="full" minH="100vh">
+    <Box bg={colors.background.darkPrimary} w="full" minH="100vh">
       <Box {...layout.sections.hero}>
         <HomeHeroSection
           isAuthenticated={isAuthenticated}

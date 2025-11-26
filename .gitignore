@@ -197,3 +197,5 @@ infra/nginx/certs
 .env.prod
 
 /data
+
+/frontend/axe-report.json

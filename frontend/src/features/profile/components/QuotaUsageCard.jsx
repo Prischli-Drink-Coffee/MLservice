@@ -1,8 +1,17 @@
 import React from "react";
-import { Box, HStack, Icon, Progress, Stack, Text, usePrefersReducedMotion } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  Icon,
+  Progress,
+  Stack,
+  Text,
+  usePrefersReducedMotion,
+} from "@chakra-ui/react";
 import { FiAlertTriangle } from "react-icons/fi";
 import GlowingCard from "@ui/molecules/GlowingCard";
 import PrimaryButton from "@ui/atoms/PrimaryButton";
+import SummaryPanel from "@ui/molecules/SummaryPanel";
 import { colors, borderRadius, spacing, gradients } from "@theme/tokens";
 
 function formatPercent(limit, used) {
@@ -77,38 +86,14 @@ function QuotaUsageCard({ quota, onPurchaseClick, isPaymentsEnabled }) {
           </Stack>
         </Box>
 
-        <HStack spacing={4} flexWrap="wrap">
-          <Box
-            flex="1"
-            minW="140px"
-            p={4}
-            borderRadius={borderRadius.lg}
-            border="1px solid rgba(255,255,255,0.08)"
-            bg="rgba(255,255,255,0.02)"
-          >
-            <Text fontSize="xs" letterSpacing="0.18em" textTransform="uppercase" color={colors.text.tertiary}>
-              Израсходовано
-            </Text>
-            <Text fontSize="2xl" fontWeight={700}>
-              {percent}%
-            </Text>
-          </Box>
-          <Box
-            flex="1"
-            minW="140px"
-            p={4}
-            borderRadius={borderRadius.lg}
-            border="1px solid rgba(255,255,255,0.08)"
-            bg="rgba(255,255,255,0.02)"
-          >
-            <Text fontSize="xs" letterSpacing="0.18em" textTransform="uppercase" color={colors.text.tertiary}>
-              Свободно
-            </Text>
-            <Text fontSize="2xl" fontWeight={700} color={isLow ? "#f97316" : colors.brand.primary}>
-              {quota.available}
-            </Text>
-          </Box>
-        </HStack>
+        <SummaryPanel
+          items={[
+            { label: "Израсходовано", value: `${percent}%` },
+            { label: "Свободно", value: quota.available, color: isLow ? "#f97316" : undefined },
+          ]}
+          columns={{ base: 1, md: 2 }}
+          size="compact"
+        />
 
         {isLow && (
           <HStack

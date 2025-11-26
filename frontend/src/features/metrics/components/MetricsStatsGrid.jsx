@@ -1,27 +1,7 @@
 import React from "react";
-import { SimpleGrid, Skeleton, Spinner, Stack, Text } from "@chakra-ui/react";
+import { SimpleGrid, Skeleton } from "@chakra-ui/react";
 import Card from "@ui/molecules/Card";
-
-function StatCard({ label, value, suffix = "", isLoading }) {
-  const displayValue = value ?? "—";
-  return (
-    <Card p={4} h="100%">
-      <Stack spacing={1} h="full" justify="space-between">
-        <Text fontSize="sm" color="text.muted">
-          {label}
-        </Text>
-        {isLoading ? (
-          <Spinner size="sm" />
-        ) : (
-          <Text fontWeight="semibold">
-            {displayValue}
-            {displayValue !== "—" ? suffix : ""}
-          </Text>
-        )}
-      </Stack>
-    </Card>
-  );
-}
+import SummaryPanel from "@ui/molecules/SummaryPanel";
 
 export function MetricsStatsSkeleton() {
   return (
@@ -47,29 +27,33 @@ function formatFixed(value, digits = 3) {
 }
 
 function MetricsStatsGrid({ aggregates, isLoading }) {
-  return (
-    <SimpleGrid columns={{ base: 2, md: 4, lg: 6 }} spacing={4}>
-      <StatCard label="Всего запусков" value={aggregates.count} isLoading={isLoading} />
-      <StatCard
-        label="Средняя accuracy"
-        value={formatPercent(aggregates.avg_accuracy)}
-        suffix="%"
-        isLoading={isLoading}
-      />
-      <StatCard label="Средний R²" value={formatFixed(aggregates.avg_r2)} isLoading={isLoading} />
-      <StatCard label="Средний MSE" value={formatFixed(aggregates.avg_mse)} isLoading={isLoading} />
-      <StatCard
-        label="Лучшая accuracy"
-        value={formatPercent(aggregates.best_accuracy)}
-        suffix="%"
-        isLoading={isLoading}
-      />
-      <StatCard label="Лучший R²" value={formatFixed(aggregates.best_r2)} isLoading={isLoading} />
-      <StatCard label="Лучший MSE" value={formatFixed(aggregates.best_mse)} isLoading={isLoading} />
-      <StatCard label="Классификации" value={aggregates.classification_count} isLoading={isLoading} />
-      <StatCard label="Регрессии" value={aggregates.regression_count} isLoading={isLoading} />
-    </SimpleGrid>
-  );
+  if (isLoading) return <MetricsStatsSkeleton />;
+
+  const items = [
+    { label: "Всего запусков", value: aggregates.count },
+    {
+      label: "Средняя accuracy",
+      value:
+        formatPercent(aggregates.avg_accuracy) != null
+          ? `${formatPercent(aggregates.avg_accuracy)}%`
+          : null,
+    },
+    { label: "Средний R²", value: formatFixed(aggregates.avg_r2) },
+    { label: "Средний MSE", value: formatFixed(aggregates.avg_mse) },
+    {
+      label: "Лучшая accuracy",
+      value:
+        formatPercent(aggregates.best_accuracy) != null
+          ? `${formatPercent(aggregates.best_accuracy)}%`
+          : null,
+    },
+    { label: "Лучший R²", value: formatFixed(aggregates.best_r2) },
+    { label: "Лучший MSE", value: formatFixed(aggregates.best_mse) },
+    { label: "Классификации", value: aggregates.classification_count },
+    { label: "Регрессии", value: aggregates.regression_count },
+  ];
+
+  return <SummaryPanel items={items} columns={{ base: 2, md: 4, lg: 6 }} />;
 }
 
 export default MetricsStatsGrid;

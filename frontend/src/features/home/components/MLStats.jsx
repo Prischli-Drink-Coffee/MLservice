@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, VStack, Spinner, SimpleGrid, usePrefersReducedMotion } from "@chakra-ui/react";
-import { motion } from "framer-motion";
+import { Box, VStack, Spinner, usePrefersReducedMotion } from "@chakra-ui/react";
+import { MotionBox } from "@ui/motionPrimitives";
 import { Footnote } from "@ui/atoms/Typography";
+import SummaryPanel from "@ui/molecules/SummaryPanel";
 import { colors, spacing, borderRadius, gradients } from "@theme/tokens";
 import { listDatasets } from "@api/datasets";
 import { listTrainingRuns } from "@api/training";
@@ -9,8 +10,6 @@ import { listArtifacts } from "@api/artifacts";
 import { getMetricsSummary } from "@api/metrics";
 import extractErrorInfo from "@utils/errorHandler";
 import isAbortError from "@utils/isAbortError";
-
-const MotionBox = motion(Box);
 
 /**
  * AnimatedCounter - Animated number counter
@@ -44,94 +43,7 @@ function AnimatedCounter({ value, duration = 1.5, decimals = 0 }) {
   return decimals > 0 ? count.toFixed(decimals) : Math.floor(count);
 }
 
-/**
- * StatCard - Individual stat card with animation
- */
-function StatCard({ label, value, suffix = "", isLoading, color, index, gradient }) {
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const accentColor = color || colors.brand.primary;
-  const accentGradient = gradient || gradients.prism;
-
-  return (
-    <MotionBox
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
-      whileHover={{ y: -6, scale: 1.015, transition: { duration: 0.25 } }}
-      h="full"
-    >
-      <Box
-        position="relative"
-        overflow="hidden"
-        bg="rgba(7,9,18,0.92)"
-        border="1px solid"
-        borderColor="rgba(255,255,255,0.08)"
-        borderRadius={borderRadius.xl}
-        p={{ base: spacing.lg, md: spacing.xl }}
-        backdropFilter="blur(24px)"
-        transition="all 0.35s ease"
-        h="full"
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        minH={{ base: "90px", md: "100px" }}
-        _hover={{
-          borderColor: accentColor,
-          boxShadow: `0 20px 55px ${accentColor}2e`,
-        }}
-        _before={{
-          content: '""',
-          position: "absolute",
-          inset: "-35%",
-          background: accentGradient,
-          opacity: 0.45,
-          filter: "blur(55px)",
-          animation: prefersReducedMotion ? "none" : "gradientOrbit 26s linear infinite",
-        }}
-        _after={{
-          content: '""',
-          position: "absolute",
-          inset: "1px",
-          borderRadius: `calc(${borderRadius.xl} - 6px)`,
-          border: "1px solid rgba(255,255,255,0.08)",
-          background: "linear-gradient(125deg, rgba(255,255,255,0.08) 0%, transparent 45%)",
-          opacity: 0.65,
-          mixBlendMode: "screen",
-          animation: prefersReducedMotion ? "none" : "shimmerTrail 7s ease-in-out infinite",
-        }}
-      >
-        <VStack spacing={spacing.sm} align="center" position="relative" zIndex={1}>
-          {isLoading ? (
-            <Spinner size="md" color={accentColor} thickness="3px" />
-          ) : (
-            <Footnote
-              variant="large"
-              color={accentColor}
-              fontWeight={700}
-              fontSize={{ base: "24px", md: "28px", lg: "32px" }}
-              lineHeight="1"
-            >
-              <AnimatedCounter value={value} decimals={suffix === "%" ? 1 : 0} />
-              {suffix}
-            </Footnote>
-          )}
-          <Footnote
-            variant="small"
-            color={colors.text.tertiary}
-            fontSize={{ base: "11px", md: "12px" }}
-            textAlign="center"
-            paddingLeft={3}
-            paddingRight={3}
-            noOfLines={2}
-            lineHeight="1.3"
-          >
-            {label}
-          </Footnote>
-        </VStack>
-      </Box>
-    </MotionBox>
-  );
-}
+// Use shared SummaryPanel + StatCard atom to render platform stats
 
 /**
  * MLStats - ML platform statistics component
@@ -200,7 +112,8 @@ function MLStats({ isAuthenticated = true }) {
         // Extract best metrics from summary
         if (metricsRes.status === "fulfilled" && metricsRes.value) {
           const aggregates = metricsRes.value.aggregates ?? {};
-          const accuracyValue = typeof aggregates.avg_accuracy === "number" ? aggregates.avg_accuracy : null;
+          const accuracyValue =
+            typeof aggregates.avg_accuracy === "number" ? aggregates.avg_accuracy : null;
           const r2Value = typeof aggregates.avg_r2 === "number" ? aggregates.avg_r2 : null;
 
           if (accuracyValue !== null) {
@@ -219,7 +132,9 @@ function MLStats({ isAuthenticated = true }) {
         if (controller.signal.aborted || isAbortError(error)) {
           return;
         }
-        const { userMessage } = extractErrorInfo(error, { fallbackMessage: "Не удалось обновить статистику" });
+        const { userMessage } = extractErrorInfo(error, {
+          fallbackMessage: "Не удалось обновить статистику",
+        });
         if (!mounted) return;
         setErrorMessage(userMessage);
       } finally {
@@ -260,50 +175,28 @@ function MLStats({ isAuthenticated = true }) {
       )}
       {/* Stats Grid */}
       {isAuthenticated ? (
-        <SimpleGrid columns={{ base: 2, md: 3, lg: 5 }} spacing={{ base: 3, md: 4 }} w="full">
-          <StatCard
-            label="Датасетов"
-            value={stats.datasets}
-            isLoading={isLoading}
-            color={colors.brand.primary}
-            gradient={gradients.horizon}
-            index={0}
-          />
-          <StatCard
-            label="Запусков обучения"
-            value={stats.trainingRuns}
-            isLoading={isLoading}
-            color={colors.brand.secondary}
-            gradient={gradients.prism}
-            index={1}
-          />
-          <StatCard
-            label="Артефактов"
-            value={stats.artifacts}
-            isLoading={isLoading}
-            color={colors.brand.tertiary}
-            gradient={gradients.midnightMesh}
-            index={2}
-          />
-          <StatCard
-            label="Средняя точность"
-            value={stats.avgAccuracy}
-            suffix="%"
-            isLoading={isLoading}
-            color="#10b981"
-            gradient={gradients.aurora}
-            index={3}
-          />
-          <StatCard
-            label="Средний R²"
-            value={stats.avgR2}
-            suffix="%"
-            isLoading={isLoading}
-            color="#f59e0b"
-            gradient={gradients.dusk}
-            index={4}
-          />
-        </SimpleGrid>
+        <SummaryPanel
+          items={[
+            { label: "Датасетов", value: stats.datasets, color: colors.brand.primary },
+            {
+              label: "Запусков обучения",
+              value: stats.trainingRuns,
+              color: colors.brand.secondary,
+            },
+            { label: "Артефактов", value: stats.artifacts, color: colors.brand.tertiary },
+            {
+              label: "Средняя точность",
+              value: stats.avgAccuracy != null ? `${stats.avgAccuracy}%` : null,
+              color: "#10b981",
+            },
+            {
+              label: "Средний R²",
+              value: stats.avgR2 != null ? `${stats.avgR2}%` : null,
+              color: "#f59e0b",
+            },
+          ]}
+          columns={{ base: 2, md: 3, lg: 5 }}
+        />
       ) : (
         <Box
           w="full"
@@ -335,7 +228,8 @@ function MLStats({ isAuthenticated = true }) {
           }}
         >
           <Footnote variant="small" color={colors.text.secondary} position="relative" zIndex={1}>
-            Подключите аккаунт, чтобы отслеживать метрики и историю запусков прямо на главной странице.
+            Подключите аккаунт, чтобы отслеживать метрики и историю запусков прямо на главной
+            странице.
           </Footnote>
         </Box>
       )}

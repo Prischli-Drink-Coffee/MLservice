@@ -30,7 +30,11 @@ function AccuracyChart({ data, gridColor }) {
         <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
           <CartesianGrid stroke={gridColor} strokeDasharray="3 3" />
           <XAxis dataKey="ts" tick={{ fontSize: 12 }} />
-          <YAxis domain={[0, 1]} tickFormatter={(value) => `${Math.round(value * 100)}%`} tick={{ fontSize: 12 }} />
+          <YAxis
+            domain={[0, 1]}
+            tickFormatter={(value) => `${Math.round(value * 100)}%`}
+            tick={{ fontSize: 12 }}
+          />
           <Tooltip />
           <Legend />
           <Line
@@ -62,7 +66,14 @@ function R2Chart({ data, gridColor }) {
           <YAxis domain={[-1, 1]} tick={{ fontSize: 12 }} />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="r2" name="R²" stroke="#38A169" strokeWidth={2} dot={false} />
+          <Line
+            type="monotone"
+            dataKey="r2"
+            name="R²"
+            stroke="#38A169"
+            strokeWidth={2}
+            dot={false}
+          />
         </LineChart>
       </ResponsiveContainer>
     </Card>

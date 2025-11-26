@@ -218,7 +218,8 @@ export const transitions = {
 };
 
 export const gradients = {
-  aurora: "linear-gradient(135deg, rgba(47, 116, 255, 0.9) 0%, rgba(12, 67, 53, 0.85) 45%, rgba(38, 13, 97, 0.95) 100%)",
+  aurora:
+    "linear-gradient(135deg, rgba(47, 116, 255, 0.9) 0%, rgba(12, 67, 53, 0.85) 45%, rgba(38, 13, 97, 0.95) 100%)",
   prism: "linear-gradient(120deg, #2f74ff 0%, #8b5cf6 55%, #158f6eff 100%)",
   dusk: "linear-gradient(160deg, rgba(47, 116, 255, 0.15) 0%, rgba(139, 92, 246, 0.25) 65%, rgba(29, 209, 161, 0.15) 100%)",
   midnightMesh:

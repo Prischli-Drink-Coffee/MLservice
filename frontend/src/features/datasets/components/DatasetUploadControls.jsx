@@ -20,7 +20,14 @@ const formatBytes = (bytes) => {
   return `${size.toFixed(size >= 10 ? 0 : 1)} ${units[unitIndex]}`;
 };
 
-function DatasetUploadControls({ file, onFileSelect, onUpload, onRefresh, isUploading, isLoading }) {
+function DatasetUploadControls({
+  file,
+  onFileSelect,
+  onUpload,
+  onRefresh,
+  isUploading,
+  isLoading,
+}) {
   const inputRef = useRef(null);
   const handlePickFile = () => inputRef.current?.click();
   const handleChange = (event) => {
@@ -36,9 +43,9 @@ function DatasetUploadControls({ file, onFileSelect, onUpload, onRefresh, isUplo
       spacing={4}
       bg="rgba(255,255,255,0.03)"
       border="1px solid rgba(255,255,255,0.08)"
-  borderRadius={tokens.borderRadius.lg}
-  p={{ base: 4, md: 5 }}
-  minW={{ base: "100%", xl: "460px" }}
+      borderRadius={tokens.borderRadius.lg}
+      p={{ base: 4, md: 5 }}
+      minW={{ base: "100%", xl: "460px" }}
     >
       <input ref={inputRef} type="file" accept=".csv" onChange={handleChange} hidden />
       <HStack spacing={4} align="flex-start" flex={1}>
@@ -54,7 +61,12 @@ function DatasetUploadControls({ file, onFileSelect, onUpload, onRefresh, isUplo
           Выбрать CSV
         </Button>
         <VStack align="flex-start" spacing={1} minW={0}>
-          <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.15em" color={colors.text.tertiary}>
+          <Text
+            fontSize="xs"
+            textTransform="uppercase"
+            letterSpacing="0.15em"
+            color={colors.text.tertiary}
+          >
             Файл для загрузки
           </Text>
           <Text fontSize="md" color={colors.text.primary} noOfLines={1} maxW="260px">
@@ -76,7 +88,12 @@ function DatasetUploadControls({ file, onFileSelect, onUpload, onRefresh, isUplo
         >
           Обновить
         </Button>
-        <PrimaryButton size="sm" onClick={onUpload} isLoading={isUploading} isDisabled={disableUpload}>
+        <PrimaryButton
+          size="sm"
+          onClick={onUpload}
+          isLoading={isUploading}
+          isDisabled={disableUpload}
+        >
           Загрузить
         </PrimaryButton>
       </HStack>

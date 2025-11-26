@@ -13,7 +13,6 @@ from service.presentation.routers.ml_api.ml_api import (
     ml_router,
 )
 
-
 _TEST_USER_ID = uuid.uuid4()
 
 

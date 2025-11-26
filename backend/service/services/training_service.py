@@ -86,7 +86,9 @@ class TrainingService:
         # 1) Find latest user file for the job.mode when dataset isn't explicitly selected
         try:
             if dataset_record is None:
-                latest_files = await self._file_repo.fetch_user_files_metadata(job.user_id, job.mode)
+                latest_files = await self._file_repo.fetch_user_files_metadata(
+                    job.user_id, job.mode
+                )
                 if not latest_files:
                     logger.warning("No user files found for user=%s mode=%s", job.user_id, job.mode)
                     raise ValueError("No input dataset available for training")

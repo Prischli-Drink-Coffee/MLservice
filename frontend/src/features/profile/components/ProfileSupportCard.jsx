@@ -14,7 +14,8 @@ function ProfileSupportCard({ email }) {
           Поддержка и документы
         </Text>
         <Text color={colors.text.tertiary} fontSize="sm">
-          Отвечаем на вопросы о квотах и профиле в рабочее время. Пока платежей нет — используйте почту.
+          Отвечаем на вопросы о квотах и профиле в рабочее время. Пока платежей нет — используйте
+          почту.
         </Text>
         <Box
           borderRadius={borderRadius.xl}

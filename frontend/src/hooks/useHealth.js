@@ -3,7 +3,8 @@ import client from "@api/client";
 import extractErrorInfo from "@utils/errorHandler";
 
 const DEFAULT_STATUS = { ok: null, details: null, error: null };
-const isAbortError = (error) => error?.code === "ERR_CANCELED" || error?.name === "CanceledError" || error?.name === "AbortError";
+const isAbortError = (error) =>
+  error?.code === "ERR_CANCELED" || error?.name === "CanceledError" || error?.name === "AbortError";
 
 export default function useHealth(pollMs = 10000, options = {}) {
   const { enabled = true } = options;

@@ -3,7 +3,7 @@ import { Avatar, Badge, Box, HStack, Icon, VStack, Tooltip, useToast } from "@ch
 import { FiGithub, FiLinkedin, FiMail, FiMapPin, FiClipboard } from "react-icons/fi";
 import { Body, Footnote, Title } from "@ui/atoms/Typography";
 import { borderRadius, colors, spacing } from "@theme/tokens";
-import { MotionBox } from "./motionPrimitives";
+import { MotionBox } from "@ui/motionPrimitives";
 
 function SocialIcon({ icon, href, label, ...motionProps }) {
   if (!href) {
@@ -20,6 +20,7 @@ function SocialIcon({ icon, href, label, ...motionProps }) {
       title={label}
       whileHover={{ scale: 1.2, rotate: 5 }}
       whileTap={{ scale: 0.95 }}
+      _focusVisible={{ boxShadow: `0 0 0 4px ${colors.brand.primary}33`, outline: "none" }}
       {...motionProps}
     >
       <Icon
@@ -157,7 +158,7 @@ function TeamMemberCard({ member, index }) {
             )}
           </VStack>
 
-          { (member.github || member.linkedin || member.email) && (
+          {(member.github || member.linkedin || member.email) && (
             <HStack spacing={{ base: 2, md: 3 }} pt={2} flexWrap="wrap" justify="center">
               {member.github && (
                 <Tooltip label="GitHub" aria-label="GitHub tooltip">
@@ -170,7 +171,12 @@ function TeamMemberCard({ member, index }) {
               {member.linkedin && (
                 <Tooltip label="LinkedIn" aria-label="LinkedIn tooltip">
                   <Box>
-                    <SocialIcon icon={FiLinkedin} href={member.linkedin} label="LinkedIn" whileHover={{ rotate: -5 }} />
+                    <SocialIcon
+                      icon={FiLinkedin}
+                      href={member.linkedin}
+                      label="LinkedIn"
+                      whileHover={{ rotate: -5 }}
+                    />
                   </Box>
                 </Tooltip>
               )}
@@ -191,13 +197,21 @@ function TeamMemberCard({ member, index }) {
                           await navigator.clipboard.writeText(member.email);
                           toast({ title: "Email скопирован", status: "success", duration: 2000 });
                         } catch (err) {
-                          toast({ title: "Не удалось скопировать", status: "error", duration: 2000 });
+                          toast({
+                            title: "Не удалось скопировать",
+                            status: "error",
+                            duration: 2000,
+                          });
                         }
                       }}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       aria-label="Copy email"
                       style={{ background: "transparent", border: "none" }}
+                      _focusVisible={{
+                        boxShadow: `0 0 0 4px ${colors.brand.primary}33`,
+                        outline: "none",
+                      }}
                     >
                       <Icon as={FiClipboard} boxSize={5} color={colors.text.secondary} />
                     </MotionBox>

@@ -1,14 +1,12 @@
 import PropTypes from "prop-types";
 import { Box, SimpleGrid, usePrefersReducedMotion } from "@chakra-ui/react";
-import { motion } from "framer-motion";
+import { MotionBox as MotionTile } from "@ui/motionPrimitives";
 import GlowingCard from "@ui/molecules/GlowingCard";
 import EmptyState from "@ui/molecules/EmptyState";
 import ErrorAlert from "@ui/molecules/ErrorAlert";
 import LoadingState from "@ui/molecules/LoadingState";
 import DatasetCard from "@features/datasets/components/DatasetCard";
 import { tokens } from "@theme/tokens";
-
-const MotionTile = motion(Box);
 
 function DatasetsGridSection({
   isInitialLoading,

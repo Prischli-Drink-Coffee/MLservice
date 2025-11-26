@@ -1,11 +1,22 @@
 import React from "react";
-import { Box, HStack, VStack, Text, Badge, Stack, Button, Wrap, WrapItem, Icon, SimpleGrid, Divider } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  VStack,
+  Text,
+  Badge,
+  Stack,
+  Button,
+  Wrap,
+  WrapItem,
+  Icon,
+  Divider,
+} from "@chakra-ui/react";
 import { ArrowDownIcon, DeleteIcon, InfoIcon } from "@chakra-ui/icons";
-import { motion } from "framer-motion";
+import { MotionBox } from "@ui/motionPrimitives";
 import PrimaryButton from "@ui/atoms/PrimaryButton";
 import { tokens, colors } from "@theme/tokens";
-
-const MotionBox = motion(Box);
+import SummaryPanel from "@ui/molecules/SummaryPanel";
 
 const formatDate = (value) => {
   if (!value) return "Дата не указана";
@@ -63,7 +74,9 @@ const DatasetCard = ({
   const records = dataset.records ?? dataset.rows ?? dataset.meta?.rows;
   const rawColumns = dataset.columns ?? dataset.meta?.columns;
   const columns = Array.isArray(rawColumns) ? rawColumns.length : rawColumns;
-  const sizeLabel = formatBytes(dataset.file_size_bytes ?? dataset.size_bytes ?? dataset.meta?.size_bytes);
+  const sizeLabel = formatBytes(
+    dataset.file_size_bytes ?? dataset.size_bytes ?? dataset.meta?.size_bytes,
+  );
   const datasetType = dataset.meta?.type || dataset.type || "CSV";
   const accentColor = accentColorProp;
   const accentTint = hexToRgba(accentColor, 0.14);
@@ -71,7 +84,10 @@ const DatasetCard = ({
   const statItems = [
     { label: "Загружен", value: formatDate(dataset.created_at || dataset.meta?.created_at) },
     { label: "Размер", value: sizeLabel || "—" },
-    { label: "Строк / Колонок", value: `${formatNumber(records) || "—"} / ${formatNumber(columns) || "—"}` },
+    {
+      label: "Строк / Колонок",
+      value: `${formatNumber(records) || "—"} / ${formatNumber(columns) || "—"}`,
+    },
   ];
   const actionsDisabled = isDeleting || isDownloading;
 
@@ -91,7 +107,15 @@ const DatasetCard = ({
       overflow="hidden"
       boxShadow="0 20px 45px rgba(0,0,0,0.35)"
     >
-      <Box position="absolute" insetX={-10} top={-10} h="120px" bg={accentTint} filter="blur(50px)" opacity={0.55} />
+      <Box
+        position="absolute"
+        insetX={-10}
+        top={-10}
+        h="120px"
+        bg={accentTint}
+        filter="blur(50px)"
+        opacity={0.55}
+      />
       <Box
         position="absolute"
         inset={0}
@@ -101,20 +125,48 @@ const DatasetCard = ({
       <Box position="absolute" insetX={0} top={0} h="4px" bg={accentColor} opacity={0.85} />
 
       <VStack align="stretch" spacing={6} position="relative">
-        <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} spacing={4} flexWrap="wrap">
+        <HStack
+          justify="space-between"
+          align={{ base: "flex-start", md: "center" }}
+          spacing={4}
+          flexWrap="wrap"
+        >
           <VStack align="flex-start" spacing={1} flex={1} minW={0}>
             <HStack spacing={3}>
-              <Badge bg={accentTint} color={colors.text.primary} borderRadius={tokens.borderRadius.full} px={3} py={1} fontSize="xs">
+              <Badge
+                bg={accentTint}
+                color={colors.text.primary}
+                borderRadius={tokens.borderRadius.full}
+                px={3}
+                py={1}
+                fontSize="xs"
+              >
                 {datasetType}
               </Badge>
-              <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.2em" color={colors.text.tertiary}>
+              <Text
+                fontSize="xs"
+                textTransform="uppercase"
+                letterSpacing="0.2em"
+                color={colors.text.tertiary}
+              >
                 Датасет
               </Text>
             </HStack>
-            <Text fontSize="xl" fontWeight={600} color={colors.text.primary} noOfLines={2} lineHeight="1.2">
+            <Text
+              fontSize="xl"
+              fontWeight={600}
+              color={colors.text.primary}
+              noOfLines={2}
+              lineHeight="1.2"
+            >
               {dataset.name || dataset.meta?.name || "Без названия"}
             </Text>
-            <Text fontSize="xs" color={colors.text.tertiary} fontFamily="mono" letterSpacing="0.05em">
+            <Text
+              fontSize="xs"
+              color={colors.text.tertiary}
+              fontFamily="mono"
+              letterSpacing="0.05em"
+            >
               ID: {dataset.id}
             </Text>
           </VStack>
@@ -147,24 +199,11 @@ const DatasetCard = ({
           </Stack>
         </HStack>
 
-        <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
-          {statItems.map((item) => (
-            <Box
-              key={item.label}
-              p={4}
-              borderRadius={tokens.borderRadius.lg}
-              bg="rgba(255,255,255,0.02)"
-              border="1px solid rgba(255,255,255,0.05)"
-            >
-              <Text fontSize="xs" textTransform="uppercase" letterSpacing="0.2em" color={colors.text.tertiary}>
-                {item.label}
-              </Text>
-              <Text mt={1} fontWeight={600} color={colors.text.primary}>
-                {item.value}
-              </Text>
-            </Box>
-          ))}
-        </SimpleGrid>
+        <SummaryPanel
+          items={statItems.map((s) => ({ label: s.label, value: s.value }))}
+          columns={{ base: 1, md: 3 }}
+          size="compact"
+        />
 
         {tags.length > 0 && (
           <Wrap spacing={2}>
@@ -194,7 +233,12 @@ const DatasetCard = ({
 
         <Divider borderColor="rgba(255,255,255,0.08)" />
 
-        <HStack justify="space-between" align={{ base: "flex-start", md: "center" }} flexWrap="wrap" gap={3}>
+        <HStack
+          justify="space-between"
+          align={{ base: "flex-start", md: "center" }}
+          flexWrap="wrap"
+          gap={3}
+        >
           <HStack spacing={3} color={colors.text.tertiary} fontSize="sm">
             <Icon as={InfoIcon} w={4} h={4} />
             <Text>Ссылка откроется в новой вкладке. Действия можно отменить до 15 секунд.</Text>

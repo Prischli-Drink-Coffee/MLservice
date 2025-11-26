@@ -1,6 +1,12 @@
 import client from "./client";
 
-export async function getMetricsTrends({ mode = null, limit = 50, datasetId, targetColumn, signal } = {}) {
+export async function getMetricsTrends({
+  mode = null,
+  limit = 50,
+  datasetId,
+  targetColumn,
+  signal,
+} = {}) {
   const params = { limit };
   if (mode) params.mode = mode;
   if (datasetId) params.dataset_id = datasetId;
@@ -9,7 +15,13 @@ export async function getMetricsTrends({ mode = null, limit = 50, datasetId, tar
   return res.data;
 }
 
-export async function getMetricsSummary({ mode = null, limit = 50, datasetId, targetColumn, signal } = {}) {
+export async function getMetricsSummary({
+  mode = null,
+  limit = 50,
+  datasetId,
+  targetColumn,
+  signal,
+} = {}) {
   const params = { limit };
   if (mode) params.mode = mode;
   if (datasetId) params.dataset_id = datasetId;

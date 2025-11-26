@@ -17,8 +17,8 @@ from service.monitoring.metrics import record_dataset_upload
 from service.presentation.dependencies.auth_checker import check_auth
 from service.presentation.routers.ml_api.schemas import (
     ArtifactDeleteResponse,
-    DatasetResponse,
     DatasetDeleteResponse,
+    DatasetResponse,
     DatasetTTLResponse,
     DatasetUploadResponse,
     MetricsSummaryResponse,
@@ -154,9 +154,7 @@ async def _cleanup_missing_dataset(
 def _missing_file_http_error(dataset_id, deleted: bool) -> HTTPException:
     code = DATASET_REMOVED_CODE if deleted else FILE_NOT_FOUND_CODE
     message = (
-        "Файл датасета недоступен и запись была удалена"
-        if deleted
-        else "Файл датасета недоступен"
+        "Файл датасета недоступен и запись была удалена" if deleted else "Файл датасета недоступен"
     )
     detail = {"code": code, "message": message}
     if dataset_id is not None:
@@ -278,9 +276,7 @@ async def delete_artifact(
     return ArtifactDeleteResponse(id=art_uuid)
 
 
-@ml_router.get(
-    "/artifacts/{artifact_id}/download-url", response_model=PresignedUrlResponse
-)
+@ml_router.get("/artifacts/{artifact_id}/download-url", response_model=PresignedUrlResponse)
 async def get_artifact_download_url(
     artifact_id: UUID,
     profile: Annotated[AuthProfile, Depends(check_auth)],

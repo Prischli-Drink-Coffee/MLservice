@@ -53,21 +53,18 @@ export default function useProfile(autoLoad = true) {
     }
   }, []);
 
-  const saveProfile = useCallback(
-    async (payload) => {
-      setIsSaving(true);
-      try {
-        const updated = await updateProfile(payload);
-        setData(updated);
-        return updated;
-      } catch (err) {
-        throw err;
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [],
-  );
+  const saveProfile = useCallback(async (payload) => {
+    setIsSaving(true);
+    try {
+      const updated = await updateProfile(payload);
+      setData(updated);
+      return updated;
+    } catch (err) {
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (autoLoad) {
