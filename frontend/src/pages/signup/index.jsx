@@ -68,7 +68,7 @@ function SignUpPage() {
   };
 
   return (
-    <Box py={16}>
+    <Box py={16} bg="transparent">
       <AuthFormCard as="form" onSubmit={handleSubmit} maxW="520px">
         {/* Header */}
         <VStack spacing={2} mb={2}>

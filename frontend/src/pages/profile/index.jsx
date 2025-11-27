@@ -40,7 +40,7 @@ function ProfilePage() {
   } = useProfilePageController();
 
   return (
-    <Stack spacing={6} w="full">
+    <Stack spacing={6} w="full" bg="transparent">
       <PageHeader
         eyebrow="ACCOUNT"
         title="Профиль"

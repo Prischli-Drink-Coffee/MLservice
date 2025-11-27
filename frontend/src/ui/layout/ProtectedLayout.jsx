@@ -79,6 +79,7 @@ function ProtectedLayout() {
               <MotionContainer
                 key={location.pathname}
                 maxW="6xl"
+                mx="auto"
                 px={{ base: spacing.md, md: spacing.lg, lg: spacing[13] }}
                 py={{ base: 8, md: 10 }}
                 initial={{ opacity: 0, y: 12 }}

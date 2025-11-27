@@ -27,7 +27,7 @@ function InfoPage() {
 
   return (
     <Box
-      bg={colors.background.darkPrimary}
+      bg="transparent"
       w="full"
       minH="100vh"
       position="relative"

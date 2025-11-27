@@ -34,7 +34,7 @@ function MetricsPage() {
   } = useMetricsPageController();
 
   return (
-    <Stack spacing={6}>
+    <Stack spacing={6} bg="transparent">
       <PageHeader
         eyebrow="OBSERVABILITY"
         title="Метрики"

@@ -32,6 +32,20 @@ if (typeof document !== "undefined" && document.defaultView) {
   document.defaultView.matchMedia = mockMatchMedia;
 }
 
+// Ensure a stable global helper node for Chakra exists in document.body so the
+// provider doesn't create it inside the test render container. This prevents
+// tests that assert an empty container from failing due to an injected node.
+try {
+  if (typeof document !== "undefined" && !document.getElementById("__chakra_env")) {
+    const __chakra_env = document.createElement("span");
+    __chakra_env.id = "__chakra_env";
+    __chakra_env.hidden = true;
+    document.body.appendChild(__chakra_env);
+  }
+} catch (e) {
+  // ignore in environments where document isn't available yet
+}
+
 // Provide a minimal global for ResizeObserver if some components rely on it in tests
 if (typeof window !== "undefined" && typeof window.ResizeObserver === "undefined") {
   class ResizeObserver {
@@ -77,17 +91,50 @@ try {
   // minimal subset for tests: `motion` primitives and `useReducedMotion`.
   jest.mock("framer-motion", () => {
     const React = require("react");
-    const mockMotionFactory = (tag) => {
-      return React.forwardRef(({ children, ...props }, ref) => React.createElement(tag, { ref, ...props }, children));
+    // Filter out motion-specific props so they don't get forwarded to DOM nodes
+    const motionPropNames = new Set([
+      "initial",
+      "animate",
+      "exit",
+      "variants",
+      "whileHover",
+      "whileTap",
+      "whileFocus",
+      "whileInView",
+      "onUpdate",
+      "onAnimationComplete",
+      "onAnimationStart",
+      "transition",
+      "layout",
+      "layoutId",
+      "drag",
+      "dragConstraints",
+      "dragElastic",
+      "dragPropagation",
+      "dragMomentum",
+      "viewport",
+      "style",
+    ]);
+
+    const mockMotionFactory = (Comp) => {
+      // Return a forwardRef component that filters out motion-specific props
+      return React.forwardRef(({ children, ...props }, ref) => {
+        const filtered = Object.keys(props).reduce((acc, k) => {
+          if (!motionPropNames.has(k)) acc[k] = props[k];
+          return acc;
+        }, {});
+        // If Comp is a string tag, create a DOM element, otherwise render the component
+        return typeof Comp === "string"
+          ? React.createElement(Comp, { ref, ...filtered }, children)
+          : React.createElement(Comp, { ref, ...filtered }, children);
+      });
     };
 
     // motion should be callable (motion(Component)) and also support
     // property access (motion.div). We implement a callable function and
-    // wrap it with a Proxy to handle property access.
-    const motionCallable = (Comp) => {
-      if (typeof Comp === "string") return mockMotionFactory(Comp);
-      return React.forwardRef(({ children, ...props }, ref) => React.createElement(Comp, { ref, ...props }, children));
-    };
+    // wrap it with a Proxy to handle property access. Ensure that when
+    // motion is called with a React component we still filter motion props.
+    const motionCallable = (Comp) => mockMotionFactory(Comp);
 
     const motionProxy = new Proxy(motionCallable, {
       get: (_, tag) => mockMotionFactory(tag),
@@ -103,18 +150,31 @@ try {
   // noop
 }
 
+// Some Chakra internals mount a helper node (#__chakra_env) into the document
+// during provider setup. Tests that assert an empty container can fail if that
+// node is present. Remove it after each test to keep test containers clean.
+// no-op cleanup: we keep a stable __chakra_env in document.body to avoid
+// races between Chakra internals and rtl cleanup.
+afterEach(() => {});
+
 // Ensure Chakra's prefers-reduced-motion hook is stable for tests while keeping
 // the real Chakra exports available. We also make ChakraProvider a passthrough
 // to avoid injecting environment DOM nodes into test containers
 // (such as #__chakra_env) which can break assertions that expect an
 // empty container.
 try {
+  // Use the real Chakra exports but override prefers-reduced-motion hook so
+  // tests are deterministic. We avoid replacing ChakraProvider with a
+  // Fragment because the styled-system utilities (like parseGradient)
+  // expect a theme provided by Chakra's context; removing the provider
+  // caused runtime errors in tests.
   jest.mock("@chakra-ui/react", () => {
     const actual = jest.requireActual("@chakra-ui/react");
-    const React = require("react");
     return {
       ...actual,
-      ChakraProvider: ({ children }) => React.createElement(React.Fragment, null, children),
+      // keep the real ChakraProvider so theme/context are available
+      ChakraProvider: actual.ChakraProvider,
+      // deterministically disable reduced motion for tests
       usePrefersReducedMotion: () => false,
     };
   });

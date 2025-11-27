@@ -82,11 +82,11 @@ export default function GlowingCard({ children, intensity = "medium", ...rest })
       _after={{
         content: '""',
         position: "absolute",
-        inset: 1,
+        inset: 0,
         borderRadius: "inherit",
-        background: `${gradients.midnightMesh}, radial-gradient(circle at 30% 20%, rgba(255,255,255,0.08), transparent 55%)`,
-        mixBlendMode: "screen",
-        opacity: 0.55,
+        background: `${gradients.midnightMesh}, radial-gradient(circle at 30% 20%, rgba(255,255,255,0.04), transparent 55%)`,
+        mixBlendMode: "overlay",
+        opacity: 0.28,
         pointerEvents: "none",
         animation: `${sparkleDrift} 18s linear infinite`,
       }}
@@ -106,8 +106,8 @@ export default function GlowingCard({ children, intensity = "medium", ...rest })
           inset={0}
           borderRadius="inherit"
           pointerEvents="none"
-          bg="linear-gradient(90deg, rgba(255,255,255,0.08), transparent)"
-          opacity={0.35}
+          bg="linear-gradient(90deg, rgba(255,255,255,0.04), transparent)"
+          opacity={0.22}
           transform="translateY(-20%)"
           filter="blur(35px)"
         />

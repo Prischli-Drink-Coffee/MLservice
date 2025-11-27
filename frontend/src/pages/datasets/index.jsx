@@ -35,7 +35,7 @@ function DatasetsPage() {
   } = useDatasetsPageController();
 
   return (
-    <Stack spacing={{ base: 6, md: 8 }} w="full">
+    <Stack spacing={{ base: 6, md: 8 }} w="full" bg="transparent">
       <PageHeader
         eyebrow="DATA OPS"
         title="Датасеты"

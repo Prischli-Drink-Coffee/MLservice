@@ -53,7 +53,7 @@ function LoginPage() {
   };
 
   return (
-    <Box py={16}>
+    <Box py={16} bg="transparent">
       <AuthFormCard as="form" onSubmit={handleSubmit}>
         {/* Header */}
         <VStack spacing={2} mb={2}>

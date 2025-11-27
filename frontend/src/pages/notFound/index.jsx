@@ -5,7 +5,7 @@ function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
-    <Box textAlign="center" py={20}>
+    <Box textAlign="center" py={20} bg="transparent">
       <Stack spacing={4} align="center">
         <Heading size="2xl">404</Heading>
         <Text fontSize="lg" color="text.muted">

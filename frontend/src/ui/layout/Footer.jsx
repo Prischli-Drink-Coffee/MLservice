@@ -1,4 +1,5 @@
-import { Box, Container, HStack, Icon, Link, SimpleGrid, Stack, Text } from "@chakra-ui/react";
+import { Box, Container, HStack, Icon, Link, SimpleGrid, Stack, Text, Button } from "@chakra-ui/react";
+import { NavLink } from "react-router-dom";
 import { FaGithub, FaVk } from "react-icons/fa";
 import {
   PROJECT_NAME,
@@ -21,18 +22,18 @@ function Footer() {
         opacity={0.9}
       />
       <Box position="relative" borderTop="1px solid rgba(255,255,255,0.08)">
-        <Container maxW="6xl" py={10} px={{ base: spacing.md, md: spacing.lg, lg: spacing[13] }}>
-          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={8}>
-            <Stack spacing={2}>
+        <Container maxW="6xl" py={6} px={{ base: spacing.md, md: spacing.lg, lg: spacing[13] }}>
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={6}>
+            <Stack spacing={1}>
               <Text
-                fontSize="sm"
+                fontSize="xs"
                 color={colors.text.secondary}
                 textTransform="uppercase"
-                letterSpacing="0.2em"
+                letterSpacing="0.12em"
               >
                 {PROJECT_NAME}
               </Text>
-              <Text fontSize="lg" fontWeight="semibold">
+              <Text fontSize="md" fontWeight="semibold">
                 Версия {PROJECT_VERSION}
               </Text>
               <Text fontSize="xs" color={colors.text.tertiary}>
@@ -40,24 +41,24 @@ function Footer() {
               </Text>
             </Stack>
 
-            <Stack spacing={2}>
+            <Stack spacing={1}>
               <Text
-                fontSize="sm"
+                fontSize="xs"
                 color={colors.text.secondary}
                 textTransform="uppercase"
-                letterSpacing="0.2em"
+                letterSpacing="0.12em"
               >
                 Контакты
               </Text>
-              <Text fontSize="sm">Email: {SUPPORT_EMAIL}</Text>
-              <HStack spacing={3}>
+              <Text fontSize="xs">Email: {SUPPORT_EMAIL}</Text>
+              <HStack spacing={2}>
                 <Link
                   href={ORG_GITHUB_URL}
                   aria-label="Organization GitHub"
                   isExternal
                   borderRadius={borderRadius.full}
                   border="1px solid rgba(255,255,255,0.12)"
-                  p={3}
+                  p={2}
                   display="inline-flex"
                   alignItems="center"
                   justifyContent="center"
@@ -67,7 +68,7 @@ function Footer() {
                     outline: "none",
                   }}
                 >
-                  <Icon as={FaGithub} boxSize={4} />
+                  <Icon as={FaGithub} boxSize={3} />
                 </Link>
                 <Link
                   href={ORG_VK_URL}
@@ -75,7 +76,7 @@ function Footer() {
                   isExternal
                   borderRadius={borderRadius.full}
                   border="1px solid rgba(255,255,255,0.12)"
-                  p={3}
+                  p={2}
                   display="inline-flex"
                   alignItems="center"
                   justifyContent="center"
@@ -85,26 +86,24 @@ function Footer() {
                     outline: "none",
                   }}
                 >
-                  <Icon as={FaVk} boxSize={4} />
+                  <Icon as={FaVk} boxSize={3} />
                 </Link>
               </HStack>
             </Stack>
 
-            <Stack spacing={2}>
+            <Stack spacing={1}>
               <Text
-                fontSize="sm"
+                fontSize="xs"
                 color={colors.text.secondary}
                 textTransform="uppercase"
-                letterSpacing="0.2em"
+                letterSpacing="0.12em"
+                textAlign={"center"}
               >
                 Документы
               </Text>
-              <Text fontSize="sm" color={colors.text.secondary}>
-                Лицензионные соглашения и политика обработки данных доступны по запросу в поддержку.
-              </Text>
-              <Link href={`mailto:${SUPPORT_EMAIL}`} fontSize="sm" color={colors.brand.primary}>
-                Запросить документы →
-              </Link>
+              <Button as={NavLink} to="/documents" size="sm" variant="ghost" color={colors.brand.primary}>
+                Посмотреть документы
+              </Button>
             </Stack>
           </SimpleGrid>
         </Container>

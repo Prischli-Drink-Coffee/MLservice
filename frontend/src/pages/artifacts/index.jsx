@@ -25,7 +25,7 @@ function ArtifactsPage() {
   } = useArtifactsPageController();
 
   return (
-    <Stack spacing={6}>
+    <Stack spacing={6} bg="transparent" w="full">
       <PageHeader
         eyebrow="REGISTRY"
         title="Артефакты моделей"

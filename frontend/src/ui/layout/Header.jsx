@@ -12,16 +12,17 @@ import {
   MenuDivider,
   MenuItem,
   MenuList,
+  Portal,
   Stack,
   Text,
 } from "@chakra-ui/react";
 import { HamburgerIcon, TriangleDownIcon } from "@chakra-ui/icons";
 import { MotionBox } from "@ui/motionPrimitives";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@context/AuthContext";
 import Logo from "../assets/common/Logo";
 import { PROJECT_NAME } from "@constants";
-import { colors, gradients, borderRadius, spacing } from "@theme/tokens";
+import { colors, gradients, borderRadius, spacing, blur as blurTokens, shadows } from "@theme/tokens";
 
 // MotionBox provided by shared primitives
 
@@ -32,7 +33,7 @@ const navItems = [
   { label: "Артефакты", to: "/artifacts" },
   { label: "Метрики", to: "/metrics" },
   { label: "О нас", to: "/info" },
-  { label: "Профиль", to: "/profile" },
+  // профиль убран из основной навигации — доступ через иконку/меню профиля
 ];
 
 const linkBaseStyles = {
@@ -42,9 +43,9 @@ const linkBaseStyles = {
   color: colors.text.secondary,
   transition: "color 0.2s ease",
 };
-
 function Header() {
   const { isAuthenticated, logout, user } = useAuth();
+  const navigate = useNavigate();
   const userLabel = user?.first_name || user?.email || "Профиль";
 
   const renderNavLink = (item) => (
@@ -105,21 +106,25 @@ function Header() {
           as={Button}
           variant="ghost"
           size="sm"
-          px={{ base: 1.5, md: 3 }}
-          py={2}
+          px={{ base: 2, md: 2 }}
+          py={1}
           borderRadius={borderRadius.full}
-          rightIcon={
-            <TriangleDownIcon fontSize="xs" display={{ base: "none", md: "inline-flex" }} />
-          }
+          rightIcon={<TriangleDownIcon fontSize="xs" display={{ base: "none", md: "inline-flex" }} />}
+          _focusVisible={{
+            boxShadow: `0 0 0 6px ${colors.brand.primary}33`,
+            outline: "none",
+          }}
         >
-          <HStack spacing={3}>
-            <Avatar
-              name={userLabel}
-              size="sm"
-              bgGradient={gradients.prism}
-              color={colors.text.primary}
-              border="1px solid rgba(255,255,255,0.2)"
-            />
+            <HStack spacing={3} align="center">
+            <Box borderRadius="full" display="inline-block" p="2px">
+              <Avatar
+                name={userLabel}
+                size="sm"
+                bgGradient={gradients.prism}
+                color={colors.text.primary}
+                border="1px solid rgba(255,255,255,0.12)"
+              />
+            </Box>
             <Stack spacing={0} align="flex-start" display={{ base: "none", md: "flex" }}>
               <Text fontSize="sm" fontWeight="semibold">
                 {user?.first_name || "Пользователь"}
@@ -130,15 +135,59 @@ function Header() {
             </Stack>
           </HStack>
         </MenuButton>
-        <MenuList bg="rgba(5,5,10,0.95)" borderColor="rgba(255,255,255,0.08)">
-          <MenuItem as={NavLink} to="/profile">
-            Профиль
-          </MenuItem>
-          <MenuDivider borderColor="rgba(255,255,255,0.08)" />
-          <MenuItem onClick={logout} color="red.300">
-            Выйти
-          </MenuItem>
-        </MenuList>
+        <Portal>
+          <MenuList
+            as={MotionBox}
+            initial={{ opacity: 0, scale: 0.98, y: -6 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            bg={colors.blur.dark}
+            backdropFilter={`blur(${blurTokens.strength.light})`}
+            backgroundImage={gradients.midnightMesh}
+            backgroundBlendMode="overlay"
+            border={`1px solid ${colors.border.subtle}`}
+            zIndex={9999}
+            py={2}
+            px={1}
+            borderRadius={borderRadius.md}
+            boxShadow={`${shadows.elevated}, ${shadows.glow}`}
+            minW="200px"
+            overflow="hidden"
+            display="flex"
+            flexDirection="column"
+            gap={2}
+          >
+            <MenuDivider borderColor={colors.border.default} />
+
+            <MenuItem
+              onClick={() => navigate("/profile")}
+              py={2}
+              px={5}
+              fontSize="sm"
+              borderRadius={borderRadius.sm}
+              _hover={{
+                bg: "rgba(47,116,255,0.06)",
+                backgroundImage: gradients.prism,
+                backgroundBlendMode: "overlay",
+              }}
+              _focus={{ boxShadow: `0 0 0 4px ${colors.brand.primary}22`, outline: "none" }}
+            >
+              Профиль
+            </MenuItem>
+
+            <MenuItem
+              onClick={logout}
+              color={colors.error}
+              py={2}
+              px={5}
+              fontSize="sm"
+              borderRadius={borderRadius.sm}
+              _hover={{ bg: "rgba(239,68,68,0.06)", backgroundBlendMode: "overlay" }}
+            >
+              Выйти
+            </MenuItem>
+          </MenuList>
+        </Portal>
       </Menu>
     );
   };
@@ -156,13 +205,13 @@ function Header() {
       <Box position="relative">
         <Container maxW="6xl" px={{ base: spacing.md, md: spacing.lg, lg: spacing[13] }}>
           <Flex align="center" justify="space-between" minH="72px" gap={4}>
-            <HStack spacing={3}>
+            <HStack spacing={2}>
               <Link
                 as={NavLink}
                 to="/"
                 display="flex"
                 alignItems="center"
-                gap={3}
+                gap={2}
                 _focusVisible={{
                   boxShadow: `0 0 0 4px ${colors.brand.primary}33`,
                   outline: "none",
@@ -174,19 +223,25 @@ function Header() {
                 >
                   <Logo boxSize={8} variant="solid" />
                 </MotionBox>
-                <Box>
-                  <Text fontWeight="bold" fontSize="lg" color={colors.text.primary}>
+                <Stack spacing={0} align="flex-start" ml={0}>
+                  <Text
+                    fontWeight="semibold"
+                    fontSize={{ base: "md", md: "lg" }}
+                    color={colors.text.primary}
+                    lineHeight={1}
+                  >
                     {PROJECT_NAME}
                   </Text>
                   <Text
                     fontSize="xs"
-                    letterSpacing="0.35em"
+                    letterSpacing="0.18em"
                     textTransform="uppercase"
                     color={colors.text.tertiary}
+                    display={{ base: "none", sm: "block" }}
                   >
                     ML Console
                   </Text>
-                </Box>
+                </Stack>
               </Link>
             </HStack>
 

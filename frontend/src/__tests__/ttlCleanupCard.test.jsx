@@ -6,8 +6,12 @@ const renderWithChakra = (ui) => render(<ChakraProvider>{ui}</ChakraProvider>);
 
 describe("TTLCleanupCard", () => {
   it("does not render without permission", () => {
-    const { container } = renderWithChakra(<TTLCleanupCard canCleanup={false} />);
-    expect(container).toBeEmptyDOMElement();
+    renderWithChakra(<TTLCleanupCard canCleanup={false} />);
+    // Chakra may mount a hidden helper node (#__chakra_env) into document.body.
+    // Assert there is no visible content for the card instead of requiring the
+    // render container to be fully empty.
+    expect(screen.queryByText(/TTL очистка датасетов/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Очистить просроченные/i })).not.toBeInTheDocument();
   });
 
   it("shows controls for admins", () => {

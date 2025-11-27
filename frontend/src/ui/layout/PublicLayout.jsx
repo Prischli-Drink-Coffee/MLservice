@@ -24,12 +24,6 @@ function PublicLayout() {
       <Box
         position="absolute"
         inset={0}
-        bg={`radial-gradient(circle at 20% 20%, rgba(47,116,255,0.35), transparent 45%), ${gradients.midnightMesh}`}
-        opacity={0.7}
-      />
-      <Box
-        position="absolute"
-        inset={0}
         bg="linear-gradient(180deg, rgba(5,5,5,0.9) 0%, rgba(5,5,5,0.75) 35%, rgba(5,5,5,0.95) 100%)"
         opacity={0.9}
       />
@@ -55,6 +49,7 @@ function PublicLayout() {
             <MotionContainer
               key={location.pathname}
               maxW="6xl"
+              mx="auto"
               py={{ base: 10, md: 14 }}
               px={{ base: spacing.md, md: spacing.lg, lg: spacing[13] }}
               initial={{ opacity: 0, y: 12 }}

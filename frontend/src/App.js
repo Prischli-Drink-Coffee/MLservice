@@ -14,6 +14,7 @@ const TrainingRunsPage = lazy(() => import("@pages/training"));
 const ArtifactsPage = lazy(() => import("@pages/artifacts"));
 const MetricsPage = lazy(() => import("@pages/metrics"));
 const ProfilePage = lazy(() => import("@pages/profile"));
+const DocumentsPage = lazy(() => import("@features/documents/DocumentsPage"));
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "login", element: <LoginPage /> },
+      { path: "documents", element: <DocumentsPage /> },
       { path: "register", element: <SignUpPage /> },
     ],
   },
