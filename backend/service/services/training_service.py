@@ -14,6 +14,13 @@ from service.monitoring.metrics import (
 )
 from service.repositories.file_repository import FileRepository
 from service.repositories.training_repository import TrainingRepository
+from service.services.automl.serialization import (
+    extract_leaderboard,
+    extract_pareto_front,
+    serialize_dataframe,
+    write_json,
+)
+from service.services.automl.tpot_trainer import TPOTTrainer
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +42,16 @@ class TrainingService:
         file_repo: FileRepository,
         *,
         storage_root: str | None = None,
+        automl_enabled: bool = False,
+        automl_fallback: bool = True,
+        tpot_trainer: TPOTTrainer | None = None,
     ) -> None:
         self._training_repo = training_repo
         self._file_repo = file_repo
         self._storage_root = storage_root or os.getenv("STORAGE_ROOT", "/var/lib/app/storage")
+        self._automl_enabled = automl_enabled and tpot_trainer is not None
+        self._automl_fallback = automl_fallback
+        self._tpot_trainer = tpot_trainer
         # Feature flag to enable real training with pandas/sklearn on safe platforms
         self._enable_real = os.getenv("ENABLE_REAL_TRAINING", "").strip().lower() in {
             "1",
@@ -126,7 +139,12 @@ class TrainingService:
 
             # 4) Load dataset and train a simple model
             data_path = self._resolve_data_path(dataset_record.file_url)
-            metrics = await self._train_and_export_model(data_path, target_column=target_column)
+            metrics = await self._train_and_export_model(
+                data_path,
+                target_column=target_column,
+                job_id=job.id,
+                payload=payload,
+            )
 
             # 5) Persist a model artifact file (already created by _train_and_export_model)
             model_url = metrics.get("model_url")
@@ -198,16 +216,126 @@ class TrainingService:
             return file_url
         return os.path.join(self._storage_root, file_url)
 
-    async def _train_and_export_model(
-        self, csv_path: str, *, target_column: str | None = None
-    ) -> dict[str, Any]:
-        """Train a simple model on CSV.
+    def _storage_path(self, rel_path: str) -> str:
+        rel = rel_path.lstrip("/\\")
+        abs_path = os.path.join(self._storage_root, rel)
+        os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+        return abs_path
 
-        If ENABLE_REAL_TRAINING is set, try pandas/sklearn path; otherwise use lightweight fallback.
-        Any failure on heavy path results in fallback.
-        """
+    def _resolve_target_column(self, df, preferred: str | None) -> str:
+        if preferred:
+            match = next((col for col in df.columns if col.lower() == preferred.lower()), None)
+            if match:
+                return match
+        for candidate in ("target", "label", "y"):
+            if candidate in df.columns:
+                return candidate
+        return df.columns[-1]
+
+    def _infer_task(self, target_column: "pd.Series", hint: str | None) -> str:
+        hint = (hint or "").strip().lower()
+        if hint in {"classification", "regression"}:
+            return hint
+        import pandas as pd
+
+        if pd.api.types.is_numeric_dtype(target_column) and target_column.nunique() > 20:
+            return "regression"
+        return "classification"
+
+    async def _train_with_automl(
+        self,
+        csv_path: str,
+        *,
+        target_column: str | None,
+        payload: dict[str, Any] | None,
+        job_id: UUID,
+    ) -> dict[str, Any]:
+        if self._tpot_trainer is None:
+            raise RuntimeError("TPOT trainer is not configured")
+        import joblib
+        import pandas as pd
+
+        df = pd.read_csv(csv_path)
+        if df.empty:
+            raise ValueError("Dataset is empty")
+
+        target_col = self._resolve_target_column(df, target_column)
+        cleaned = df.dropna(subset=[target_col]).copy()
+        if cleaned.empty:
+            raise ValueError("Dataset has no rows after removing missing targets")
+
+        feature_frame = cleaned.drop(columns=[target_col], errors="ignore")
+        valid_idx = feature_frame.dropna().index
+        cleaned = cleaned.loc[valid_idx]
+        if cleaned.empty:
+            raise ValueError("No rows remain once missing feature values are removed")
+
+        task_hint = (payload or {}).get("task")
+        task = self._infer_task(cleaned[target_col], task_hint)
+        options = self._tpot_trainer.resolve_run_options(payload)
+        result = self._tpot_trainer.train(
+            cleaned,
+            target_column=target_col,
+            task=task,
+            payload=payload,
+        )
+
+        job_id_str = str(job_id)
+        model_rel = f"models/tpot/{job_id_str}_model.joblib"
+        leaderboard_rel = f"models/tpot/{job_id_str}_leaderboard.json"
+        pareto_rel = f"models/tpot/{job_id_str}_pareto_front.json"
+
+        joblib.dump(result.fitted_pipeline, self._storage_path(model_rel))
+        leaderboard_data = extract_leaderboard(
+            result.evaluated_individuals, options.metric, options.leaderboard_topk
+        )
+        write_json(leaderboard_data, self._storage_path(leaderboard_rel))
+        pareto_data = extract_pareto_front(result.evaluated_individuals)
+        write_json(pareto_data, self._storage_path(pareto_rel))
+
+        return {
+            "task": task,
+            "target_column": target_col,
+            "metric": options.metric,
+            "parallel_mode": result.parallel_mode,
+            "tp_generations": result.generations_completed,
+            "tp_population_size": result.population_size,
+            "best_score": result.best_score,
+            "n_samples": len(cleaned),
+            "n_features": len(cleaned.columns) - 1,
+            "leaderboard": leaderboard_data,
+            "pareto_front": pareto_data,
+            "leaderboard_url": f"/storage/{leaderboard_rel}",
+            "pareto_front_url": f"/storage/{pareto_rel}",
+            "model_url": f"/storage/{model_rel}",
+            "evaluated_individuals": serialize_dataframe(result.evaluated_individuals.head(20)),
+        }
+
+    async def _train_and_export_model(
+        self,
+        csv_path: str,
+        *,
+        target_column: str | None = None,
+        job_id: UUID,
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Train a model on CSV, preferring AutoML when enabled before legacy paths."""
         if not os.path.exists(csv_path):
             raise FileNotFoundError(f"Dataset not found: {csv_path}")
+
+        if self._automl_enabled:
+            try:
+                return await self._train_with_automl(
+                    csv_path,
+                    target_column=target_column,
+                    payload=payload,
+                    job_id=job_id,
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("TPOT training failed, falling back: %s", exc)
+                if not self._automl_fallback:
+                    raise
+
         if self._enable_real:
             try:
                 import joblib

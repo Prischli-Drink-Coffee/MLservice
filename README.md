@@ -99,6 +99,42 @@ Redis используется для хранения активных поль
 - `MAX_EMPTY_RATIO` — максимальная доля пустых/`nan`/`null` ячеек (0..1), по умолчанию `0.5`.
 - `MAX_MODEL_ARTIFACTS` — ретенция артефактов моделей на пользователя: хранится указанное число самых новых, старые удаляются из БД и файловой системы (по умолчанию `5`).
 
+### TPOT AutoML (новое)
+
+- `ENABLE_AUTOML` — включает использование TPOT для автоматического поиска моделей (feature-flag).
+- `TPOT_PARALLEL_MODE` — `local` / `distributed` / `off` (по умолчанию `local`).
+- `TPOT__CONFIG_DICT` — конфигурация TPOT: рекомендуется использовать строковые имена пространств поиска (`'linear'`, `'graph'`) или `tpot.config.get_search_space('regressors')`; для старых версий можно указать `module.attr` или literal dict.
+- `TPOT__GENERATIONS`, `TPOT__POPULATION_SIZE`, `TPOT__TIME_LEFT`, `TPOT__PER_RUN_LIMIT`, `TPOT__METRIC` — стандартные параметры TPOT.
+
+Пример включения в `.env`:
+
+```ini
+ENABLE_AUTOML=true
+TPOT_PARALLEL_MODE=local
+TPOT__CONFIG_DICT='linear'
+TPOT__GENERATIONS=40
+TPOT__POPULATION_SIZE=64
+TPOT__TIME_LEFT=600
+TPOT__PER_RUN_LIMIT=60
+TPOT__METRIC=accuracy
+```
+
+Документация и плейбуки по TPOT:
+
+- `docs/tpot_integration_plan.md` — план интеграции TPOT в pipeline и миграционные заметки.
+- `docs/tpot_playbook.md` — пошаговый плейбук для запуска TPOT локально и на Dask.
+- `docs/tpot_prod_setup.md` — рекомендации для продакшен-деплоя (ресурсы, Prometheus, Grafana).
+
+Для установки всех необязательных зависимостей TPOT (тяжёлых пакетов для e2e/Dask) можно
+выполнить:
+
+```bash
+pip install -r backend/requirements-tpot.txt
+```
+
+Файл `backend/requirements-tpot.txt` содержит версии пакетов, нужных для TPOT и распределённых запусков.
+
+
 ### ML API (v1) эндпоинты
 
 - `GET /api/ml/v1/datasets` — список датасетов пользователя.

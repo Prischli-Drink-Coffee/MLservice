@@ -74,13 +74,42 @@ def setup_monitoring(app: FastAPI) -> None:
             "Instrument-in-progress metric ignored because the helper is unavailable in this version"
         )
 
+    # Instrument immediately, but expose metrics on application startup to avoid
+    # issues with reloaders / multiple process lifecycles. Exposing on startup
+    # mirrors the pattern suggested by prometheus-fastapi-instrumentator docs:
+    #   instrumentator = Instrumentator().instrument(app)
+    #   @app.on_event("startup")
+    #   async def _startup():
+    #       instrumentator.expose(app)
     instrumentator.instrument(app)
-    instrumentator.expose(
-        app,
-        endpoint=monitoring_cfg.metrics_path,
-        include_in_schema=False,
-        should_gzip=True,
-    )
+    # Expose immediately (works in normal and single-process mode). Also keep
+    # a startup handler as a fallback for lifecycle edge-cases (reloaders)
+    try:
+        instrumentator.expose(
+            app,
+            endpoint=monitoring_cfg.metrics_path,
+            include_in_schema=False,
+            should_gzip=True,
+        )
+    except Exception:
+        logger.exception(
+            "Failed to expose Prometheus metrics endpoint immediately; will try on startup"
+        )
+
+    def _expose_metrics() -> None:
+        try:
+            instrumentator.expose(
+                app,
+                endpoint=monitoring_cfg.metrics_path,
+                include_in_schema=False,
+                should_gzip=True,
+            )
+        except Exception:
+            # It's fine if expose can't be re-registered; ignore silently.
+            pass
+
+    # Use startup handler as a safety net for reload/multiprocess servers
+    app.add_event_handler("startup", _expose_metrics)
 
     _instrumentator = instrumentator
 

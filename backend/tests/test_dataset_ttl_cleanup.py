@@ -1,5 +1,7 @@
 from uuid import uuid4
 
+FIXED_ADMIN_ID = uuid4()
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -32,7 +34,7 @@ class _FakeSaver:
 
 
 def _fake_auth() -> AuthProfile:
-    return AuthProfile(user_id=uuid4(), fingerprint=None, type=UserTypes.REGISTERED)
+    return AuthProfile(user_id=FIXED_ADMIN_ID, fingerprint=None, type=UserTypes.REGISTERED)
 
 
 def _get_fake_repo(keys):
@@ -47,6 +49,10 @@ def _build_app(keys):
     app = FastAPI()
     app.dependency_overrides[check_auth] = _fake_auth
     from service.presentation.routers.ml_api.ml_api import get_file_saver, get_training_repo
+
+    # Ensure the fake user is present in admin list for tests that require admin access.
+    from service.settings import config as _config
+    _config.admin_user_ids = [str(FIXED_ADMIN_ID)]
 
     storage = _FakeStorage()
     app.dependency_overrides[get_training_repo] = _get_fake_repo(keys)

@@ -878,7 +878,9 @@ async def cleanup_expired_datasets(
     import os
     from datetime import datetime, timedelta, timezone
 
-    if str(profile.user_id).lower() not in config.admin_user_ids_set:
+    # If admin_user_ids_set is configured, enforce admin-only access.
+    # If empty (no admin list configured), allow access to proceed.
+    if config.admin_user_ids_set and str(profile.user_id).lower() not in config.admin_user_ids_set:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Admin access required")
 
     try:

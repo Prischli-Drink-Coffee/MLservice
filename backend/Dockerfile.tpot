@@ -1,0 +1,49 @@
+FROM python:3.13-slim
+
+ARG NEXUS_PYPI_INDEX_URL
+
+ENV HOME="/dude"
+ENV PYTHONPATH=$HOME
+
+RUN groupadd -g 999 dudes && \
+    useradd -u 999 -m -g dudes -s /bin/bash dude && \
+    mkdir -p ${HOME} && chown dude:dudes $HOME
+
+RUN mkdir -p /var/lib/app/storage && chown -R dude:dudes /var/lib/app
+
+WORKDIR ${HOME}
+
+RUN apt-get update && apt-get install -y curl build-essential netcat-openbsd \
+    gcc \
+    libpq-dev \
+    cargo \
+    rustc \
+    gosu \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (used by the backend Dockerfile) and pip
+RUN python -m pip install --disable-pip-version-check --no-cache-dir uv
+
+# Ensure setuptools (pkg_resources) is available at build time so TPOT and
+# its dependencies (stopit, etc.) can import pkg_resources inside worker
+# processes. Installing here makes the image self-contained and avoids
+# runtime pip installs inside containers.
+RUN python -m pip install --no-cache-dir setuptools
+
+COPY --chown=dude:dudes ./requirements.txt ${HOME}/
+COPY --chown=dude:dudes ./requirements-tpot.txt ${HOME}/
+
+# Install base requirements and TPOT-related heavy requirements
+RUN uv pip install --system --index-url "${NEXUS_PYPI_INDEX_URL:-https://pypi.org/simple}" -r requirements.txt && \
+    uv pip install --system --index-url "${NEXUS_PYPI_INDEX_URL:-https://pypi.org/simple}" -r requirements-tpot.txt
+
+COPY --chown=dude:dudes ./service ${HOME}/service
+COPY --chown=dude:dudes ./alembic ${HOME}/alembic
+COPY --chown=dude:dudes ./entrypoints.sh ${HOME}
+COPY ./docker-entrypoint.sh ${HOME}
+
+RUN chmod +x ${HOME}/entrypoints.sh ${HOME}/docker-entrypoint.sh
+
+ENTRYPOINT ["/dude/docker-entrypoint.sh"]
+
+CMD ["server"]

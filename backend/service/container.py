@@ -6,6 +6,7 @@ from service.repositories.file_repository import FileRepository
 from service.repositories.job_repository import JobRepository
 from service.repositories.profile_repository import ProfileRepository
 from service.services.auth_service import AuthService
+from service.services.automl.tpot_trainer import TPOTTrainer
 from service.services.file_saver_service import FileSaverService
 from service.services.job_processor import NewJobProcessor
 from service.services.job_service import JobService
@@ -116,6 +117,9 @@ def build(config: Config):
     _CONTAINER[TrainingServiceName] = TrainingService(
         training_repo=training_repo,
         file_repo=get(FileRepositoryName),
+        automl_enabled=config.enable_automl,
+        automl_fallback=config.enable_automl_fallback,
+        tpot_trainer=TPOTTrainer(config.tpot),
     )
 
     _CONTAINER[NewJobProcessorName] = NewJobProcessor(

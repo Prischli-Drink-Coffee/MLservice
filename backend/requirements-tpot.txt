@@ -1,0 +1,14 @@
+## Optional requirements for TPOT AutoML and distributed runs
+# Install these when you want full TPOT functionality (heavy, optional).
+# TPOT pulls a number of heavy dependencies (dask, distributed, lightgbm, xgboost, etc.)
+# Pin versions here to keep CI reproducible.
+tpot==1.1.0
+dask==2024.12.1
+distributed==2024.12.1
+dask-jobqueue==0.9.0
+dask-expr==1.1.21
+lightgbm==4.6.0
+stopit==1.1.2
+scikit-learn-intelex==2025.9.0
+# NOTE: many of TPOT's optional deps (xgboost, seaborn, matplotlib) are already
+# present in the main `backend/requirements.txt` or will be pulled transitively.

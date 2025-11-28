@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 
 import dotenv
 from pydantic import BaseModel, Field, field_validator
@@ -84,6 +85,61 @@ class MLConfig(BaseSettings):
     #     env_prefix = "ML_"
 
 
+class TPOTConfig(BaseSettings):
+    """TPOT-specific runtime options read from TPOT__/TPOT_ env vars."""
+
+    parallel_mode: Literal["local", "distributed", "off"] = Field(
+        "local",
+        env="TPOT_PARALLEL_MODE",
+        description="Parallel mode (local/distributed/off) for TPOT-based training",
+    )
+    n_jobs: int | None = Field(
+        None, env="TPOT__N_JOBS", description="Local worker count (if unset, derived dynamically)"
+    )
+    memory_limit_mb: int | None = Field(
+        None, env="TPOT__MEMORY_LIMIT_MB", description="Memory limit passed to TPOT estimators"
+    )
+    generations: int = Field(
+        40, env="TPOT__GENERATIONS", description="Default number of TPOT generations"
+    )
+    population_size: int = Field(
+        64, env="TPOT__POPULATION_SIZE", description="TPOT population size"
+    )
+    time_left: int = Field(600, env="TPOT__TIME_LEFT", description="Search budget in seconds")
+    per_run_limit: int = Field(
+        60, env="TPOT__PER_RUN_LIMIT", description="Per-model time budget in seconds"
+    )
+    metric: str = Field("accuracy", env="TPOT__METRIC", description="Default scoring metric")
+    cv_folds: int = Field(5, env="TPOT__CV_FOLDS", description="Cross-validation folds")
+    config_dict: str | dict | None = Field(
+        None,
+        env="TPOT__CONFIG_DICT",
+        description=(
+            "Reference (module.path.attr) or literal dict for TPOT search space. "
+            "Newer TPOT versions prefer search spaces via `tpot.config.get_search_space(name)` or simple "
+            "string names like 'linear'/'graph'. For legacy behaviour you can supply a dict or a module.path.attr "
+            "that points to a config dict."
+        ),
+    )
+    dask_scheduler_file: str | None = Field(
+        "/var/run/tpot/scheduler.json",
+        env="TPOT__DASK_SCHEDULER_FILE",
+        description="Path to Dask scheduler file used in distributed mode",
+    )
+    random_state: int = Field(42, env="TPOT__RANDOM_STATE", description="Random state for TPOT")
+    leaderboard_topk: int = Field(
+        5, env="TPOT__LEADERBOARD_TOPK", description="Leaderboard size to keep in metadata"
+    )
+
+    model_config = SettingsConfigDict(
+        env_prefix="TPOT__",
+        env_nested_delimiter="__",
+        case_sensitive=False,
+        extra="allow",
+        env_file=ENV_FILE,
+    )
+
+
 class CorsConfig(BaseSettings):
     """CORS configuration"""
 
@@ -155,6 +211,29 @@ class MonitoringConfig(BaseSettings):
             10.0,
         ]
     )
+
+    @field_validator("latency_buckets", mode="before")
+    @classmethod
+    def _parse_latency_buckets(cls, v):
+        # Accept either a proper list or a JSON/string representation from env files.
+        if v is None:
+            return v
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return [float(x) for x in parsed]
+            except Exception:
+                # Fall through and try to parse simple comma-separated list
+                try:
+                    parts = [p.strip() for p in v.strip("[] ").split(",") if p.strip()]
+                    return [float(x) for x in parts]
+                except Exception:
+                    raise ValueError(
+                        "Invalid latency_buckets format; expected JSON list or comma-separated numbers"
+                    )
+        return v
+
     gather_default_metrics: bool = True
     instrument_inprogress: bool = True
 
@@ -180,6 +259,17 @@ class Config(BaseSettings):
     # Storage backend selection
     storage_backend: str = "local"  # "local" or "minio"
 
+    enable_automl: bool = Field(
+        False,
+        env="ENABLE_AUTOML",
+        description="Master switch for TPOT-powered AutoML training",
+    )
+    enable_automl_fallback: bool = Field(
+        True,
+        env="ENABLE_AUTOML_FALLBACK",
+        description="Allow fallback to legacy training when TPOT fails",
+    )
+
     # Настройки загрузки файлов (используются files API)
     allowed_extensions: tuple[str, ...] = (".png", ".jpg", ".jpeg", ".csv")
     max_file_size_byte: int = 20 * 1024 * 1024  # 20 MB
@@ -190,6 +280,8 @@ class Config(BaseSettings):
         os.getenv("DATASET_TTL_CHECK_INTERVAL_SEC", "3600")
     )  # default: hourly
     dataset_ttl_batch_limit: int = int(os.getenv("DATASET_TTL_BATCH_LIMIT", "500"))
+
+    tpot: TPOTConfig = Field(default_factory=TPOTConfig)
 
     model_config = SettingsConfigDict(
         case_sensitive=False,

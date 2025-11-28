@@ -199,3 +199,4 @@ infra/nginx/certs
 /data
 
 /frontend/axe-report.json
+/tmp_tpot

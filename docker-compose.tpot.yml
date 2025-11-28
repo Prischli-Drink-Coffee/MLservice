@@ -1,0 +1,44 @@
+
+version: '3.9'
+
+services:
+  dask-scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.tpot
+    image: mlservice-dask-tpot:latest
+    entrypoint: ["dask-scheduler"]
+    ports:
+      - '8786:8786'
+    volumes:
+      - ./infra/storage:/storage
+      - ./infra/monitoring:/var/run/tpot
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request, sys; u=urllib.request.urlopen(\"http://localhost:8787/status\"); sys.exit(0 if u.status==200 else 1)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dask-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.tpot
+    image: mlservice-dask-tpot:latest
+    depends_on:
+      dask-scheduler:
+        condition: service_healthy
+    entrypoint: ["dask-worker", "tcp://dask-scheduler:8786", "--nthreads", "1", "--memory-limit", "2GB"]
+    deploy:
+      replicas: 1
+    volumes:
+      - ./infra/storage:/storage
+      - ./infra/monitoring:/var/run/tpot
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request, sys; u=urllib.request.urlopen(\"http://localhost:8787/status\"); sys.exit(0 if u.status==200 else 1)'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  default:
+    external: false
