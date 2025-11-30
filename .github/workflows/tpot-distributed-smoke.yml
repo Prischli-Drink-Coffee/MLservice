@@ -1,0 +1,60 @@
+name: TPOT Distributed Smoke (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: 'Optional note for this run'
+        required: false
+
+jobs:
+  distributed-smoke:
+    name: Gated distributed TPOT smoke (manual)
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU and buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build TPOT-enabled image
+        run: |
+          docker build -f backend/Dockerfile.tpot -t mlservice-dask-tpot:ci .
+
+      - name: Start Dask compose stack
+        run: |
+          # This workflow is intended to be run on a self-hosted runner with Docker
+          # enabled or a runner that supports Docker Compose. If the runner cannot
+          # run Docker, this step will fail. Run manually on an appropriate host.
+          docker compose -f docker-compose.tpot.yml up -d
+
+      - name: Wait for scheduler
+        run: |
+          echo "Waiting for Dask scheduler to come up..."
+          for i in $(seq 1 30); do
+            if nc -z localhost 8786; then
+              echo "Scheduler listening"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Run distributed minimal smoke
+        env:
+          TPOT_DASK_ADDRESS: tcp://127.0.0.1:8786
+          PYTHONPATH: backend
+        run: |
+          python3 backend/tools/tpot_trainer_smoke_distributed_minimal.py
+
+      - name: Collect logs
+        if: always()
+        run: |
+          mkdir -p artifacts
+          cp -r tmp_tpot artifacts/ || true
+
+      - name: Tear down compose
+        if: always()
+        run: |
+          docker compose -f docker-compose.tpot.yml down --volumes
