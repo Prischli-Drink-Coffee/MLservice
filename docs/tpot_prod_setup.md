@@ -46,24 +46,71 @@ scrape_configs:
   - `dask_worker_status`
 
 ## Grafana
-- Create a dashboard showing:
-  - Worker memory usage over time (alert on >80% of configured `TPOT__MEMORY_LIMIT_MB`).
-  - Task throughput and average duration.
-  - Number of failures / restarting workers.
+# TPOT Production Setup
+
+Практические рекомендации по запуску TPOT в production/стейджинг окружении. В документе учтены последние изменения: сборка образа с setuptools, логирование снимков scheduler_info и рекомендации по доставке проектного кода на воркеры.
+
+## Docker / Compose
+
+Используйте `docker-compose.tpot.yml` для деплоя Dask scheduler + workers. Ключевые рекомендации:
+
+- Используйте небольшое число потоков на worker (рекомендуется 1) и увеличивайте число реплик воркеров для горизонтального масштабирования.
+- Всегда указывайте `TPOT__MEMORY_LIMIT_MB`, чтобы контролировать память на оценку модели.
+- Смонтируйте общий том для `/var/run/tpot`, чтобы `scheduler.json` был доступен backend и worker'ам.
+- В образ воркера включите проектный код (COPY) и setuptools — это минимизирует риски десериализации/ImportError.
+
+## K8s / Helm notes
+
+Если деплоите в Kubernetes, используйте Deployment/StatefulSet и PV для обмена `scheduler.json` или применяйте сервисную регистрацию. Настройте ресурсы и readinessProbe для scheduler/worker.
+
+Пример readiness probe:
+
+```yaml
+readinessProbe:
+  httpGet:
+    path: /status
+    port: 8787
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  failureThreshold: 3
+```
+
+## Prometheus / Dask monitoring
+
+- Убедитесь, что Dask dashboard/metrics доступны и добавьте их в scrape_configs Prometheus.
+- Важные метрики:
+  - `dask_worker_memory_used_bytes`
+  - `dask_worker_nthreads`
+  - `dask_scheduler_tasks_total`
+  - `dask_worker_status`
+
+Также собирайте метрики TrainingService: `training_duration_seconds{mode="tpot"}`, `training_best_score` и `tpot_parallel_fallbacks_total`.
+
+## Grafana
+
+- Панель должна показывать загрузку памяти воркеров, число задач, среднюю длительность задач и частоту рестартов nanny.
 
 ## Entrypoint best-practices
-- Backend must handle scheduler absence gracefully and either retry or fall back to local mode. Example shell wait-loop provided in `docs/tpot_playbook.md`.
+
+- Backend должен уметь ждать появления `scheduler.json` и корректно реконнектиться или переходить в локальный режим.
+- В `tpot_trainer` добавлены снимки состояния scheduler (pre-fit / on-exception) — сохраняются в /tmp и могут собираться в host `tmp_tpot/` для постмортема.
 
 ## Resource sizing guidance
+
 - Small dev: 2 workers x 1 thread, 2GB per worker.
 - Staging: 4 workers x 1 thread, 4GB per worker.
-- Production: depends on dataset size and concurrency; benchmark and scale horizontally.
+- Production: тестируйте и масштабируйте горизонтально, опираясь на реальную длительность и память оценок.
 
 ## Security
-- Run workers/scheduler inside isolated network namespaces.
-- Limit RBAC and network egress if running in k8s.
+
+- Изолируйте network namespace scheduler/worker'ов, ограничьте egress/ingress в prod.
 
 ## Rollout plan (summary)
-1. Deploy scheduler with 1 worker in staging and set `TPOT_PARALLEL_MODE=distributed`.
-2. Run canary jobs (10% of runs) for 48h and monitor memory/latency.
-3. Gradually scale workers and increase job share.
+
+1. Deploy scheduler + 1 worker в staging, `TPOT_PARALLEL_MODE=distributed`.
+2. Прогоните canary jobs (10% = небольшая доля) в течение 48h; мониторьте memory & task failures.
+3. Если стабильно — увеличивайте число worker'ов и долю production jobs.
+
+---
+
+Примечание: для быстрой локальной проверки используйте `backend/tools/tpot_trainer_smoke_minimal_local.py` и `backend/tests/test_tpot_smoke_local.py` в CI как быстрый smoke.

@@ -51,11 +51,21 @@ jobs:
           cd backend
           pytest -q -k "tpot or automl or tpot_trainer" --junitxml=../artifacts/junit-fast-${{ matrix.python-version }}.xml
 
+      - name: Run TPOT local smoke test (explicit)
+        env:
+          ENABLE_AUTOML: 'true'
+        run: |
+          cd backend
+          # explicit, fast smoke test for distributed codepaths in local mode
+          pytest -q tests/test_tpot_smoke_local.py --junitxml=../artifacts/junit-smoke-local-${{ matrix.python-version }}.xml || true
+
       - name: Upload fast test results
         uses: actions/upload-artifact@v4
         with:
           name: tpot-fast-junit-${{ matrix.python-version }}
-          path: artifacts/junit-fast-${{ matrix.python-version }}.xml
+          path: |
+            artifacts/junit-fast-${{ matrix.python-version }}.xml
+            artifacts/junit-smoke-local-${{ matrix.python-version }}.xml
 
   tpot-heavy:
     name: Heavy TPOT e2e (optional)

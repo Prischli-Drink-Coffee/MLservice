@@ -29,6 +29,43 @@ Notes
 
 Add the following services to `docker-compose.dev.yaml` (or `docker-compose.yaml` for staging):
 
+# TPOT Playbook — DevOps snippets
+
+Практические сниппеты и оперативные заметки для запуска TPOT в `local` и `distributed` режимах (Docker Compose). Добавлены примечания по последним изменениям в проекте.
+
+## Важные обновления
+
+- Образ воркера/планировщика должен содержать `setuptools` (в репозитории обновлён `backend/Dockerfile.tpot` для этого).
+- В `backend/tools/` добавлены минимальные smoke-скрипты: локальная и распределённая версии. Используйте их для быстрой проверки после сборки образа.
+- Для стабильной работы распределённого режима рекомендуется включить проектный код в образ воркера (COPY) — это устраняет частые ошибки десериализации/импорта.
+
+## 1) Local dev (quick)
+
+Use this when you want to test TPOT locally without Dask.
+
+- Убедитесь, что в `.env` установлены значения:
+
+```ini
+ENABLE_AUTOML=true
+TPOT_PARALLEL_MODE=local
+TPOT__CONFIG_DICT='linear'
+TPOT__N_JOBS=2
+TPOT__MEMORY_LIMIT_MB=2048
+```
+
+- Запуск бэкенда в dev режиме:
+
+```bash
+docker compose -f docker-compose.dev.yaml up --build backend
+```
+
+Заметки:
+- Local TPOT использует `n_jobs` для параллелизма. Держите `TPOT__N_JOBS` в разумных пределах, чтобы избежать OOM.
+
+## 2) Distributed (Dask scheduler + workers)
+
+Пример сервисов для `docker-compose` (стартовый шаблон):
+
 ```yaml
   tpot-scheduler:
     image: daskdev/dask:2024.5.2
@@ -39,7 +76,7 @@ Add the following services to `docker-compose.dev.yaml` (or `docker-compose.yaml
       - backend
 
   tpot-worker:
-    image: daskdev/dask:2024.5.2
+    image: mlservice-dask-tpot:latest
     depends_on:
       - tpot-scheduler
     command: /bin/bash -lc "DASK_DISTRIBUTED__WORKER__DAEMON=False dask-worker --nthreads 1 --memory-limit 0 --scheduler-file /var/run/tpot/scheduler.json"
@@ -51,12 +88,12 @@ Add the following services to `docker-compose.dev.yaml` (or `docker-compose.yaml
       - backend
 ```
 
-- Expose `TPOT__DASK_SCHEDULER_FILE=/var/run/tpot/scheduler.json` to the backend container so it can connect using `Client(scheduler_file=...)`.
-- When using `distributed` mode set `TPOT_PARALLEL_MODE=distributed` and ensure `TPOT__N_JOBS` matches number of worker processes.
+- Передайте `TPOT__DASK_SCHEDULER_FILE=/var/run/tpot/scheduler.json` в контейнер backend, чтобы он мог подключиться через `Client(scheduler_file=...)`.
+- Для distributed режима ставьте `TPOT_PARALLEL_MODE=distributed` и согласуйте `TPOT__N_JOBS` с количеством воркеров/процессов.
 
 ## 3) Entrypoint wait helper (backend)
 
-Dask scheduler writes `scheduler.json` after starting. Backend should wait for file presence before using it (or handle connection failure gracefully). Example shell snippet for entrypoint:
+Поскольку `dask-scheduler` пишет `scheduler.json` после старта, рекомендую в entrypoint делать ожидание файла (или ретраить подключение). Пример shell-обёртки (см. `backend/entrypoints.sh`):
 
 ```bash
 #!/usr/bin/env bash
@@ -64,7 +101,7 @@ set -e
 if [ "$TPOT_PARALLEL_MODE" = "distributed" ]; then
   echo "Waiting for Dask scheduler file $TPOT__DASK_SCHEDULER_FILE"
   retries=0
-  while [ $retries -lt 30 ]; do
+  while [ $retries -lt 60 ]; do
     if [ -f "$TPOT__DASK_SCHEDULER_FILE" ]; then
       echo "Found scheduler file"
       break
@@ -79,19 +116,19 @@ exec uvicorn service.main:app --host 0.0.0.0 --port 8000
 
 ## 4) Resource recommendations
 
-- For small dev runs: 2 workers, 1 thread each, memory_limit ~ 2GB per worker.
-- For staging: 4+ workers depending on workload.
-- Always set `TPOT__MEMORY_LIMIT_MB` to limit memory per evaluation.
+- Small dev: 2 workers, 1 thread each, memory_limit ~ 2GB per worker.
+- Staging: 4+ workers depending on load.
+- Всегда указывайте `TPOT__MEMORY_LIMIT_MB` для предсказуемости.
 
 ## 5) Troubleshooting
 
-- "Can't connect to scheduler": check volume mount for `/var/run/tpot` and permissions.
-- `Worker process died`: likely OOM, reduce `n_jobs` or increase `TPOT__MEMORY_LIMIT_MB`.
-- Long evaluations: reduce `TPOT__POPULATION_SIZE` or `TPOT__GENERATIONS`, or set `TPOT__PER_RUN_LIMIT`.
+- "Can't connect to scheduler": проверьте монтирование тома для `/var/run/tpot` и права доступа.
+- `Worker process died`: вероятно OOM — уменьшите `n_jobs` или увеличьте `TPOT__MEMORY_LIMIT_MB`.
+- Ошибки десериализации/ImportError на воркерах: убедитесь, что в image воркера есть все зависимости и проектный код либо копируется в образ, либо загружается через `client.upload_file()`.
 
 ## 6) Quick sanity checks
 
-From within backend container:
+В контейнере backend можно быстро проверить подключение к scheduler:
 
 ```bash
 python - <<'PY'
@@ -101,8 +138,6 @@ print(c)
 PY
 ```
 
-This verifies connectivity to scheduler.
-
 ---
 
-Keep this playbook with ops docs and update versions/images and resource recommendations based on production observations.
+Обновляйте инструкции по образам и ресурсам на основе наблюдений в staging/production.
